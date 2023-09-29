@@ -256,5 +256,5 @@ switch $argv[1]
 		list $argv[2..]
 	case *
 		print_help
-		exit
+		exit 1
 end
