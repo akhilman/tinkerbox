@@ -73,8 +73,6 @@ function create \
 		--ignore-unknown \
 		--stop-nonopt \
 		'i/image=?' \
-		'v/volume=+' \
-		's/setup-script=?' \
 		'X/X11' \
 		'W/wayland' \
 		'B/dbus' \
