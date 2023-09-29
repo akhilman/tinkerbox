@@ -155,7 +155,7 @@ function create \
 	echo \$ podman $podman_args
 	set -l container_id (podman $podman_args); or exit $status
 
-	podman exec --user=root mkdir -p /usr/local/{bin,sbin}
+	podman exec --user=root $container_id mkdir -p /usr/local/{bin,sbin}
 	set -l tmpfile (mktemp)
 	echo $BOOTSTRAP_SCRIPT > $tmpfile
 	podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-bootstrap.sh
