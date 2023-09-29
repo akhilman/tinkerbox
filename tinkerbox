@@ -1,0 +1,262 @@
+#!/usr/bin/env fish
+
+set -l fish_trace on
+
+set -l DEFAULT_PROJECT_DIR $HOME/Projects
+set -l DEFAULT_IMAGE debian:latest
+
+set -l BOOTSTRAP_SCRIPT '#!/bin/sh
+
+set -x
+
+if command -v apk; then
+	apk add sudo shadow
+elif command -v apt-get; then
+	apt-get update
+	apt-get install -y sudo
+elif command -v dnf; then
+	dnf install -y sudo
+elif command -v pacman; then
+	pacman -Sy sudo
+elif command -v zypper; then
+	zypper install -y sudo
+else
+	echo WARNING: Unsupported distro!
+fi
+
+TINKERBOX_HOST_HOME=/home/$TINKERBOX_HOST_USER
+usermod --home $TINKERBOX_HOST_HOME $TINKERBOX_HOST_USER
+if [ ! -d $TINKERBOX_HOST_HOME ]; then
+	mkdir -p $HOME
+	chown $TINKERBOX_HOST_USER: $HOME
+	chmod 700 $HOME
+fi
+
+USER_SHELL=$(getent passwd $(id -u $TINKERBOX_HOST_USER) | cut -d: -f7)
+BASH_PATH=$(command -v bash)
+if [ $USER_SHELL = /bin/sh ] && [ -n "$BASH_PATH" ]; then
+	usermod --shell $BASH_PATH $TINKERBOX_HOST_USER
+fi
+
+mkdir -p /etc/sudoers.d
+cat > /etc/sudoers.d/$TINKERBOX_HOST_USER << EOF
+$TINKERBOX_HOST_USER ALL=(ALL:ALL) NOPASSWD: ALL
+EOF
+
+test -d /mnt/shared && chmod a+rwX /mnt/shared
+'
+
+set -l ENTRYPOINT_SCRIPT '#!/bin/sh
+set -x
+cd
+SHELL=$(getent passwd $(id -u) | cut -d: -f7)
+exec $SHELL -l
+'
+
+function print_help
+	set -l CMD_NAME (basename (status filename))
+	echo "\
+Usage: 
+	$CMD_NAME create <name> [podman run args]
+	$CMD_NAME enter <name>
+"
+end
+
+function create \
+	--inherit-variable DEFAULT_IMAGE \
+	--inherit-variable BOOTSTRAP_SCRIPT \
+	--inherit-variable ENTRYPOINT_SCRIPT
+
+	argparse \
+		--name "tinkerbox" \
+		--min-args 1 \
+		--ignore-unknown \
+		--stop-nonopt \
+		'i/image=?' \
+		'v/volume=+' \
+		's/setup-script=?' \
+		'X/X11' \
+		'W/wayland' \
+		'B/dbus' \
+		'A/audio' \
+		-- $argv
+	or begin
+		print_help
+		exit 1
+	end
+
+	set --query _flag_X11; and set -l share_x11
+	set --query _flag_wayland; and set -l share_wayland
+	set --query _flag_dbus; and set -l share_dbus
+	set --query _flag_audio; and set -l share_audio
+
+	set -l box_name $argv[1]
+
+	set -l image
+	if [ -n "$_flag_image" ]
+		set image $_flag_image
+	else
+		set image $DEFAULT_IMAGE
+	end
+
+	set -l setup_script
+	if set --query _flag_setup_script
+		set setup_script "$(cat $_flag_setup_script)"
+		or exit $status
+	else
+		set setup_script $DEFAULT_SETUP_SCRIPT
+	end
+
+	set -l podman_args container run -dit
+
+	set --append podman_args --name=$box_name
+	set --append podman_args --hostname=$box_name
+	set --append podman_args --label=manager=tinkerbox
+
+	set --append podman_args --env=TINKERBOX_HOST_USER=$USER
+
+	set --append podman_args --userns=keep-id
+	# set --append podman_args --group-add=keep-groups
+	
+	# TODO: deduplicate volumes
+	set --append podman_args --volume=tinkerbox-shared:/mnt/shared
+	set --append podman_args --volume=tinkerbox-home-$box_name:/home
+
+	set --append podman_args --mount=type=tmpfs,dst=/run
+
+	if set --query share_dbus
+		echo Sharing DBus is not implemented
+	end
+
+	if set --query share_audio
+		echo Sharing PulseAudio and PipeWire is not implemented
+	end
+
+	if set --query share_x11
+		set --append podman_args --annotation=ru.akhil.tinkerbox.share_x11=true
+		set --append podman_args --mount=type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix
+	end
+
+	if set --query share_wayland
+		echo Sharing Wayland is not implemented
+	end
+
+	if set --query share_x11; or set --query share_wayland
+		# set --append podman_args --mount=type=bind,src=/dev/dri,dst=/dev/dri
+		for dev in (find /dev/dri -type c)
+			set --append podman_args --device=$dev:$dev:rw
+		end
+	end
+
+	for arg in $argv[2..]
+		set --append podman_args $arg
+	end
+
+	set --append podman_args $image
+
+	echo \$ podman $podman_args
+	set -l container_id (podman $podman_args); or exit $status
+
+	podman exec --user=root mkdir -p /usr/local/{bin,sbin}
+	set -l tmpfile (mktemp)
+	echo $BOOTSTRAP_SCRIPT > $tmpfile
+	podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-bootstrap.sh
+	echo $ENTRYPOINT_SCRIPT > $tmpfile
+	podman cp $tmpfile $container_id:/usr/local/bin/tinkerbox-entrypoint.sh
+	rm $tmpfile
+	podman exec --user=root $container_id sh /usr/local/sbin/tinkerbox-bootstrap.sh
+end
+
+function enter
+	argparse \
+		--name "tinkerbox" \
+		--min-args 1 \
+		--stop-nonopt \
+		'R/root' \
+		-- $argv
+	or begin
+		print_help
+		exit 1
+	end
+
+	set --query _flag_root; and set -l enter_as_root
+
+	set -l box_name $argv[1]
+
+	if not [ "tinkerbox" = "$(podman container inspect --format='{{index .Config.Labels "manager"}}' $box_name)" ]
+		echo Not a tinkerbox container: $box_name
+		exit 1
+	end
+
+	[ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_x11"}}' $box_name)" ]
+		and set -l share_x11
+
+	set -l podman_args exec -it
+
+	if [ -d "$XDG_RUNTIME_DIR" ]
+		set --append podman_args --env=XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
+		podman exec -u root $box_name sh -c "mkdir -p $XDG_RUNTIME_DIR && chown -R $USER: $XDG_RUNTIME_DIR"
+	end
+
+	if set --query share_x11
+			and [ -n "$DISPLAY" ]
+		set --append podman_args --env=DISPLAY=$DISPLAY
+		if [ -n "$XAUTHORITY" ]
+			set --append podman_args --env=XAUTHORITY=$XAUTHORITY
+			podman cp $XAUTHORITY $box_name:$XAUTHORITY
+		end
+	end
+
+	if set --query enter_as_root
+		set --append podman_args --user=root
+	end
+
+	set --append podman_args $box_name
+	set --append podman_args sh /usr/local/bin/tinkerbox-entrypoint.sh
+
+	echo \$ podman $podman_args
+	podman $podman_args
+	exit $status
+end
+
+function remove
+	echo Not implemented
+	exit 1
+end
+
+function list
+	echo Not implemented
+	exit 1
+end
+
+
+argparse \
+	--name "tinkerbox" \
+	--min-args 1 \
+	--ignore-unknown \
+	--stop-nonopt \
+	'h/help' \
+	-- $argv
+or begin
+	print_help
+	exit 1
+end
+
+if [ -n "$_flag_help" ]
+	print_help
+	exit 0
+end
+
+switch $argv[1]
+	case cr create
+		create $argv[2..]
+	case en enter
+		enter $argv[2..]
+	case rm remove
+		remove $argv[2..]
+	case ls list
+		list $argv[2..]
+	case *
+		print_help
+		exit
+end
