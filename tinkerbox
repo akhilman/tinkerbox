@@ -114,12 +114,13 @@ function create \
 
 	set --append podman_args --mount=type=tmpfs,dst=/run
 
-	if set --query share_dbus
-		echo Sharing DBus is not implemented
-	end
-
 	if set --query share_audio
 		echo Sharing PulseAudio and PipeWire is not implemented
+	end
+
+	if set --query share_dbus; and set --query XDG_RUNTIME_DIR
+		set --append podman_args --annotation=ru.akhil.tinkerbox.share_dbus=true
+		set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/bus,dst=$XDG_RUNTIME_DIR/bus
 	end
 
 	if set --query share_display
@@ -183,6 +184,8 @@ function enter
 		exit 1
 	end
 
+	[ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_dbus"}}' $box_name)" ]
+		and set -l share_dbus
 	[ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_display"}}' $box_name)" ]
 		and set -l share_display
 
@@ -193,8 +196,11 @@ function enter
 		podman exec -u root $box_name sh -c "mkdir -p $XDG_RUNTIME_DIR && chown -R $USER: $XDG_RUNTIME_DIR"
 	end
 
-	if set --query share_display
-			and [ -n "$DISPLAY" ]
+	if set --query share_dbus; and [ -n "$DBUS_SESSION_BUS_ADDRESS" ]
+		set --append podman_args --env=DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS
+	end
+		
+	if set --query share_display; and [ -n "$DISPLAY" ]
 		set --append podman_args --env=DISPLAY=$DISPLAY
 		if [ -n "$XAUTHORITY" ]
 			set --append podman_args --env=XAUTHORITY=$XAUTHORITY
