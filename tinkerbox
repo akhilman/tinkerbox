@@ -73,20 +73,18 @@ function create \
 		--ignore-unknown \
 		--stop-nonopt \
 		'i/image=?' \
-		'X/X11' \
-		'W/wayland' \
-		'B/dbus' \
-		'A/audio' \
+		'B/share-dbus' \
+		'D/share-display' \
+		'A/share-audio' \
 		-- $argv
 	or begin
 		print_help
 		exit 1
 	end
 
-	set --query _flag_X11; and set -l share_x11
-	set --query _flag_wayland; and set -l share_wayland
-	set --query _flag_dbus; and set -l share_dbus
-	set --query _flag_audio; and set -l share_audio
+	set --query _flag_share_display; and set -l share_display
+	set --query _flag_share_dbus; and set -l share_dbus
+	set --query _flag_share_audio; and set -l share_audio
 
 	set -l box_name $argv[1]
 
@@ -95,14 +93,6 @@ function create \
 		set image $_flag_image
 	else
 		set image $DEFAULT_IMAGE
-	end
-
-	set -l setup_script
-	if set --query _flag_setup_script
-		set setup_script "$(cat $_flag_setup_script)"
-		or exit $status
-	else
-		set setup_script $DEFAULT_SETUP_SCRIPT
 	end
 
 	set -l podman_args container run -dit
