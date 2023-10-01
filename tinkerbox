@@ -95,8 +95,10 @@ function create \
 		set image $DEFAULT_IMAGE
 	end
 
-	set -l podman_args container run -dit
+	set -l podman_args
+	set -l bootstrap_commands
 
+	set --append podman_args container run -dit
 	set --append podman_args --name=$box_name
 	set --append podman_args --hostname=$box_name
 	set --append podman_args --label=manager=tinkerbox
@@ -120,19 +122,21 @@ function create \
 		echo Sharing PulseAudio and PipeWire is not implemented
 	end
 
-	if set --query share_x11
-		set --append podman_args --annotation=ru.akhil.tinkerbox.share_x11=true
+	if set --query share_display
+		set --append podman_args --annotation=ru.akhil.tinkerbox.share_display=true
 		set --append podman_args --mount=type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix
-	end
-
-	if set --query share_wayland
-		echo Sharing Wayland is not implemented
-	end
-
-	if set --query share_x11; or set --query share_wayland
-		# set --append podman_args --mount=type=bind,src=/dev/dri,dst=/dev/dri
-		for dev in (find /dev/dri -type c)
-			set --append podman_args --device=$dev:$dev:rw
+		if set --query XDG_RUNTIME_DIR; and set --query WAYLAND_DISPLAY
+			set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY,dst=$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY
+			set --append podman_args --env=WAYLAND_DISPLAY=$WAYLAND_DISPLAY
+		end
+		if [ -d /dev/dri ]
+			for dev in (find /dev/dri -type c)
+				set --append podman_args --device=$dev:$dev:rw
+			end
+			for link in (find /dev/dri -type l)
+				set --append bootstrap_commands "mkdir -p $(path dirname $link)"
+				set --append bootstrap_commands "ln -s $(readlink $link) $link"
+			end
 		end
 	end
 
@@ -148,6 +152,9 @@ function create \
 	podman exec --user=root $container_id mkdir -p /usr/local/{bin,sbin}
 	set -l tmpfile (mktemp)
 	echo $BOOTSTRAP_SCRIPT > $tmpfile
+	for cmd in $bootstrap_commands
+		echo $cmd >> $tmpfile
+	end
 	podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-bootstrap.sh
 	echo $ENTRYPOINT_SCRIPT > $tmpfile
 	podman cp $tmpfile $container_id:/usr/local/bin/tinkerbox-entrypoint.sh
@@ -176,8 +183,8 @@ function enter
 		exit 1
 	end
 
-	[ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_x11"}}' $box_name)" ]
-		and set -l share_x11
+	[ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_display"}}' $box_name)" ]
+		and set -l share_display
 
 	set -l podman_args exec -it
 
@@ -186,7 +193,7 @@ function enter
 		podman exec -u root $box_name sh -c "mkdir -p $XDG_RUNTIME_DIR && chown -R $USER: $XDG_RUNTIME_DIR"
 	end
 
-	if set --query share_x11
+	if set --query share_display
 			and [ -n "$DISPLAY" ]
 		set --append podman_args --env=DISPLAY=$DISPLAY
 		if [ -n "$XAUTHORITY" ]
