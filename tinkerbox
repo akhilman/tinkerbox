@@ -24,6 +24,13 @@ else
 	echo WARNING: Unsupported distro!
 fi
 
+# A hack to support AltLinux
+if [ -f /etc/altlinux-release ] && [ -d /etc/tcb ]; then
+	mkdir -p /etc/tcb/$TINKERBOX_HOST_USER
+	echo "$TINKERBOX_HOST_USER:!!:19631::::::" > /etc/tcb/$TINKERBOX_HOST_USER/shadow
+	chown -R $TINKERBOX_HOST_USER:auth /etc/tcb/$TINKERBOX_HOST_USER
+fi
+
 TINKERBOX_HOST_HOME=/home/$TINKERBOX_HOST_USER
 usermod --home $TINKERBOX_HOST_HOME $TINKERBOX_HOST_USER
 if [ ! -d $TINKERBOX_HOST_HOME ]; then
@@ -148,6 +155,12 @@ function create \
 				set --append bootstrap_commands "ln -s $(readlink $link) $link"
 			end
 		end
+	end
+
+	# This is a hack to allow user to call sudo in AltLinux container.
+	# Tell me if you know how to make it better.
+	if string match -qr '^((docker.io/)?library/)?alt$' $image
+		set --append podman_args --group-add=wheel
 	end
 
 	for arg in $argv[2..]
