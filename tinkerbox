@@ -112,7 +112,7 @@ function create \
 	
 	# TODO: deduplicate volumes
 	set --append podman_args --volume=tinkerbox-shared:/mnt/shared
-	set --append podman_args --volume=tinkerbox-home-$box_name:/home
+	set --append podman_args --volume={$box_name}-home:/home
 
 	set --append podman_args --mount=type=tmpfs,dst=/run
 
