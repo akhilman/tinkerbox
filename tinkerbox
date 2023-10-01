@@ -15,11 +15,11 @@ elif command -v apt-get; then
 	apt-get update
 	apt-get install -y sudo less
 elif command -v dnf; then
-	dnf install -y sudo
+	dnf install -y sudo less
 elif command -v pacman; then
-	pacman -Sy sudo
+	pacman -Sy sudo less
 elif command -v zypper; then
-	zypper install -y sudo
+	zypper install -y sudo less
 else
 	echo WARNING: Unsupported distro!
 fi
