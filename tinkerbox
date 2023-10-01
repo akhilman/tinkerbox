@@ -75,7 +75,7 @@ function create \
 		'i/image=?' \
 		'B/share-dbus' \
 		'D/share-display' \
-		'A/share-audio' \
+		'P/share-pulse' \
 		-- $argv
 	or begin
 		print_help
@@ -84,7 +84,7 @@ function create \
 
 	set --query _flag_share_display; and set -l share_display
 	set --query _flag_share_dbus; and set -l share_dbus
-	set --query _flag_share_audio; and set -l share_audio
+	set --query _flag_share_pulse; and set -l share_pulse
 
 	set -l box_name $argv[1]
 
@@ -114,8 +114,9 @@ function create \
 
 	set --append podman_args --mount=type=tmpfs,dst=/run
 
-	if set --query share_audio
-		echo Sharing PulseAudio and PipeWire is not implemented
+	if set --query share_pulse
+		set --append podman_args --annotation=ru.akhil.tinkerbox.share_pulse=true
+		set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/pulse,dst=$XDG_RUNTIME_DIR/pulse
 	end
 
 	if set --query share_dbus; and set --query XDG_RUNTIME_DIR
