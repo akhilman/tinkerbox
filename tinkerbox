@@ -144,12 +144,6 @@ function create \
 		exit 0
 	end
 
-	set --query _flag_share_dbus; and set -l share_dbus
-	set --query _flag_share_gpu; and set -l share_gpu
-	set --query _flag_share_pulse; and set -l share_pulse
-	set --query _flag_share_wayland; and set -l share_wayland
-	set --query _flag_share_x11; and set -l share_x11
-
 	if [ (count $argv) -ne 1 ]
 		echo "$CREATE_HELP"
 		exit 1
@@ -183,28 +177,28 @@ function create \
 
 	set --append podman_args --mount=type=tmpfs,dst=/run
 
-	if set --query share_pulse
+	if set --query _flag_share_pulse
 		set --append podman_args --annotation=ru.akhil.tinkerbox.share_pulse=true
 		set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/pulse,dst=$XDG_RUNTIME_DIR/pulse
 	end
 
-	if set --query share_dbus; and set --query XDG_RUNTIME_DIR
+	if set --query _flag_share_dbus; and set --query XDG_RUNTIME_DIR
 		set --append podman_args --annotation=ru.akhil.tinkerbox.share_dbus=true
 		set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/bus,dst=$XDG_RUNTIME_DIR/bus
 	end
 
-	if set --query share_wayland; and set --query XDG_RUNTIME_DIR; and set --query WAYLAND_DISPLAY
+	if set --query _flag_share_wayland; and set --query XDG_RUNTIME_DIR; and set --query WAYLAND_DISPLAY
 		set --append podman_args --annotation=ru.akhil.tinkerbox.share_wayland=true
 		set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY,dst=$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY
 		set --append podman_args --env=WAYLAND_DISPLAY=$WAYLAND_DISPLAY
 	end
 
-	if set --query share_x11
+	if set --query _flag_share_x11
 		set --append podman_args --annotation=ru.akhil.tinkerbox.share_x11=true
 		set --append podman_args --mount=type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix
 	end
 
-	if set --query share_gpu
+	if set --query _flag_share_gpu
 		set --append podman_args --annotation=ru.akhil.tinkerbox.share_gpu=true
 		if [ -d /dev/dri ]
 			for dev in (find /dev/dri -type c)
@@ -258,8 +252,6 @@ function enter \
 		exit 0
 	end
 
-	set --query _flag_root; and set -l enter_as_root
-
 	if [ (count $argv) -ne 1 ]
 		echo "$ENTER_HELP"
 		exit 1
@@ -271,11 +263,6 @@ function enter \
 		exit 1
 	end
 
-	[ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_dbus"}}' $box_name)" ]
-		and set -l share_dbus
-	[ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_x11"}}' $box_name)" ]
-		and set -l share_x11
-
 	set -l podman_args exec -it
 
 	if [ -d "$XDG_RUNTIME_DIR" ]
@@ -283,11 +270,13 @@ function enter \
 		podman exec -u root $box_name sh -c "mkdir -p $XDG_RUNTIME_DIR && chown -R $USER: $XDG_RUNTIME_DIR"
 	end
 
-	if set --query share_dbus; and [ -n "$DBUS_SESSION_BUS_ADDRESS" ]
+	if [ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_dbus"}}' $box_name)" ]
+			and [ -n "$DBUS_SESSION_BUS_ADDRESS" ]
 		set --append podman_args --env=DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS
 	end
 		
-	if set --query share_x11; and [ -n "$DISPLAY" ]
+	if [ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_x11"}}' $box_name)" ]
+			and [ -n "$DISPLAY" ]
 		set --append podman_args --env=DISPLAY=$DISPLAY
 		if [ -n "$XAUTHORITY" ]
 			set --append podman_args --env=XAUTHORITY=$XAUTHORITY
@@ -298,7 +287,7 @@ function enter \
 	set --query TERM; and set --append podman_args --env=TERM=$TERM
 	set --query COLORTERM; and set --append podman_args --env=COLORTERM=$COLORTERM
 
-	if set --query enter_as_root
+	if set --query _flag_root
 		set --append podman_args --user=root
 	end
 
