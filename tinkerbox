@@ -150,11 +150,11 @@ function create \
 	set --query _flag_share_wayland; and set -l share_wayland
 	set --query _flag_share_x11; and set -l share_x11
 
-	set -l box_name $argv[1]
-	if [ -z "$box_name" ]
+	if [ (count $argv) -ne 1 ]
 		echo "$CREATE_HELP"
 		exit 1
 	end
+	set -l box_name $argv[1]
 
 	set -l image $DEFAULT_IMAGE
 	if set --query _flag_image
@@ -260,11 +260,11 @@ function enter \
 
 	set --query _flag_root; and set -l enter_as_root
 
-	set -l box_name $argv[1]
-	if [ -z "$box_name" ]
+	if [ (count $argv) -ne 1 ]
 		echo "$ENTER_HELP"
 		exit 1
 	end
+	set -l box_name $argv[1]
 
 	if not [ "tinkerbox" = "$(podman container inspect --format='{{index .Config.Labels "manager"}}' $box_name)" ]
 		echo Not a tinkerbox container: $box_name
