@@ -15,8 +15,8 @@ Options:
 	-h, --help	Show this help.
 
 Available commands:
-	cr, create	Create a new container
-	en, enter	Enter a container
+	cr, create	Create a new container.
+	en, enter	Enter a container.
 	ls, list	!Unimplemented!
 	rm, remive	!Unimplemented!
 
@@ -52,7 +52,7 @@ Usage:
 	$CMD_NAME enter [options] <container_name>
 
 Options:
-	-R, --root	Enter as the root user
+	-R, --root	Enter as the root user.
 	-h, --help	Show this help.
 "
 
