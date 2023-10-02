@@ -72,7 +72,7 @@ function create \
 		--min-args 1 \
 		--ignore-unknown \
 		--stop-nonopt \
-		'i/image=?' \
+		'I/image=?' \
 		'B/share-dbus' \
 		'G/share-gpu' \
 		'P/share-pulse' \
