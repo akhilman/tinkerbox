@@ -31,7 +31,8 @@ Options:
 	-I<image>, --image=<image>	Use provided image to create a new container.
 	-B, --share-dbus		Share DBus between the host and a new container.
 	-G, --share-gpu			Share GPU between the host and a new container.
-	-P, --share-pulse		Share PulseAudio between the host and a new container.
+	-P, --share-pipewire		Share PipeWire between the host and a new container.
+	-A, --share-pulse		Share PulseAudio between the host and a new container.
 	-W, --share-wayland		Share Wayland display between the host and a new container.
 	-X, --share-x11			Share X11 display between the host and a new container.
 	-h, --help			Show this help.
@@ -126,7 +127,8 @@ function create \
 		'I/image=?' \
 		'B/share-dbus' \
 		'G/share-gpu' \
-		'P/share-pulse' \
+		'P/share-pipewire' \
+		'A/share-pulse' \
 		'W/share-wayland' \
 		'X/share-x11' \
 		'p-podman-arg=+' \
@@ -179,6 +181,13 @@ function create \
 	if set --query _flag_share_pulse
 		set --append podman_args --annotation=ru.akhil.tinkerbox.share_pulse=true
 		set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/pulse,dst=$XDG_RUNTIME_DIR/pulse
+	end
+
+	if set --query _flag_share_pipewire
+		set --append podman_args --annotation=ru.akhil.tinkerbox.share_pipewire=true
+		for socket in $XDG_RUNTIME_DIR/pipewire-?
+			set --append podman_args --mount=type=bind,src=$socket,dst=$socket
+		end
 	end
 
 	if set --query _flag_share_dbus; and set --query XDG_RUNTIME_DIR
