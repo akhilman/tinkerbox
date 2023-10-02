@@ -29,11 +29,11 @@ Usage:
 
 Options:
 	-I<image>, --image=<image>	Use provided image to create a new container.
-	-B, --share-dbus		Share DBus between the host and new container.
-	-G, --share-gpu			Share GPU between the host and new container.
-	-P, --share-pulse		Share PulseAudio between the host and new container.
-	-W, --share-wayland		Share Wayland display between the host and new container.
-	-X, --share-x11			Share X11 display between the host and new container.
+	-B, --share-dbus		Share DBus between the host and a new container.
+	-G, --share-gpu			Share GPU between the host and a new container.
+	-P, --share-pulse		Share PulseAudio between the host and a new container.
+	-W, --share-wayland		Share Wayland display between the host and a new container.
+	-X, --share-x11			Share X11 display between the host and a new container.
 	-h, --help			Show this help.
 
 Supported images:
