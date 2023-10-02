@@ -5,6 +5,67 @@ set -l fish_trace on
 set -l DEFAULT_PROJECT_DIR $HOME/Projects
 set -l DEFAULT_IMAGE debian:latest
 
+set -l CMD_NAME (basename (status filename))
+
+set -l MAIN_HELP "\
+Tinkerbox is a tool to manage interactive podman containers for experements and development.
+
+Usage: 
+	$CMD_NAME [options] <command> [command args]
+
+Options:
+	-h, --help	Show this help.
+
+Available commands:
+	cr, create	Create a new container
+	en, enter	Enter a container
+	ls, list	!Unimplemented!
+	rm, remive	!Unimplemented!
+
+To get command help:
+	$CMD_NAME <command> --help
+"
+
+set -l CREATE_HELP "\
+Usage: 
+	$CMD_NAME create [options] <container_name> [ -- [podman args]]
+
+Options:
+	-I<image>, --image=<image>	Use provided image to create a new container.
+	-B, --share-dbus		Share DBus between the host and new container.
+	-G, --share-gpu			Share GPU between the host and new container.
+	-P, --share-pulse		Share PulseAudio between the host and new container.
+	-W, --share-wayland		Share Wayland display between the host and new container.
+	-X, --share-x11			Share X11 display between the host and new container.
+	-h, --help			Show this help.
+
+Supported images:
+	alpine
+	archlinux
+	debian (default)
+	fedora
+	opensuse/tumbleweed
+
+	Other images may work but not tested.
+"
+
+set -l ENTER_HELP "\
+Usage:
+	$CMD_NAME enter [options] <container_name>
+
+Options:
+	-R, --root	Enter as the root user
+	-h, --help	Show this help.
+"
+
+set -l LIST_HELP "\
+TODO
+"
+
+set -l REMOVE_HELP "\
+TODO
+"
+
 set -l BOOTSTRAP_SCRIPT '#!/bin/sh
 
 set -x
@@ -53,23 +114,15 @@ SHELL=$(getent passwd $(id -u) | cut -d: -f7)
 exec $SHELL -l
 '
 
-function print_help
-	set -l CMD_NAME (basename (status filename))
-	echo "\
-Usage: 
-	$CMD_NAME create <name> [podman run args]
-	$CMD_NAME enter <name>
-"
-end
-
 function create \
+	--inherit-variable CREATE_HELP \
 	--inherit-variable DEFAULT_IMAGE \
 	--inherit-variable BOOTSTRAP_SCRIPT \
 	--inherit-variable ENTRYPOINT_SCRIPT
 
 	argparse \
 		--name "tinkerbox" \
-		--min-args 1 \
+		--max-args 1 \
 		'I/image=?' \
 		'B/share-dbus' \
 		'G/share-gpu' \
@@ -77,10 +130,16 @@ function create \
 		'W/share-wayland' \
 		'X/share-x11' \
 		'p-podman-arg=+' \
+		'h/help' \
 		-- $argv
 	or begin
-		print_help
+		echo "$CREATE_HELP"
 		exit 1
+	end
+
+	if set --query _flag_help
+		echo $CREATE_HELP
+		exit 0
 	end
 
 	set --query _flag_share_dbus; and set -l share_dbus
@@ -90,6 +149,10 @@ function create \
 	set --query _flag_share_x11; and set -l share_x11
 
 	set -l box_name $argv[1]
+	if [ -z "$box_name" ]
+		echo "$CREATE_HELP"
+		exit 1
+	end
 
 	set -l image
 	if [ -n "$_flag_image" ]
@@ -173,21 +236,32 @@ function create \
 	podman exec --user=root $container_id sh /usr/local/sbin/tinkerbox-bootstrap.sh
 end
 
-function enter
+function enter \
+	--inherit-variable ENTER_HELP
+
 	argparse \
 		--name "tinkerbox" \
-		--min-args 1 \
 		--max-args 1 \
 		'R/root' \
+		'h/help' \
 		-- $argv
 	or begin
-		print_help
+		echo "$ENTER_HELP"
 		exit 1
+	end
+
+	if set --query _flag_help
+		echo "$ENTER_HELP"
+		exit 0
 	end
 
 	set --query _flag_root; and set -l enter_as_root
 
 	set -l box_name $argv[1]
+	if [ -z "$box_name" ]
+		echo "$ENTER_HELP"
+		exit 1
+	end
 
 	if not [ "tinkerbox" = "$(podman container inspect --format='{{index .Config.Labels "manager"}}' $box_name)" ]
 		echo Not a tinkerbox container: $box_name
@@ -233,31 +307,34 @@ function enter
 	exit $status
 end
 
-function remove
+function list \
+	--inherit-variable LIST_HELP
+
 	echo Not implemented
 	exit 1
 end
 
-function list
+
+function remove \
+	--inherit-variable REMOVE_HELP
+
 	echo Not implemented
 	exit 1
 end
-
 
 argparse \
 	--name "tinkerbox" \
-	--min-args 1 \
 	--ignore-unknown \
 	--stop-nonopt \
 	'h/help' \
 	-- $argv
 or begin
-	print_help
+	echo $MAIN_HELP
 	exit 1
 end
 
-if [ -n "$_flag_help" ]
-	print_help
+if set --query _flag_help
+	echo $MAIN_HELP
 	exit 0
 end
 
@@ -282,6 +359,8 @@ switch $argv[1]
 	case ls list
 		list $argv[2..]
 	case *
-		print_help
+		echo "$MAIN_HELP"
 		exit 1
 end
+
+# vim: ts=8 sw=8 noet
