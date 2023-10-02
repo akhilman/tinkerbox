@@ -74,6 +74,7 @@ function create \
 		--stop-nonopt \
 		'i/image=?' \
 		'B/share-dbus' \
+		'G/share-gpu' \
 		'P/share-pulse' \
 		'W/share-wayland' \
 		'X/share-x11' \
@@ -84,6 +85,7 @@ function create \
 	end
 
 	set --query _flag_share_dbus; and set -l share_dbus
+	set --query _flag_share_gpu; and set -l share_gpu
 	set --query _flag_share_pulse; and set -l share_pulse
 	set --query _flag_share_wayland; and set -l share_wayland
 	set --query _flag_share_x11; and set -l share_x11
@@ -137,8 +139,8 @@ function create \
 		set --append podman_args --mount=type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix
 	end
 
-	if set --query share_wayland; or set --query share_x11
-		set --append podman_args --annotation=ru.akhil.tinkerbox.share_dri=true
+	if set --query share_gpu
+		set --append podman_args --annotation=ru.akhil.tinkerbox.share_gpu=true
 		if [ -d /dev/dri ]
 			for dev in (find /dev/dri -type c)
 				set --append podman_args --device=$dev:$dev:rw
