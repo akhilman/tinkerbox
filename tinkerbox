@@ -1,7 +1,5 @@
 #!/usr/bin/env fish
 
-set -l fish_trace on
-
 set -l DEFAULT_PROJECT_DIR $HOME/Projects
 set -l DEFAULT_IMAGE debian:latest
 
@@ -68,8 +66,9 @@ TODO
 
 set -l BOOTSTRAP_SCRIPT '#!/bin/sh
 
-set -x
+[ -n "$TINKERBOX_DEBUG" ] && set -x
 
+echo -n "Package manager: "
 if command -v apk; then
 	apk add sudo shadow
 elif command -v apt-get; then
@@ -108,7 +107,9 @@ test -d /mnt/shared && chmod a+rwX /mnt/shared
 '
 
 set -l ENTRYPOINT_SCRIPT '#!/bin/sh
-set -x
+
+[ -n "$TINKERBOX_DEBUG" ] && set -x
+
 cd
 SHELL=$(getent passwd $(id -u) | cut -d: -f7)
 exec $SHELL -l
@@ -131,6 +132,7 @@ function create \
 		'X/share-x11' \
 		'p-podman-arg=+' \
 		'h/help' \
+		'd-debug' \
 		-- $argv
 	or begin
 		echo "$CREATE_HELP"
@@ -154,11 +156,9 @@ function create \
 		exit 1
 	end
 
-	set -l image
-	if [ -n "$_flag_image" ]
+	set -l image $DEFAULT_IMAGE
+	if set --query _flag_image
 		set image $_flag_image
-	else
-		set image $DEFAULT_IMAGE
 	end
 
 	set -l podman_args
@@ -170,6 +170,9 @@ function create \
 	set --append podman_args --label=manager=tinkerbox
 
 	set --append podman_args --env=TINKERBOX_HOST_USER=$USER
+	if set --query _flag_debug
+		set --append podman_args --env=TINKERBOX_DEBUG=1
+	end
 
 	set --append podman_args --userns=keep-id
 	# set --append podman_args --group-add=keep-groups
@@ -326,11 +329,16 @@ argparse \
 	--name "tinkerbox" \
 	--ignore-unknown \
 	--stop-nonopt \
+	'd-debug' \
 	'h/help' \
 	-- $argv
 or begin
 	echo $MAIN_HELP
 	exit 1
+end
+
+if set --query _flag_debug
+	set fish_trace on
 end
 
 if set --query _flag_help
@@ -342,6 +350,9 @@ switch $argv[1]
 	case cr create
 		set -l create_args
 		set -l separator_reached false
+		if set --query _flag_debug
+			set --append create_args --debug
+		end
 		for arg in $argv[2..]
 			if [ "$arg" = "--" ]
 				set separator_reached true
