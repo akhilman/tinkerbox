@@ -12,8 +12,10 @@ Read code for instructions or call `tinkerbox --help`.
 ## Persistent volumes
 
 Tinkerbox mounts two persistent volumes for each container:
+
  * `<boxname>-home` to `/home`
  * `tinkerbox-shared` to `/mnt/shared`
+
 The last one is shared between containers and intended to be used to store different kind of caches like `~/.cache/pip`.
 
 Make a symbolic link for your cache directory to this volume.
