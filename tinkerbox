@@ -70,14 +70,13 @@ function create \
 	argparse \
 		--name "tinkerbox" \
 		--min-args 1 \
-		--ignore-unknown \
-		--stop-nonopt \
 		'I/image=?' \
 		'B/share-dbus' \
 		'G/share-gpu' \
 		'P/share-pulse' \
 		'W/share-wayland' \
 		'X/share-x11' \
+		'p-podman-arg=+' \
 		-- $argv
 	or begin
 		print_help
@@ -152,7 +151,7 @@ function create \
 		end
 	end
 
-	for arg in $argv[2..]
+	for arg in $_flag_podman_arg
 		set --append podman_args $arg
 	end
 
@@ -178,7 +177,7 @@ function enter
 	argparse \
 		--name "tinkerbox" \
 		--min-args 1 \
-		--stop-nonopt \
+		--max-args 1 \
 		'R/root' \
 		-- $argv
 	or begin
@@ -264,7 +263,18 @@ end
 
 switch $argv[1]
 	case cr create
-		create $argv[2..]
+		set -l create_args
+		set -l separator_reached false
+		for arg in $argv[2..]
+			if [ "$arg" = "--" ]
+				set separator_reached true
+			else if $separator_reached
+				set --append create_args --podman-arg=$arg
+			else
+				set --append create_args $arg
+			end
+		end
+		create $create_args
 	case en enter
 		enter $argv[2..]
 	case rm remove
