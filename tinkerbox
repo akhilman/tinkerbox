@@ -219,6 +219,9 @@ function enter
 		end
 	end
 
+	set --query TERM; and set --append podman_args --env=TERM=$TERM
+	set --query COLORTERM; and set --append podman_args --env=COLORTERM=$COLORTERM
+
 	if set --query enter_as_root
 		set --append podman_args --user=root
 	end
