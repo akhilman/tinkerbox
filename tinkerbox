@@ -76,7 +76,7 @@ function create \
 		'B/share-dbus' \
 		'P/share-pulse' \
 		'W/share-wayland' \
-		'X/share-xorg' \
+		'X/share-x11' \
 		-- $argv
 	or begin
 		print_help
