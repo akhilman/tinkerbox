@@ -1,6 +1,5 @@
 #!/usr/bin/env fish
 
-set -l DEFAULT_PROJECT_DIR $HOME/Projects
 set -l DEFAULT_IMAGE debian:latest
 
 set -l CMD_NAME (basename (status filename))
