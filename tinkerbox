@@ -17,7 +17,7 @@ Available commands:
 	cr, create	Create a new container.
 	en, enter	Enter a container.
 	ls, list	!Unimplemented!
-	rm, remive	!Unimplemented!
+	rm, remove	!Unimplemented!
 
 To get command help:
 	$CMD_NAME <command> --help
