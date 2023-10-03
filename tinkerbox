@@ -164,7 +164,7 @@ function create \
 	set -l podman_args
 	set -l bootstrap_commands
 
-	set --append podman_args container run -dit
+	set --append podman_args container run --detach
 	set --append podman_args --name=$box_name
 	set --append podman_args --hostname=$box_name
 	set --append podman_args --label=manager=tinkerbox
@@ -229,6 +229,7 @@ function create \
 	end
 
 	set --append podman_args $image
+	set --append podman_args sh -c 'trap "{ echo Caught SIGTERM, exiting...; exit; }" TERM; sleep infinity & wait'
 
 	echo \$ podman $podman_args
 	set -l container_id (podman $podman_args); or exit $status
