@@ -128,7 +128,7 @@ function create \
 
 	argparse \
 		--name "tinkerbox" \
-		--max-args 1 \
+		--stop-nonopt \
 		'I/image=?' \
 		'B/share-dbus' \
 		'G/share-gpu' \
@@ -136,7 +136,6 @@ function create \
 		'A/share-pulse' \
 		'W/share-wayland' \
 		'X/share-x11' \
-		'p-podman-arg=+' \
 		'h/help' \
 		'd-debug' \
 		-- $argv
@@ -150,11 +149,24 @@ function create \
 		exit 0
 	end
 
-	if [ (count $argv) -ne 1 ]
+	set -l create_args
+	set -l custom_podman_args
+	set -l separator_reached false
+	for arg in $argv
+		if [ "$arg" = "--" ]
+			set separator_reached true
+		else if $separator_reached
+			set --append custom_podman_args $arg
+		else
+			set --append create_args $arg
+		end
+	end
+
+	if [ (count $create_args) -ne 1 ]
 		echo "$CREATE_HELP"
 		exit 1
 	end
-	set -l box_name $argv[1]
+	set -l box_name $create_args[1]
 
 	set -l image $DEFAULT_IMAGE
 	if set --query _flag_image
@@ -224,7 +236,7 @@ function create \
 		end
 	end
 
-	for arg in $_flag_podman_arg
+	for arg in $custom_podman_args
 		set --append podman_args $arg
 	end
 
@@ -330,7 +342,6 @@ end
 
 argparse \
 	--name "tinkerbox" \
-	--ignore-unknown \
 	--stop-nonopt \
 	'd-debug' \
 	'h/help' \
@@ -351,21 +362,11 @@ end
 
 switch $argv[1]
 	case cr create
-		set -l create_args
-		set -l separator_reached false
+		set -l debug_flag
 		if set --query _flag_debug
-			set --append create_args --debug
+			set debug_flag --debug
 		end
-		for arg in $argv[2..]
-			if [ "$arg" = "--" ]
-				set separator_reached true
-			else if $separator_reached
-				set --append create_args --podman-arg=$arg
-			else
-				set --append create_args $arg
-			end
-		end
-		create $create_args
+		create $debug_flag $argv[2..]
 	case en enter
 		enter $argv[2..]
 	case rm remove
