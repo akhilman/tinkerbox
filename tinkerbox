@@ -1,5 +1,10 @@
 #!/usr/bin/env fish
 
+# SPDX-License-Identifier: MIT
+#
+# This file is part of the tinkerbox project:
+# 	https://codeberg.org/AkhIL/tinkerbox
+
 set -l DEFAULT_IMAGE debian:latest
 
 set -l CMD_NAME (basename (status filename))
