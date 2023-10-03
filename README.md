@@ -38,7 +38,7 @@ tinkerbox create -Ialpine my_alpine_box -- --volume=$HOME/my_directory:$HOME/my_
 
 ## Display, DBus and sound
 
-Container can use host's X11 and Wayland servers, DBus and PulseAudio.
+Container can use host's X11 and Wayland servers, DBus, PulseAudio and PipeWire.
 See `tinkerbox create --help` for exact flags.
 
 
