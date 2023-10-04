@@ -132,11 +132,15 @@ echo Starting container
 # Spown your daemons here.
 
 # python3 -m http.server -d $HOME 8000 &
+# pids="$pids $!"
 
 on_sigterm() {
 	echo Caught SIGTERM, exiting...
 
 	# Stop your daemons here.
+
+	# kill $pids
+	# wait $pids
 
 	exit
 }
@@ -267,7 +271,7 @@ function create \
 	end
 
 	set --append podman_args $image
-	set --append podman_args sh -c 'if test -x /usr/local/bin/tinkerbox-init; then { exec /usr/local/bin/tinkerbox-init; } else { trap exit TERM; sleep infinity & wait; }; fi'
+	set --append podman_args sh -c 'set -x; test -x /usr/local/bin/tinkerbox-init && exec /usr/local/bin/tinkerbox-init & pid=$!; trap "test x$pid != x && kill -TERM $pid && wait $pid; exit;" TERM; sleep infinity & wait'
 
 	echo \$ podman $podman_args
 	set -l container_id (podman $podman_args); or exit $status
