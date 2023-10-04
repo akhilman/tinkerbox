@@ -111,7 +111,7 @@ EOF
 test -d /mnt/shared && chmod a+rwX /mnt/shared
 '
 
-set -l ENTRYPOINT_SCRIPT '#!/bin/sh
+set -l LOGIN_SCRIPT '#!/bin/sh
 
 [ -n "$TINKERBOX_DEBUG" ] && set -x
 
@@ -120,11 +120,37 @@ SHELL=$(getent passwd $(id -u) | cut -d: -f7)
 exec $SHELL -l
 '
 
+set -l INIT_SCRIPT '#!/bin/sh
+
+[ -n "$TINKERBOX_DEBUG" ] && set -x
+
+# This script is being executed by your user.
+# Use sudo to gain root privileges.
+
+echo Starting container
+
+# Spown your daemons here.
+
+# python3 -m http.server -d $HOME 8000 &
+
+on_sigterm() {
+	echo Caught SIGTERM, exiting...
+
+	# Stop your daemons here.
+
+	exit
+}
+
+# Catch a signal from `podman stop`.
+trap "on_sigterm" TERM; sleep infinity & wait;
+'
+
 function create \
 	--inherit-variable CREATE_HELP \
 	--inherit-variable DEFAULT_IMAGE \
 	--inherit-variable BOOTSTRAP_SCRIPT \
-	--inherit-variable ENTRYPOINT_SCRIPT
+	--inherit-variable INIT_SCRIPT \
+	--inherit-variable LOGIN_SCRIPT
 
 	argparse \
 		--name "tinkerbox" \
@@ -241,22 +267,31 @@ function create \
 	end
 
 	set --append podman_args $image
-	set --append podman_args sh -c 'trap "{ echo Caught SIGTERM, exiting...; exit; }" TERM; sleep infinity & wait'
+	set --append podman_args sh -c 'if test -x /usr/local/bin/tinkerbox-init; then { exec /usr/local/bin/tinkerbox-init; } else { trap exit TERM; sleep infinity & wait; }; fi'
 
 	echo \$ podman $podman_args
 	set -l container_id (podman $podman_args); or exit $status
 
-	podman exec --user=root $container_id mkdir -p /usr/local/{bin,sbin}
+	podman exec --user=root $container_id mkdir -p /usr/local/{bin,sbin}; or exit $status
 	set -l tmpfile (mktemp)
+	chmod +x $tmpfile
+
 	echo $BOOTSTRAP_SCRIPT > $tmpfile
 	for cmd in $bootstrap_commands
 		echo $cmd >> $tmpfile
 	end
-	podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-bootstrap.sh
-	echo $ENTRYPOINT_SCRIPT > $tmpfile
-	podman cp $tmpfile $container_id:/usr/local/bin/tinkerbox-entrypoint.sh
+	podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-bootstrap
+
+	echo $INIT_SCRIPT > $tmpfile
+	podman cp $tmpfile $container_id:/usr/local/bin/tinkerbox-init
+
+	echo $LOGIN_SCRIPT > $tmpfile
+	podman cp $tmpfile $container_id:/usr/local/bin/tinkerbox-login
+
 	rm $tmpfile
-	podman exec --user=root $container_id sh /usr/local/sbin/tinkerbox-bootstrap.sh
+
+	podman exec --user=root $container_id sh /usr/local/sbin/tinkerbox-bootstrap
+	podman stop $container_id
 end
 
 function enter \
@@ -289,6 +324,22 @@ function enter \
 		exit 1
 	end
 
+	if [ "true" = "$(podman container inspect --format='{{.State.Paused}}' $box_name)" ]
+		echo Container is paused
+		echo "Call `podman unpause $box_name` to unpause this container"
+		exit 1
+	end
+
+	if not [ "true" = "$(podman container inspect --format='{{.State.Running}}' $box_name)" ]
+		echo \$ podman start $box_name
+		podman start $box_name; or exit $status
+		timeout 10s podman wait --condition=running $box_name > /dev/null
+		or begin
+			echo Container not running
+			exit 1
+		end
+	end
+
 	set -l podman_args exec -it
 
 	if [ -d "$XDG_RUNTIME_DIR" ]
@@ -318,7 +369,7 @@ function enter \
 	end
 
 	set --append podman_args $box_name
-	set --append podman_args sh /usr/local/bin/tinkerbox-entrypoint.sh
+	set --append podman_args sh /usr/local/bin/tinkerbox-login
 
 	echo \$ podman $podman_args
 	podman $podman_args

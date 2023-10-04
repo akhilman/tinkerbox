@@ -42,6 +42,22 @@ Container can use host's X11 and Wayland servers, DBus, PulseAudio and PipeWire.
 See `tinkerbox create --help` for exact flags.
 
 
+## Running daemons
+
+Tinkerbox container runs `/usr/local/bin/tinkerbox-init` as entry point by your regular user (**not root**).
+Put commands you would like to execute at start there.
+
+```bash
+host $ tinkerbox create -Idebian http_server -- -p 129.0.0.1:8000:8000
+host $ tinkerbox enter http_server
+box $ sudo apt install python3
+box $ echo python3 -m http.server -d $HOME 8000 > /usr/local/bin/tinkerbox-init
+box $ logout
+host $ podman restart http_server
+host $ firefox http://localhost:8000
+```
+
+
 ## Supported distributions
 
  * Alpine
