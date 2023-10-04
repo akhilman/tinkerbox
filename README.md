@@ -30,7 +30,7 @@ done
 
 ## Share directory with host
 
-You may add any `podman run` flags to `tinkerbox create` after `--` separator:
+You can add any `podman run` flags to `tinkerbox create` after `--` separator:
 ```bash
 tinkerbox create -Ialpine my_alpine_box -- --volume=$HOME/my_directory:$HOME/my_directory:rw
 ```
@@ -41,6 +41,12 @@ tinkerbox create -Ialpine my_alpine_box -- --volume=$HOME/my_directory:$HOME/my_
 Container can use host's X11 and Wayland servers, DBus, PulseAudio and PipeWire.
 See `tinkerbox create --help` for exact flags.
 
+
+## Shell configuration
+
+You can set your preferred shell by `sudo usermod --shell /path/to/shell $USER` or by editing `/usr/local/bin/tinkerbox-login`.
+
+If you would like to set environment variables the `$HOME/.profile` should do the trick.
 
 ## Running daemons
 
