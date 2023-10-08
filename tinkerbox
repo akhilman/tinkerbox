@@ -383,7 +383,8 @@ end
 function list \
 	--inherit-variable LIST_HELP
 
-	echo Not implemented
+	echo Not implemented.
+	echo Use \`podman containers list\` for now.
 	exit 1
 end
 
@@ -391,7 +392,8 @@ end
 function remove \
 	--inherit-variable REMOVE_HELP
 
-	echo Not implemented
+	echo Not implemented.
+	echo Use \`podman container rm\` for now.
 	exit 1
 end
 
