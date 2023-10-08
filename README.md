@@ -1,6 +1,6 @@
 # Tinkerbox
 
-Tinkerbox is a tool to manage interactive podman containers for experements and development.
+Tinkerbox is a tool to manage interactive podman containers for experiments and development.
 
 It is like toolbox and distrobox, but does not share directories with host.
 
@@ -71,3 +71,6 @@ host $ firefox http://localhost:8000
  * Debian (default)
  * Fedora
  * OpenSuse
+        
+Other images may work but not tested.
+
