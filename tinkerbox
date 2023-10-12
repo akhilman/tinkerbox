@@ -361,6 +361,7 @@ function enter \
 		set --append podman_args --env=DISPLAY=$DISPLAY
 		if [ -n "$XAUTHORITY" ]
 			set --append podman_args --env=XAUTHORITY=$XAUTHORITY
+			podman exec -u root $box_name sh -c "mkdir -p $(path dirname $XAUTHORITY)"
 			podman cp $XAUTHORITY $box_name:$XAUTHORITY
 		end
 	end
