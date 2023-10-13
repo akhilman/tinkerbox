@@ -219,6 +219,9 @@ function create \
 	set --append podman_args --userns=keep-id
 	# set --append podman_args --group-add=keep-groups
 	
+	# Bypass SELinux restrictions on Fedora host
+	set --append podman_args --security-opt label=type:container_runtime_t
+	
 	# TODO: deduplicate volumes
 	set --append podman_args --volume=tinkerbox-shared:/mnt/shared
 	set --append podman_args --volume={$box_name}-home:/home
