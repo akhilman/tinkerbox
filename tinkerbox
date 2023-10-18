@@ -78,9 +78,9 @@ if command -v apk; then
 	apk add sudo shadow
 elif command -v apt-get; then
 	apt-get update
-	apt-get install -y sudo less
+	apt-get install -y sudo procps less
 elif command -v dnf; then
-	dnf install -y sudo less
+	dnf install -y sudo procps-ng less
 elif command -v pacman; then
 	pacman -Sy sudo less
 elif command -v zypper; then
