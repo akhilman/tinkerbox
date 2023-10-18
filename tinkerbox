@@ -33,13 +33,13 @@ Usage:
 	$CMD_NAME create [options] <container_name> [ -- [podman args]]
 
 Options:
-	-I<image>, --image=<image>	Use provided image to create a new container.
-	-B, --share-dbus		Share DBus between the host and a new container.
-	-G, --share-gpu			Share GPU between the host and a new container.
-	-P, --share-pipewire		Share PipeWire between the host and a new container.
-	-A, --share-pulse		Share PulseAudio between the host and a new container.
-	-W, --share-wayland		Share Wayland display between the host and a new container.
-	-X, --share-x11			Share X11 display between the host and a new container.
+	-i<image>, --image=<image>	Use provided image to create a new container.
+	-b, --share-dbus		Share DBus between the host and a new container.
+	-g, --share-gpu			Share GPU between the host and a new container.
+	-p, --share-pipewire		Share PipeWire between the host and a new container.
+	-a, --share-pulse		Share PulseAudio between the host and a new container.
+	-w, --share-wayland		Share Wayland display between the host and a new container.
+	-x, --share-x11			Share X11 display between the host and a new container.
 	-h, --help			Show this help.
 
 Supported images:
@@ -57,7 +57,7 @@ Usage:
 	$CMD_NAME enter [options] <container_name>
 
 Options:
-	-R, --root	Enter as the root user.
+	-r, --root	Enter as the root user.
 	-h, --help	Show this help.
 "
 
@@ -159,13 +159,13 @@ function create \
 	argparse \
 		--name "tinkerbox" \
 		--stop-nonopt \
-		'I/image=?' \
-		'B/share-dbus' \
-		'G/share-gpu' \
-		'P/share-pipewire' \
-		'A/share-pulse' \
-		'W/share-wayland' \
-		'X/share-x11' \
+		'i/image=?' \
+		'b/share-dbus' \
+		'g/share-gpu' \
+		'p/share-pipewire' \
+		'a/share-pulse' \
+		'w/share-wayland' \
+		'x/share-x11' \
 		'h/help' \
 		'd-debug' \
 		-- $argv
@@ -307,7 +307,7 @@ function enter \
 	argparse \
 		--name "tinkerbox" \
 		--max-args 1 \
-		'R/root' \
+		'r/root' \
 		'h/help' \
 		-- $argv
 	or begin

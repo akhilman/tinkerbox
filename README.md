@@ -32,7 +32,7 @@ done
 
 You can add any `podman run` flags to `tinkerbox create` after `--` separator:
 ```bash
-tinkerbox create -Ialpine my_alpine_box -- --volume=$HOME/my_directory:$HOME/my_directory:rw
+tinkerbox create -ialpine my_alpine_box -- --volume=$HOME/my_directory:$HOME/my_directory:rw
 ```
 
 
@@ -54,7 +54,7 @@ Tinkerbox container runs `/usr/local/bin/tinkerbox-init` as entry point by your 
 Put commands you would like to execute at start there.
 
 ```bash
-host $ tinkerbox create -Idebian http_server -- -p 129.0.0.1:8000:8000
+host $ tinkerbox create -idebian http_server -- -p 129.0.0.1:8000:8000
 host $ tinkerbox enter http_server
 box $ sudo apt install python3
 box $ echo python3 -m http.server -d $HOME 8000 > /usr/local/bin/tinkerbox-init
