@@ -9,23 +9,10 @@ Work in progress, but useable.
 Read code for instructions or call `tinkerbox --help`.
 
 
-## Persistent volumes
+## Home partition
 
-Tinkerbox mounts two persistent volumes for each container:
-
- * `<boxname>-home` to `/home`
- * `tinkerbox-shared` to `/mnt/shared`
-
-The last one is shared between containers and intended to be used to store different kind of caches like `~/.cache/pip`.
-
-Make a symbolic link for your cache directory to this volume.
-```bash
-mkdir -p /mnt/shared/cache
-for dir in $HOME/{.cargo,.rustup,.cache/{pip,deno}}; do
-    mkdir -p $(dirname $dir)
-    ln -s /mnt/shared/cache/$(basename $dir) $dir 
-done
-```
+Tinkerbox mounts a persistent volume named `<boxname>-home` to the `/home` directory,
+so that the user can recreate the container with same name without loosing his data.
 
 
 ## Share directory with host

@@ -107,8 +107,6 @@ mkdir -p /etc/sudoers.d
 cat > /etc/sudoers.d/$TINKERBOX_HOST_USER << EOF
 $TINKERBOX_HOST_USER ALL=(ALL:ALL) NOPASSWD: ALL
 EOF
-
-test -d /mnt/shared && chmod a+rwX /mnt/shared
 '
 
 set -l LOGIN_SCRIPT '#!/bin/sh
@@ -222,10 +220,7 @@ function create \
 	# Bypass SELinux restrictions on Fedora host
 	set --append podman_args --security-opt label=type:container_runtime_t
 	
-	# TODO: deduplicate volumes
-	set --append podman_args --volume=tinkerbox-shared:/mnt/shared
 	set --append podman_args --volume={$box_name}-home:/home
-
 	set --append podman_args --mount=type=tmpfs,dst=/run
 
 	if set --query _flag_share_pulse
