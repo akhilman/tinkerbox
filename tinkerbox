@@ -7,7 +7,7 @@
 
 set -l DEFAULT_IMAGE debian:latest
 
-set -l CMD_NAME (basename (status filename))
+set -l CMD_NAME (path basename (status filename))
 
 set -l MAIN_HELP "\
 Tinkerbox is a tool to manage interactive podman containers for experements and development.
