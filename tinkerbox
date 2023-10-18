@@ -211,6 +211,7 @@ function create \
 	set --append podman_args --name=$box_name
 	set --append podman_args --hostname=$box_name
 	set --append podman_args --label=manager=tinkerbox
+	set --append podman_args --env=CONTAINER_MANAGER=tinkerbox
 
 	if set --query _flag_debug
 		set --append podman_args --env=TINKERBOX_DEBUG=1
