@@ -89,23 +89,23 @@ else
 	echo WARNING: Unsupported distro!
 fi
 
-USERS_HOME=/home/$TINKERBOX_HOST_USER
-usermod --home $USERS_HOME $TINKERBOX_HOST_USER
+USERS_HOME=/home/%USER%
+usermod --home $USERS_HOME %USER%
 if [ ! -d $USERS_HOME ]; then
 	mkdir -p $USERS_HOME
-	chown $TINKERBOX_HOST_USER: $USERS_HOME
+	chown %USER%: $USERS_HOME
 	chmod 700 $USERS_HOME
 fi
 
-USER_SHELL=$(getent passwd $(id -u $TINKERBOX_HOST_USER) | cut -d: -f7)
+USER_SHELL=$(getent passwd $(id -u %USER%) | cut -d: -f7)
 BASH_PATH=$(command -v bash)
 if [ $USER_SHELL = /bin/sh ] && [ -n "$BASH_PATH" ]; then
-	usermod --shell $BASH_PATH $TINKERBOX_HOST_USER
+	usermod --shell $BASH_PATH %USER%
 fi
 
 mkdir -p /etc/sudoers.d
-cat > /etc/sudoers.d/$TINKERBOX_HOST_USER << EOF
-$TINKERBOX_HOST_USER ALL=(ALL:ALL) NOPASSWD: ALL
+cat > /etc/sudoers.d/%USER% << EOF
+%USER% ALL=(ALL:ALL) NOPASSWD: ALL
 EOF
 '
 
@@ -126,7 +126,7 @@ set -l ENTRYPOINT_SCRIPT '#!/bin/sh
 
 echo Starting container
 
-INIT_USERS="root $TINKERBOX_HOST_USER"
+INIT_USERS="root %USER%"
 INIT_SCRIPT=init
 
 for user in $INIT_USERS; do
@@ -212,7 +212,6 @@ function create \
 	set --append podman_args --hostname=$box_name
 	set --append podman_args --label=manager=tinkerbox
 
-	set --append podman_args --env=TINKERBOX_HOST_USER=$USER
 	if set --query _flag_debug
 		set --append podman_args --env=TINKERBOX_DEBUG=1
 	end
@@ -282,16 +281,16 @@ function create \
 	set -l tmpfile (mktemp)
 	chmod a+rx $tmpfile
 
-	echo $BOOTSTRAP_SCRIPT > $tmpfile
+	echo $BOOTSTRAP_SCRIPT | string replace '%USER%' $USER > $tmpfile
 	for cmd in $bootstrap_commands
 		echo $cmd >> $tmpfile
 	end
 	podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-bootstrap
 
-	echo $ENTRYPOINT_SCRIPT > $tmpfile
+	echo $ENTRYPOINT_SCRIPT | string replace '%USER%' $USER > $tmpfile
 	podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-entrypoint
 
-	echo $LOGIN_SCRIPT > $tmpfile
+	echo $LOGIN_SCRIPT | string replace '%USER%' $USER > $tmpfile
 	podman cp $tmpfile $container_id:/usr/local/bin/tinkerbox-login
 
 	rm $tmpfile
