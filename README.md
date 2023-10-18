@@ -41,17 +41,18 @@ Tinkerbox container runs `$HOME/init` for the root and your user.
 Put commands you would like to execute at start to `~/init` and make this file executable.
 
 ```bash
-host $ tinkerbox create -idebian webdav_server -- -p 129.0.0.1:8000:8000
+host $ tinkerbox create -idebian webdav_server -- -p 127.0.0.1:8000:8000
 host $ tinkerbox enter webdav_server
 box $ sudo apt install chezdav
 box $ echo chezdav --public --no-mdns -p 8000 -P $HOME \& > ~/init
 box $ chmod +x ~/init
 box $ logout
-host $ podman restart webdav_server
+host $ podman stop webdav_server
+host $ podman start webdav_server
 host $ firefox http://localhost:8000
 ```
 
-Change `/usr/local/sbin/tinkerbox-entrypoit` if you want to change initialization further.
+Edit `/usr/local/sbin/tinkerbox-entrypoit` if you want to change initialization further.
 
 
 ## Supported distributions
