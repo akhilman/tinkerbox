@@ -37,18 +37,21 @@ If you would like to set environment variables the `$HOME/.profile` should do th
 
 ## Running daemons
 
-Tinkerbox container runs `/usr/local/bin/tinkerbox-init` as entry point by your regular user (**not root**).
-Put commands you would like to execute at start there.
+Tinkerbox container runs `$HOME/init` for the root and your user.
+Put commands you would like to execute at start to `~/init` and make this file executable.
 
 ```bash
-host $ tinkerbox create -idebian http_server -- -p 129.0.0.1:8000:8000
-host $ tinkerbox enter http_server
-box $ sudo apt install python3
-box $ echo python3 -m http.server -d $HOME 8000 > /usr/local/bin/tinkerbox-init
+host $ tinkerbox create -idebian webdav_server -- -p 129.0.0.1:8000:8000
+host $ tinkerbox enter webdav_server
+box $ sudo apt install chezdav
+box $ echo chezdav --public --no-mdns -p 8000 -P $HOME \& > ~/init
+box $ chmod +x ~/init
 box $ logout
-host $ podman restart http_server
+host $ podman restart webdav_server
 host $ firefox http://localhost:8000
 ```
+
+Change `/usr/local/sbin/tinkerbox-entrypoit` if you want to change initialization further.
 
 
 ## Supported distributions

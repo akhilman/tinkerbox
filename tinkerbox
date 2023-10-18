@@ -118,40 +118,43 @@ SHELL=$(getent passwd $(id -u) | cut -d: -f7)
 exec $SHELL -l
 '
 
-set -l INIT_SCRIPT '#!/bin/sh
+set -l ENTRYPOINT_SCRIPT '#!/bin/sh
 
 [ -n "$TINKERBOX_DEBUG" ] && set -x
 
-# This script is being executed by your user.
-# Use sudo to gain root privileges.
+# This script will be executed as the root user.
 
 echo Starting container
 
-# Spown your daemons here.
+INIT_USERS="root $TINKERBOX_HOST_USER"
+INIT_SCRIPT=init
 
-# python3 -m http.server -d $HOME 8000 &
-# pids="$pids $!"
+for user in $INIT_USERS; do
+	home=$(getent passwd $(id -u $user) | cut -d: -f6)
+	init=$home/$INIT_SCRIPT
+	if [ -x $init ]; then
+		sudo -u $user $init &
+	fi
+done
+
+sleep infinity & sleep_pid=$!
 
 on_sigterm() {
 	echo Caught SIGTERM, exiting...
-
-	# Stop your daemons here.
-
-	# kill $pids
-	# wait $pids
-
-	exit
+	kill -TERM $sleep_pid
+	jobs -p | xargs -r kill -TERM
+	wait
 }
 
-# Catch a signal from `podman stop`.
-trap "on_sigterm" TERM; sleep infinity & wait;
+trap "on_sigterm" TERM
+wait
 '
 
 function create \
 	--inherit-variable CREATE_HELP \
 	--inherit-variable DEFAULT_IMAGE \
 	--inherit-variable BOOTSTRAP_SCRIPT \
-	--inherit-variable INIT_SCRIPT \
+	--inherit-variable ENTRYPOINT_SCRIPT \
 	--inherit-variable LOGIN_SCRIPT
 
 	argparse \
@@ -268,15 +271,16 @@ function create \
 		set --append podman_args $arg
 	end
 
+	set --append podman_args --user=root
 	set --append podman_args $image
-	set --append podman_args sh -c 'set -x; test -x /usr/local/bin/tinkerbox-init && exec /usr/local/bin/tinkerbox-init & pid=$!; trap "test x$pid != x && kill -TERM $pid && wait $pid; exit;" TERM; sleep infinity & wait'
+	set --append podman_args sh -c 'if [ -x /usr/local/sbin/tinkerbox-entrypoint ]; then exec /usr/local/sbin/tinkerbox-entrypoint; else trap "exit" TERM; sleep infinity & wait; fi'
 
 	echo \$ podman $podman_args
 	set -l container_id (podman $podman_args); or exit $status
 
 	podman exec --user=root $container_id mkdir -p /usr/local/{bin,sbin}; or exit $status
 	set -l tmpfile (mktemp)
-	chmod +x $tmpfile
+	chmod a+rx $tmpfile
 
 	echo $BOOTSTRAP_SCRIPT > $tmpfile
 	for cmd in $bootstrap_commands
@@ -284,8 +288,8 @@ function create \
 	end
 	podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-bootstrap
 
-	echo $INIT_SCRIPT > $tmpfile
-	podman cp $tmpfile $container_id:/usr/local/bin/tinkerbox-init
+	echo $ENTRYPOINT_SCRIPT > $tmpfile
+	podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-entrypoint
 
 	echo $LOGIN_SCRIPT > $tmpfile
 	podman cp $tmpfile $container_id:/usr/local/bin/tinkerbox-login
@@ -369,6 +373,8 @@ function enter \
 
 	if set --query _flag_root
 		set --append podman_args --user=root
+	else
+		set --append podman_args --user=$USER
 	end
 
 	set --append podman_args $box_name
