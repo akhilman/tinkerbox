@@ -34,6 +34,7 @@ Usage:
 
 Options:
 	-i<image>, --image=<image>	Use provided image to create a new container.
+	-e, --enter			Enter into the new container after creating it.
 	-b, --share-dbus		Share DBus between the host and a new container.
 	-g, --share-gpu			Share GPU between the host and a new container.
 	-p, --share-pipewire		Share PipeWire between the host and a new container.
@@ -152,6 +153,7 @@ wait
 
 function create \
 	--inherit-variable CREATE_HELP \
+	--inherit-variable CMD_NAME \
 	--inherit-variable DEFAULT_IMAGE \
 	--inherit-variable BOOTSTRAP_SCRIPT \
 	--inherit-variable ENTRYPOINT_SCRIPT \
@@ -160,6 +162,7 @@ function create \
 	argparse \
 		--name "tinkerbox" \
 		--stop-nonopt \
+		'e/enter' \
 		'i/image=?' \
 		'b/share-dbus' \
 		'g/share-gpu' \
@@ -297,7 +300,16 @@ function create \
 	rm $tmpfile
 
 	podman exec --user=root $container_id sh /usr/local/sbin/tinkerbox-bootstrap
-	podman stop $container_id
+
+	if set -q _flag_enter
+		enter $box_name
+	else
+		podman stop $container_id
+
+		echo
+		echo "Enter with:"
+		echo "	$CMD_NAME enter $box_name"
+	end
 end
 
 function enter \
