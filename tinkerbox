@@ -21,8 +21,8 @@ Options:
 Available commands:
 	cr, create	Create a new container.
 	en, enter	Enter a container.
-	rm, remove	!Unimplemented!
 	ls, list	List volumes and containers managed by Tinkerbox.
+	rm, remove	Remove containers.
 
 To get command help:
 	$CMD_NAME <command> --help
@@ -71,7 +71,13 @@ Options:
 "
 
 set -l REMOVE_HELP "\
-TODO
+Usage:
+	$CMD_NAME remove [options] [container_name] [container_name]...
+
+Options:
+	-s, --stop	Stop running containers.
+	-v, --volume	Remove home volumes.
+	-h, --help	Show this help.
 "
 
 set -l BOOTSTRAP_SCRIPT '#!/bin/sh
@@ -446,9 +452,61 @@ end
 function remove \
 	--inherit-variable REMOVE_HELP
 
-	echo Not implemented.
-	echo Use \`podman container rm\` for now.
-	exit 1
+	argparse \
+		--name "tinkerbox" \
+		's/stop' \
+		'v/volume' \
+		'h/help' \
+		-- $argv
+	or begin
+		echo "$REMOVE_HELP"
+		exit 1
+	end
+
+	if set --query _flag_help
+		echo "$REMOVE_HELP"
+		exit 0
+	end
+
+	set -l containers
+	for container in $argv
+		if not podman container exists $container
+			echo Container \`$container\` not exists
+			continue
+		end
+		set --append containers $container
+	end
+
+	if set -q _flag_stop
+		for container in $containers
+			if [ "true" = "$(podman container inspect --format='{{.State.Running}}' $container)" ]
+				echo -n "Stopping container: "
+				podman container stop $container
+				or exit $status
+			end
+		end
+	end
+
+	for container in $containers
+		if [ "true" = "$(podman container inspect --format='{{.State.Running}}' $container)" ]
+			echo Container \`$container\` is running. Skipping.
+			continue
+		end
+
+		set -l box_name (podman container inspect --format='{{.Name}}' $container)
+		or exit $status
+
+		echo -n "Removing container: "
+		podman container rm $container
+		or exit $status
+
+		if set -q _flag_volume
+			echo -n "Removing volume: "
+			podman volume rm {$box_name}-home
+		end
+	end
+
+	exit 0
 end
 
 argparse \
