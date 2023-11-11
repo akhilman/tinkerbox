@@ -360,6 +360,9 @@ function enter \
 
 	set -l podman_args exec -it
 
+	# Do not intercept Ctrl-P keys
+	set --append podman_args --detach-keys=
+
 	if [ -d "$XDG_RUNTIME_DIR" ]
 		set --append podman_args --env=XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
 		podman exec -u root $box_name sh -c "mkdir -p $XDG_RUNTIME_DIR && chown -R $USER: $XDG_RUNTIME_DIR"
