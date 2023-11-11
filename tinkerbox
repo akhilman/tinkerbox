@@ -210,6 +210,13 @@ function create \
 	set -l podman_args
 	set -l bootstrap_commands
 
+	if podman volume exists {$box_name}-home
+		echo Using existing home volume: {$box_name}-home
+	else
+		echo -n "Creating new home volume: "
+		podman volume create --label=manager=tinkerbox {$box_name}-home
+	end
+
 	set --append podman_args container run --detach
 	set --append podman_args --name=$box_name
 	set --append podman_args --hostname=$box_name
