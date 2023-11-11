@@ -21,8 +21,8 @@ Options:
 Available commands:
 	cr, create	Create a new container.
 	en, enter	Enter a container.
-	ls, list	!Unimplemented!
 	rm, remove	!Unimplemented!
+	ls, list	List volumes and containers managed by Tinkerbox.
 
 To get command help:
 	$CMD_NAME <command> --help
@@ -63,7 +63,11 @@ Options:
 "
 
 set -l LIST_HELP "\
-TODO
+Usage:
+	$CMD_NAME list [options]
+
+Options:
+	-h, --help	Show this help.
 "
 
 set -l REMOVE_HELP "\
@@ -410,9 +414,32 @@ end
 function list \
 	--inherit-variable LIST_HELP
 
-	echo Not implemented.
-	echo Use \`podman containers list\` for now.
-	exit 1
+	argparse \
+		--name "tinkerbox" \
+		--max-args 0 \
+		'h/help' \
+		-- $argv
+	or begin
+		echo "$LIST_HELP"
+		exit 1
+	end
+
+	if set --query _flag_help
+		echo "$LIST_HELP"
+		exit 0
+	end
+
+	echo Volumes:
+	podman volume list --filter label=manager=tinkerbox
+	or exit $status
+
+	echo
+
+	echo Boxes:
+	podman container list -a --filter label=manager=tinkerbox
+	or exit $status
+
+	exit 0
 end
 
 
