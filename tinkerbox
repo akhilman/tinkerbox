@@ -470,10 +470,16 @@ function remove \
 
 	set -l containers
 	for container in $argv
+		if not [ "tinkerbox" = "$(podman container inspect --format='{{index .Config.Labels "manager"}}' $container)" ]
+			echo Not a tinkerbox container: $container
+			exit 1
+		end
+
 		if not podman container exists $container
 			echo Container \`$container\` not exists
 			continue
 		end
+
 		set --append containers $container
 	end
 
