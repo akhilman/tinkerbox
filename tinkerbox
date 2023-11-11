@@ -352,23 +352,23 @@ function enter \
 		echo "$ENTER_HELP"
 		exit 1
 	end
-	set -l box_name $argv[1]
+	set -l container $argv[1]
 
-	if not [ "tinkerbox" = "$(podman container inspect --format='{{index .Config.Labels "manager"}}' $box_name)" ]
-		echo Not a tinkerbox container: $box_name
+	if not [ "tinkerbox" = "$(podman container inspect --format='{{index .Config.Labels "manager"}}' $container)" ]
+		echo Not a tinkerbox container: $container
 		exit 1
 	end
 
-	if [ "true" = "$(podman container inspect --format='{{.State.Paused}}' $box_name)" ]
+	if [ "true" = "$(podman container inspect --format='{{.State.Paused}}' $container)" ]
 		echo Container is paused
-		echo "Call `podman unpause $box_name` to unpause this container"
+		echo "Call `podman unpause $container` to unpause this container"
 		exit 1
 	end
 
-	if not [ "true" = "$(podman container inspect --format='{{.State.Running}}' $box_name)" ]
-		echo \$ podman start $box_name
-		podman start $box_name; or exit $status
-		timeout 10s podman wait --condition=running $box_name > /dev/null
+	if not [ "true" = "$(podman container inspect --format='{{.State.Running}}' $container)" ]
+		echo \$ podman start $container
+		podman start $container; or exit $status
+		timeout 10s podman wait --condition=running $container > /dev/null
 		or begin
 			echo Container not running
 			exit 1
@@ -382,21 +382,21 @@ function enter \
 
 	if [ -d "$XDG_RUNTIME_DIR" ]
 		set --append podman_args --env=XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
-		podman exec -u root $box_name sh -c "mkdir -p $XDG_RUNTIME_DIR && chown -R $USER: $XDG_RUNTIME_DIR"
+		podman exec -u root $container sh -c "mkdir -p $XDG_RUNTIME_DIR && chown -R $USER: $XDG_RUNTIME_DIR"
 	end
 
-	if [ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_dbus"}}' $box_name)" ]
+	if [ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_dbus"}}' $container)" ]
 			and [ -n "$DBUS_SESSION_BUS_ADDRESS" ]
 		set --append podman_args --env=DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS
 	end
 		
-	if [ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_x11"}}' $box_name)" ]
+	if [ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_x11"}}' $container)" ]
 			and [ -n "$DISPLAY" ]
 		set --append podman_args --env=DISPLAY=$DISPLAY
 		if [ -n "$XAUTHORITY" ]
 			set --append podman_args --env=XAUTHORITY=$XAUTHORITY
-			podman exec -u root $box_name sh -c "mkdir -p $(path dirname $XAUTHORITY)"
-			podman cp $XAUTHORITY $box_name:$XAUTHORITY
+			podman exec -u root $container sh -c "mkdir -p $(path dirname $XAUTHORITY)"
+			podman cp $XAUTHORITY $container:$XAUTHORITY
 		end
 	end
 
@@ -409,7 +409,7 @@ function enter \
 		set --append podman_args --user=$USER
 	end
 
-	set --append podman_args $box_name
+	set --append podman_args $container
 	set --append podman_args sh /usr/local/bin/tinkerbox-login
 
 	echo \$ podman $podman_args
