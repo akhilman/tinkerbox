@@ -457,7 +457,7 @@ switch $argv[1]
 		remove $argv[2..]
 	case ls list
 		list $argv[2..]
-	case *
+	case \*
 		echo "$MAIN_HELP"
 		exit 1
 end
