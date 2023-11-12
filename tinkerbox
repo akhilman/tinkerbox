@@ -95,7 +95,7 @@ elif command -v dnf; then
 elif command -v pacman; then
 	pacman -Sy sudo less
 elif command -v zypper; then
-	zypper install -y sudo less
+	zypper install -y sudo which less
 else
 	echo WARNING: Unsupported distro!
 fi
