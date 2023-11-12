@@ -101,12 +101,10 @@ else
 fi
 
 USER_HOME=/home/%USER%
+mkdir -p $USER_HOME
+chown %USER%: $USER_HOME
+chmod 700 $USER_HOME
 usermod --home $USER_HOME %USER%
-if [ ! -d $USER_HOME ]; then
-	mkdir -p $USER_HOME
-	chown %USER%: $USER_HOME
-	chmod 700 $USER_HOME
-fi
 
 USER_SHELL=$(getent passwd $(id -u %USER%) | cut -d: -f7)
 BASH_PATH=$(command -v bash)
