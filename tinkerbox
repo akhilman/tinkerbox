@@ -93,7 +93,7 @@ elif command -v apt-get; then
 elif command -v dnf; then
 	dnf install -y sudo procps-ng less
 elif command -v pacman; then
-	pacman -Sy sudo less
+	pacman --noconfirm -Sy --needed sudo less
 elif command -v zypper; then
 	zypper install -y sudo which less
 else
