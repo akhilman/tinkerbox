@@ -86,15 +86,19 @@ set -l BOOTSTRAP_SCRIPT '#!/bin/sh
 
 echo -n "Package manager: "
 if command -v apk; then
+	apk upgrade
 	apk add sudo shadow
 elif command -v apt-get; then
 	apt-get update
+	apt-get upgrade -y
 	apt-get install -y sudo procps less
 elif command -v dnf; then
+	dnf upgrade -y
 	dnf install -y sudo procps-ng less
 elif command -v pacman; then
-	pacman --noconfirm -Sy --needed sudo less
+	pacman --noconfirm -Suy --needed sudo less
 elif command -v zypper; then
+	zypper update -y
 	zypper install -y sudo which less
 else
 	echo WARNING: Unsupported distro!
