@@ -293,14 +293,14 @@ function create \
 		set --append podman_args $arg
 	end
 
-	set --append podman_args --user=root
+	set --append podman_args --user=0
 	set --append podman_args $image
 	set --append podman_args sh -c 'if [ -x /usr/local/sbin/tinkerbox-entrypoint ]; then exec /usr/local/sbin/tinkerbox-entrypoint; else trap "exit" TERM; sleep infinity & wait; fi'
 
 	echo \$ podman $podman_args
 	set -l container_id (podman $podman_args); or exit $status
 
-	podman exec --user=root $container_id mkdir -p /usr/local/{bin,sbin}; or exit $status
+	podman exec --user=0 $container_id mkdir -p /usr/local/{bin,sbin}; or exit $status
 	set -l tmpfile (mktemp)
 	chmod a+rx $tmpfile
 
@@ -318,7 +318,7 @@ function create \
 
 	rm $tmpfile
 
-	podman exec --user=root $container_id sh /usr/local/sbin/tinkerbox-bootstrap
+	podman exec --user=0 $container_id sh /usr/local/sbin/tinkerbox-bootstrap
 
 	if set -q _flag_enter
 		enter $box_name
@@ -384,7 +384,7 @@ function enter \
 
 	if [ -d "$XDG_RUNTIME_DIR" ]
 		set --append podman_args --env=XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
-		podman exec -u root $container sh -c "mkdir -p $XDG_RUNTIME_DIR && chown -R $USER: $XDG_RUNTIME_DIR"
+		podman exec --user=0 $container sh -c "mkdir -p $XDG_RUNTIME_DIR && chown -R $USER: $XDG_RUNTIME_DIR"
 	end
 
 	if [ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_dbus"}}' $container)" ]
@@ -397,7 +397,7 @@ function enter \
 		set --append podman_args --env=DISPLAY=$DISPLAY
 		if [ -n "$XAUTHORITY" ]
 			set --append podman_args --env=XAUTHORITY=$XAUTHORITY
-			podman exec -u root $container sh -c "mkdir -p $(path dirname $XAUTHORITY)"
+			podman exec --user=0 $container sh -c "mkdir -p $(path dirname $XAUTHORITY)"
 			podman cp $XAUTHORITY $container:$XAUTHORITY
 		end
 	end
@@ -406,9 +406,9 @@ function enter \
 	set --query COLORTERM; and set --append podman_args --env=COLORTERM=$COLORTERM
 
 	if set --query _flag_root
-		set --append podman_args --user=root
+		set --append podman_args --user=0
 	else
-		set --append podman_args --user=$USER
+		set --append podman_args --user=(id -u)
 	end
 
 	set --append podman_args $container
