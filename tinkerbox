@@ -304,16 +304,16 @@ function create \
 	set -l tmpfile (mktemp)
 	chmod a+rx $tmpfile
 
-	echo $BOOTSTRAP_SCRIPT | string replace '%USER%' $USER > $tmpfile
+	echo $BOOTSTRAP_SCRIPT | string replace -a '%USER%' $USER > $tmpfile
 	for cmd in $bootstrap_commands
 		echo $cmd >> $tmpfile
 	end
 	podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-bootstrap
 
-	echo $ENTRYPOINT_SCRIPT | string replace '%USER%' $USER > $tmpfile
+	echo $ENTRYPOINT_SCRIPT | string replace -a '%USER%' $USER > $tmpfile
 	podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-entrypoint
 
-	echo $LOGIN_SCRIPT | string replace '%USER%' $USER > $tmpfile
+	echo $LOGIN_SCRIPT | string replace -a '%USER%' $USER > $tmpfile
 	podman cp $tmpfile $container_id:/usr/local/bin/tinkerbox-login
 
 	rm $tmpfile
