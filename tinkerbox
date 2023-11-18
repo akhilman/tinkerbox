@@ -104,6 +104,11 @@ else
 	echo WARNING: Unsupported distro!
 fi
 
+if [ -n "%ZONEINFO%" -a -e /etc/localtime -a -e "/etc/%ZONEINFO%" ]; then
+	rm /etc/localtime
+	ln -s %ZONEINFO% /etc/localtime
+fi
+
 USER_HOME=/home/%USER%
 mkdir -p $USER_HOME
 chown %USER%: $USER_HOME
@@ -300,11 +305,19 @@ function create \
 	echo \$ podman $podman_args
 	set -l container_id (podman $podman_args); or exit $status
 
+	set -l zoneinfo
+	if [ -L /etc/localtime ]
+		set zoneinfo (readlink /etc/localtime)
+	end
+
 	podman exec --user=0 $container_id mkdir -p /usr/local/{bin,sbin}; or exit $status
 	set -l tmpfile (mktemp)
 	chmod a+rx $tmpfile
 
-	echo $BOOTSTRAP_SCRIPT | string replace -a '%USER%' $USER > $tmpfile
+	echo $BOOTSTRAP_SCRIPT \
+		| string replace -a '%USER%' $USER \
+		| string replace -a '%ZONEINFO%' "$zoneinfo" \
+		> $tmpfile
 	for cmd in $bootstrap_commands
 		echo $cmd >> $tmpfile
 	end
