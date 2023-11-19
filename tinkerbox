@@ -144,6 +144,10 @@ set -l ENTRYPOINT_SCRIPT '#!/bin/sh
 
 echo Starting container
 
+if command -v systemd-tmpfiles > /dev/null; then
+	command systemd-tmpfiles --create
+fi
+
 INIT_USERS="root %USER%"
 INIT_SCRIPT=init
 
