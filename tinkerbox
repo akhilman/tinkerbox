@@ -416,6 +416,7 @@ function enter \
 			set --append podman_args --env=XAUTHORITY=$XAUTHORITY
 			podman exec --user=0 $container sh -c "mkdir -p $(path dirname $XAUTHORITY)"
 			podman cp $XAUTHORITY $container:$XAUTHORITY
+			podman exec --user=0 $container sh -c "chown $USER: $XAUTHORITY"
 		end
 	end
 
