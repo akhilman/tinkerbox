@@ -104,8 +104,8 @@ else
 	echo WARNING: Unsupported distro!
 fi
 
-if [ -n "%ZONEINFO%" -a -e /etc/localtime -a -e "/etc/%ZONEINFO%" ]; then
-	rm /etc/localtime
+if [ -n "%ZONEINFO%" -a -e "/etc/%ZONEINFO%" ]; then
+	[ -e /etc/localtime ] && rm /etc/localtime
 	ln -s %ZONEINFO% /etc/localtime
 fi
 
