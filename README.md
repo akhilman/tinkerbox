@@ -22,6 +22,8 @@ You can add any `podman run` flags to `tinkerbox create` after `--` separator:
 tinkerbox create -ialpine my_alpine_box -- --volume=$HOME/my_directory:$HOME/my_directory:rw
 ```
 
+Use `podman cp` to move files from/to your containers.
+
 
 ## Display, DBus and sound
 
