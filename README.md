@@ -12,7 +12,7 @@ Read code for instructions or call `tinkerbox --help`.
 ## Home partition
 
 Tinkerbox mounts a persistent volume named `<boxname>-home` to the `/home` directory,
-so that the user can recreate the container with same name without loosing his data.
+so that the user can recreate the container with same name without losing it's data.
 
 
 ## Share directory with host
