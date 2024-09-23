@@ -173,404 +173,403 @@ wait
 '
 
 function create \
-	--inherit-variable CREATE_HELP \
-	--inherit-variable CMD_NAME \
-	--inherit-variable DEFAULT_IMAGE \
-	--inherit-variable BOOTSTRAP_SCRIPT \
-	--inherit-variable ENTRYPOINT_SCRIPT \
-	--inherit-variable LOGIN_SCRIPT
+    --inherit-variable CREATE_HELP \
+    --inherit-variable CMD_NAME \
+    --inherit-variable DEFAULT_IMAGE \
+    --inherit-variable BOOTSTRAP_SCRIPT \
+    --inherit-variable ENTRYPOINT_SCRIPT \
+    --inherit-variable LOGIN_SCRIPT
 
-	argparse \
-		--name "tinkerbox" \
-		--stop-nonopt \
-		'e/enter' \
-		'i/image=?' \
-		'b/share-dbus' \
-		'g/share-gpu' \
-		'p/share-pipewire' \
-		'a/share-pulse' \
-		'w/share-wayland' \
-		'x/share-x11' \
-		'h/help' \
-		'd-debug' \
-		-- $argv
-	or begin
-		echo "$CREATE_HELP"
-		exit 1
-	end
+    argparse \
+        --name tinkerbox \
+        --stop-nonopt \
+        e/enter \
+        'i/image=?' \
+        b/share-dbus \
+        g/share-gpu \
+        p/share-pipewire \
+        a/share-pulse \
+        w/share-wayland \
+        x/share-x11 \
+        h/help \
+        d-debug \
+        -- $argv
+    or begin
+        echo "$CREATE_HELP"
+        exit 1
+    end
 
-	if set --query _flag_help
-		echo $CREATE_HELP
-		exit 0
-	end
+    if set --query _flag_help
+        echo $CREATE_HELP
+        exit 0
+    end
 
-	set -l create_args
-	set -l custom_podman_args
-	set -l separator_reached false
-	for arg in $argv
-		if [ "$arg" = "--" ]
-			set separator_reached true
-		else if $separator_reached
-			set --append custom_podman_args $arg
-		else
-			set --append create_args $arg
-		end
-	end
+    set -l create_args
+    set -l custom_podman_args
+    set -l separator_reached false
+    for arg in $argv
+        if [ "$arg" = -- ]
+            set separator_reached true
+        else if $separator_reached
+            set --append custom_podman_args $arg
+        else
+            set --append create_args $arg
+        end
+    end
 
-	if [ (count $create_args) -ne 1 ]
-		echo "$CREATE_HELP"
-		exit 1
-	end
-	set -l box_name $create_args[1]
+    if [ (count $create_args) -ne 1 ]
+        echo "$CREATE_HELP"
+        exit 1
+    end
+    set -l box_name $create_args[1]
 
-	set -l image $DEFAULT_IMAGE
-	if set --query _flag_image
-		set image $_flag_image
-	end
+    set -l image $DEFAULT_IMAGE
+    if set --query _flag_image
+        set image $_flag_image
+    end
 
-	set -l podman_args
-	set -l bootstrap_commands
+    set -l podman_args
+    set -l bootstrap_commands
 
-	if podman volume exists {$box_name}-home
-		echo Using existing home volume: {$box_name}-home
-	else
-		echo -n "Creating new home volume: "
-		podman volume create --label=manager=tinkerbox {$box_name}-home
-	end
+    if podman volume exists {$box_name}-home
+        echo Using existing home volume: {$box_name}-home
+    else
+        echo -n "Creating new home volume: "
+        podman volume create --label=manager=tinkerbox {$box_name}-home
+    end
 
-	set --append podman_args container run --detach
-	set --append podman_args --name=$box_name
-	set --append podman_args --hostname=$box_name
-	set --append podman_args --label=manager=tinkerbox
-	set --append podman_args --env=CONTAINER_MANAGER=tinkerbox
+    set --append podman_args container run --detach
+    set --append podman_args --name=$box_name
+    set --append podman_args --hostname=$box_name
+    set --append podman_args --label=manager=tinkerbox
+    set --append podman_args --env=CONTAINER_MANAGER=tinkerbox
 
-	if set --query _flag_debug
-		set --append podman_args --env=TINKERBOX_DEBUG=1
-	end
+    if set --query _flag_debug
+        set --append podman_args --env=TINKERBOX_DEBUG=1
+    end
 
-	set --append podman_args --userns=keep-id
-	# set --append podman_args --group-add=keep-groups
-	
-	# Bypass SELinux restrictions on Fedora host
-	set --append podman_args --security-opt label=type:container_runtime_t
-	
-	set --append podman_args --volume={$box_name}-home:/home
-	set --append podman_args --mount=type=tmpfs,dst=/run
+    set --append podman_args --userns=keep-id
+    # set --append podman_args --group-add=keep-groups
 
-	if set --query _flag_share_pulse
-		set --append podman_args --annotation=ru.akhil.tinkerbox.share_pulse=true
-		set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/pulse,dst=$XDG_RUNTIME_DIR/pulse
-	end
+    # Bypass SELinux restrictions on Fedora host
+    set --append podman_args --security-opt label=type:container_runtime_t
 
-	if set --query _flag_share_pipewire
-		set --append podman_args --annotation=ru.akhil.tinkerbox.share_pipewire=true
-		for socket in $XDG_RUNTIME_DIR/pipewire-?
-			set --append podman_args --mount=type=bind,src=$socket,dst=$socket
-		end
-	end
+    set --append podman_args --volume={$box_name}-home:/home
+    set --append podman_args --mount=type=tmpfs,dst=/run
 
-	if set --query _flag_share_dbus; and set --query XDG_RUNTIME_DIR
-		set --append podman_args --annotation=ru.akhil.tinkerbox.share_dbus=true
-		set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/bus,dst=$XDG_RUNTIME_DIR/bus
-	end
+    if set --query _flag_share_pulse
+        set --append podman_args --annotation=ru.akhil.tinkerbox.share_pulse=true
+        set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/pulse,dst=$XDG_RUNTIME_DIR/pulse
+    end
 
-	if set --query _flag_share_wayland; and set --query XDG_RUNTIME_DIR; and set --query WAYLAND_DISPLAY
-		set --append podman_args --annotation=ru.akhil.tinkerbox.share_wayland=true
-		set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY,dst=$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY
-		set --append podman_args --env=WAYLAND_DISPLAY=$WAYLAND_DISPLAY
-	end
+    if set --query _flag_share_pipewire
+        set --append podman_args --annotation=ru.akhil.tinkerbox.share_pipewire=true
+        for socket in $XDG_RUNTIME_DIR/pipewire-?
+            set --append podman_args --mount=type=bind,src=$socket,dst=$socket
+        end
+    end
 
-	if set --query _flag_share_x11
-		set --append podman_args --annotation=ru.akhil.tinkerbox.share_x11=true
-		set --append podman_args --mount=type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix
-	end
+    if set --query _flag_share_dbus; and set --query XDG_RUNTIME_DIR
+        set --append podman_args --annotation=ru.akhil.tinkerbox.share_dbus=true
+        set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/bus,dst=$XDG_RUNTIME_DIR/bus
+    end
 
-	if set --query _flag_share_gpu
-		set --append podman_args --annotation=ru.akhil.tinkerbox.share_gpu=true
-		if [ -d /dev/dri ]
-			for dev in (find /dev/dri -type c)
-				set --append podman_args --device=$dev:$dev:rw
-			end
-			for link in (find /dev/dri -type l)
-				set --append bootstrap_commands "mkdir -p $(path dirname $link)"
-				set --append bootstrap_commands "ln -s $(readlink $link) $link"
-			end
-		end
-	end
+    if set --query _flag_share_wayland; and set --query XDG_RUNTIME_DIR; and set --query WAYLAND_DISPLAY
+        set --append podman_args --annotation=ru.akhil.tinkerbox.share_wayland=true
+        set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY,dst=$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY
+        set --append podman_args --env=WAYLAND_DISPLAY=$WAYLAND_DISPLAY
+    end
 
-	for arg in $custom_podman_args
-		set --append podman_args $arg
-	end
+    if set --query _flag_share_x11
+        set --append podman_args --annotation=ru.akhil.tinkerbox.share_x11=true
+        set --append podman_args --mount=type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix
+    end
 
-	set --append podman_args --user=0
-	set --append podman_args $image
-	set --append podman_args sh -c 'if [ -x /usr/local/sbin/tinkerbox-entrypoint ]; then exec /usr/local/sbin/tinkerbox-entrypoint; else trap "exit" TERM; sleep infinity & wait; fi'
+    if set --query _flag_share_gpu
+        set --append podman_args --annotation=ru.akhil.tinkerbox.share_gpu=true
+        if [ -d /dev/dri ]
+            for dev in (find /dev/dri -type c)
+                set --append podman_args --device=$dev:$dev:rw
+            end
+            for link in (find /dev/dri -type l)
+                set --append bootstrap_commands "mkdir -p $(path dirname $link)"
+                set --append bootstrap_commands "ln -s $(readlink $link) $link"
+            end
+        end
+    end
 
-	echo \$ podman $podman_args
-	set -l container_id (podman $podman_args); or exit $status
+    for arg in $custom_podman_args
+        set --append podman_args $arg
+    end
 
-	set -l zoneinfo
-	if [ -L /etc/localtime ]
-		set zoneinfo (readlink /etc/localtime)
-	end
+    set --append podman_args --user=0
+    set --append podman_args $image
+    set --append podman_args sh -c 'if [ -x /usr/local/sbin/tinkerbox-entrypoint ]; then exec /usr/local/sbin/tinkerbox-entrypoint; else trap "exit" TERM; sleep infinity & wait; fi'
 
-	podman exec --user=0 $container_id mkdir -p /usr/local/{bin,sbin}; or exit $status
-	set -l tmpfile (mktemp)
-	chmod a+rx $tmpfile
+    echo \$ podman $podman_args
+    set -l container_id (podman $podman_args); or exit $status
 
-	echo $BOOTSTRAP_SCRIPT \
-		| string replace -a '%USER%' $USER \
-		| string replace -a '%ZONEINFO%' "$zoneinfo" \
-		> $tmpfile
-	for cmd in $bootstrap_commands
-		echo $cmd >> $tmpfile
-	end
-	podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-bootstrap
+    set -l zoneinfo
+    if [ -L /etc/localtime ]
+        set zoneinfo (readlink /etc/localtime)
+    end
 
-	echo $ENTRYPOINT_SCRIPT | string replace -a '%USER%' $USER > $tmpfile
-	podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-entrypoint
+    podman exec --user=0 $container_id mkdir -p /usr/local/{bin,sbin}; or exit $status
+    set -l tmpfile (mktemp)
+    chmod a+rx $tmpfile
 
-	echo $LOGIN_SCRIPT | string replace -a '%USER%' $USER > $tmpfile
-	podman cp $tmpfile $container_id:/usr/local/bin/tinkerbox-login
+    echo $BOOTSTRAP_SCRIPT \
+        | string replace -a '%USER%' $USER \
+        | string replace -a '%ZONEINFO%' "$zoneinfo" >$tmpfile
+    for cmd in $bootstrap_commands
+        echo $cmd >>$tmpfile
+    end
+    podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-bootstrap
 
-	rm $tmpfile
+    echo $ENTRYPOINT_SCRIPT | string replace -a '%USER%' $USER >$tmpfile
+    podman cp $tmpfile $container_id:/usr/local/sbin/tinkerbox-entrypoint
 
-	podman exec --user=0 $container_id sh /usr/local/sbin/tinkerbox-bootstrap
+    echo $LOGIN_SCRIPT | string replace -a '%USER%' $USER >$tmpfile
+    podman cp $tmpfile $container_id:/usr/local/bin/tinkerbox-login
 
-	if set -q _flag_enter
-		enter $box_name
-	else
-		podman stop $container_id
+    rm $tmpfile
 
-		echo
-		echo "Enter with:"
-		echo "	$CMD_NAME enter $box_name"
-	end
+    podman exec --user=0 $container_id sh /usr/local/sbin/tinkerbox-bootstrap
+
+    if set -q _flag_enter
+        enter $box_name
+    else
+        podman stop $container_id
+
+        echo
+        echo "Enter with:"
+        echo "	$CMD_NAME enter $box_name"
+    end
 end
 
 function enter \
-	--inherit-variable ENTER_HELP
+    --inherit-variable ENTER_HELP
 
-	argparse \
-		--name "tinkerbox" \
-		--max-args 1 \
-		'r/root' \
-		'h/help' \
-		-- $argv
-	or begin
-		echo "$ENTER_HELP"
-		exit 1
-	end
+    argparse \
+        --name tinkerbox \
+        --max-args 1 \
+        r/root \
+        h/help \
+        -- $argv
+    or begin
+        echo "$ENTER_HELP"
+        exit 1
+    end
 
-	if set --query _flag_help
-		echo "$ENTER_HELP"
-		exit 0
-	end
+    if set --query _flag_help
+        echo "$ENTER_HELP"
+        exit 0
+    end
 
-	if [ (count $argv) -ne 1 ]
-		echo "$ENTER_HELP"
-		exit 1
-	end
-	set -l container $argv[1]
+    if [ (count $argv) -ne 1 ]
+        echo "$ENTER_HELP"
+        exit 1
+    end
+    set -l container $argv[1]
 
-	if not [ "tinkerbox" = "$(podman container inspect --format='{{index .Config.Labels "manager"}}' $container)" ]
-		echo Not a tinkerbox container: $container
-		exit 1
-	end
+    if not [ tinkerbox = "$(podman container inspect --format='{{index .Config.Labels "manager"}}' $container)" ]
+        echo Not a tinkerbox container: $container
+        exit 1
+    end
 
-	if [ "true" = "$(podman container inspect --format='{{.State.Paused}}' $container)" ]
-		echo Container is paused
-		echo "Call `podman unpause $container` to unpause this container"
-		exit 1
-	end
+    if [ true = "$(podman container inspect --format='{{.State.Paused}}' $container)" ]
+        echo Container is paused
+        echo "Call `podman unpause $container` to unpause this container"
+        exit 1
+    end
 
-	if not [ "true" = "$(podman container inspect --format='{{.State.Running}}' $container)" ]
-		echo \$ podman start $container
-		podman start $container; or exit $status
-		timeout 10s podman wait --condition=running $container > /dev/null
-		or begin
-			echo Container not running
-			exit 1
-		end
-	end
+    if not [ true = "$(podman container inspect --format='{{.State.Running}}' $container)" ]
+        echo \$ podman start $container
+        podman start $container; or exit $status
+        timeout 10s podman wait --condition=running $container >/dev/null
+        or begin
+            echo Container not running
+            exit 1
+        end
+    end
 
-	set -l podman_args exec -it
+    set -l podman_args exec -it
 
-	# Do not intercept Ctrl-P keys
-	set --append podman_args --detach-keys=
+    # Do not intercept Ctrl-P keys
+    set --append podman_args --detach-keys=
 
-	if [ -d "$XDG_RUNTIME_DIR" ]
-		set --append podman_args --env=XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
-		podman exec --user=0 $container sh -c "mkdir -p $XDG_RUNTIME_DIR && chown -R $USER: $XDG_RUNTIME_DIR"
-	end
+    if [ -d "$XDG_RUNTIME_DIR" ]
+        set --append podman_args --env=XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
+        podman exec --user=0 $container sh -c "mkdir -p $XDG_RUNTIME_DIR && chown -R $USER: $XDG_RUNTIME_DIR"
+    end
 
-	if [ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_dbus"}}' $container)" ]
-			and [ -n "$DBUS_SESSION_BUS_ADDRESS" ]
-		set --append podman_args --env=DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS
-	end
-		
-	if [ "true" = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_x11"}}' $container)" ]
-			and [ -n "$DISPLAY" ]
-		set --append podman_args --env=DISPLAY=$DISPLAY
-		if [ -n "$XAUTHORITY" ]
-			set --append podman_args --env=XAUTHORITY=$XAUTHORITY
-			podman exec --user=0 $container sh -c "mkdir -p $(path dirname $XAUTHORITY)"
-			podman cp $XAUTHORITY $container:$XAUTHORITY
-			podman exec --user=0 $container sh -c "chown $USER: $XAUTHORITY"
-		end
-	end
+    if [ true = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_dbus"}}' $container)" ]
+        and [ -n "$DBUS_SESSION_BUS_ADDRESS" ]
+        set --append podman_args --env=DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS
+    end
 
-	set --query TERM; and set --append podman_args --env=TERM=$TERM
-	set --query COLORTERM; and set --append podman_args --env=COLORTERM=$COLORTERM
+    if [ true = "$(podman container inspect --format='{{index .Config.Annotations "ru.akhil.tinkerbox.share_x11"}}' $container)" ]
+        and [ -n "$DISPLAY" ]
+        set --append podman_args --env=DISPLAY=$DISPLAY
+        if [ -n "$XAUTHORITY" ]
+            set --append podman_args --env=XAUTHORITY=$XAUTHORITY
+            podman exec --user=0 $container sh -c "mkdir -p $(path dirname $XAUTHORITY)"
+            podman cp $XAUTHORITY $container:$XAUTHORITY
+            podman exec --user=0 $container sh -c "chown $USER: $XAUTHORITY"
+        end
+    end
 
-	if set --query _flag_root
-		set --append podman_args --user=0
-	else
-		set --append podman_args --user=(id -u)
-	end
+    set --query TERM; and set --append podman_args --env=TERM=$TERM
+    set --query COLORTERM; and set --append podman_args --env=COLORTERM=$COLORTERM
 
-	set --append podman_args $container
-	set --append podman_args sh /usr/local/bin/tinkerbox-login
+    if set --query _flag_root
+        set --append podman_args --user=0
+    else
+        set --append podman_args --user=(id -u)
+    end
 
-	echo \$ podman $podman_args
-	podman $podman_args
-	exit $status
+    set --append podman_args $container
+    set --append podman_args sh /usr/local/bin/tinkerbox-login
+
+    echo \$ podman $podman_args
+    podman $podman_args
+    exit $status
 end
 
 function list \
-	--inherit-variable LIST_HELP
+    --inherit-variable LIST_HELP
 
-	argparse \
-		--name "tinkerbox" \
-		--max-args 0 \
-		'h/help' \
-		-- $argv
-	or begin
-		echo "$LIST_HELP"
-		exit 1
-	end
+    argparse \
+        --name tinkerbox \
+        --max-args 0 \
+        h/help \
+        -- $argv
+    or begin
+        echo "$LIST_HELP"
+        exit 1
+    end
 
-	if set --query _flag_help
-		echo "$LIST_HELP"
-		exit 0
-	end
+    if set --query _flag_help
+        echo "$LIST_HELP"
+        exit 0
+    end
 
-	echo Volumes:
-	podman volume list --filter label=manager=tinkerbox
-	or exit $status
+    echo Volumes:
+    podman volume list --filter label=manager=tinkerbox
+    or exit $status
 
-	echo
+    echo
 
-	echo Boxes:
-	podman container list -a --filter label=manager=tinkerbox
-	or exit $status
+    echo Boxes:
+    podman container list -a --filter label=manager=tinkerbox
+    or exit $status
 
-	exit 0
+    exit 0
 end
 
 
 function remove \
-	--inherit-variable REMOVE_HELP
+    --inherit-variable REMOVE_HELP
 
-	argparse \
-		--name "tinkerbox" \
-		's/stop' \
-		'v/volume' \
-		'h/help' \
-		-- $argv
-	or begin
-		echo "$REMOVE_HELP"
-		exit 1
-	end
+    argparse \
+        --name tinkerbox \
+        s/stop \
+        v/volume \
+        h/help \
+        -- $argv
+    or begin
+        echo "$REMOVE_HELP"
+        exit 1
+    end
 
-	if set --query _flag_help
-		echo "$REMOVE_HELP"
-		exit 0
-	end
+    if set --query _flag_help
+        echo "$REMOVE_HELP"
+        exit 0
+    end
 
-	set -l containers
-	for container in $argv
-		if not [ "tinkerbox" = "$(podman container inspect --format='{{index .Config.Labels "manager"}}' $container)" ]
-			echo Not a tinkerbox container: $container
-			exit 1
-		end
+    set -l containers
+    for container in $argv
+        if not [ tinkerbox = "$(podman container inspect --format='{{index .Config.Labels "manager"}}' $container)" ]
+            echo Not a tinkerbox container: $container
+            exit 1
+        end
 
-		if not podman container exists $container
-			echo Container \`$container\` not exists
-			continue
-		end
+        if not podman container exists $container
+            echo Container \`$container\` not exists
+            continue
+        end
 
-		set --append containers $container
-	end
+        set --append containers $container
+    end
 
-	if set -q _flag_stop
-		for container in $containers
-			if [ "true" = "$(podman container inspect --format='{{.State.Running}}' $container)" ]
-				echo -n "Stopping container: "
-				podman container stop $container
-				or exit $status
-			end
-		end
-	end
+    if set -q _flag_stop
+        for container in $containers
+            if [ true = "$(podman container inspect --format='{{.State.Running}}' $container)" ]
+                echo -n "Stopping container: "
+                podman container stop $container
+                or exit $status
+            end
+        end
+    end
 
-	for container in $containers
-		if [ "true" = "$(podman container inspect --format='{{.State.Running}}' $container)" ]
-			echo Container \`$container\` is running. Skipping.
-			continue
-		end
+    for container in $containers
+        if [ true = "$(podman container inspect --format='{{.State.Running}}' $container)" ]
+            echo Container \`$container\` is running. Skipping.
+            continue
+        end
 
-		set -l box_name (podman container inspect --format='{{.Name}}' $container)
-		or exit $status
+        set -l box_name (podman container inspect --format='{{.Name}}' $container)
+        or exit $status
 
-		echo -n "Removing container: "
-		podman container rm $container
-		or exit $status
+        echo -n "Removing container: "
+        podman container rm $container
+        or exit $status
 
-		if set -q _flag_volume
-			echo -n "Removing volume: "
-			podman volume rm {$box_name}-home
-		end
-	end
+        if set -q _flag_volume
+            echo -n "Removing volume: "
+            podman volume rm {$box_name}-home
+        end
+    end
 
-	exit 0
+    exit 0
 end
 
 argparse \
-	--name "tinkerbox" \
-	--stop-nonopt \
-	'd-debug' \
-	'h/help' \
-	-- $argv
+    --name tinkerbox \
+    --stop-nonopt \
+    d-debug \
+    h/help \
+    -- $argv
 or begin
-	echo $MAIN_HELP
-	exit 1
+    echo $MAIN_HELP
+    exit 1
 end
 
 if set --query _flag_debug
-	set fish_trace on
+    set fish_trace on
 end
 
 if set --query _flag_help
-	echo $MAIN_HELP
-	exit 0
+    echo $MAIN_HELP
+    exit 0
 end
 
 switch $argv[1]
-	case cr create
-		set -l debug_flag
-		if set --query _flag_debug
-			set debug_flag --debug
-		end
-		create $debug_flag $argv[2..]
-	case en enter
-		enter $argv[2..]
-	case rm remove
-		remove $argv[2..]
-	case ls list
-		list $argv[2..]
-	case \*
-		echo "$MAIN_HELP"
-		exit 1
+    case cr create
+        set -l debug_flag
+        if set --query _flag_debug
+            set debug_flag --debug
+        end
+        create $debug_flag $argv[2..]
+    case en enter
+        enter $argv[2..]
+    case rm remove
+        remove $argv[2..]
+    case ls list
+        list $argv[2..]
+    case \*
+        echo "$MAIN_HELP"
+        exit 1
 end
 
 # vim: ts=8 sw=8 noet
