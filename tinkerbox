@@ -303,6 +303,7 @@ function create \
     end
 
     set --append podman_args --user=0
+    set --append podman_args --pull=newer
     set --append podman_args $image
     set --append podman_args sh -c 'if [ -x /usr/local/sbin/tinkerbox-entrypoint ]; then exec /usr/local/sbin/tinkerbox-entrypoint; else trap "exit" TERM; sleep infinity & wait; fi'
 
