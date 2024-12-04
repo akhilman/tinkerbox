@@ -131,7 +131,6 @@ set -l LOGIN_SCRIPT '#!/bin/sh
 
 [ -n "$TINKERBOX_DEBUG" ] && set -x
 
-cd
 SHELL=$(getent passwd $(id -u) | cut -d: -f7)
 exec $SHELL -l
 '
@@ -302,7 +301,8 @@ function create \
         set --append podman_args $arg
     end
 
-    set --append podman_args --user=0
+    set --append podman_args --user=(id -u)
+    set --append podman_args --workdir=/home/$USER
     set --append podman_args --pull=newer
     set --append podman_args $image
     set --append podman_args sh -c 'if [ -x /usr/local/sbin/tinkerbox-entrypoint ]; then exec /usr/local/sbin/tinkerbox-entrypoint; else trap "exit" TERM; sleep infinity & wait; fi'
