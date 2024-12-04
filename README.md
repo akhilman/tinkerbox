@@ -64,6 +64,7 @@ Edit `/usr/local/sbin/tinkerbox-entrypoit` if you want to change initialization 
  * Debian (default)
  * Fedora
  * OpenSuse
+ * Ubuntu
         
 Other images may work but not tested.
 

@@ -49,6 +49,7 @@ Supported images:
 	debian (default)
 	fedora
 	opensuse/tumbleweed
+	ubuntu
 
 	Other images may work but not tested.
 "
@@ -109,13 +110,21 @@ if [ -n "%ZONEINFO%" -a -e "/etc/%ZONEINFO%" ]; then
 	ln -s %ZONEINFO% /etc/localtime
 fi
 
+IMAGE_USER_NAME=$(id -nu %UID%)
+IMAGE_USER_HOME=$(getent passwd %UID% | cut -d: -f6)
 USER_HOME=/home/%USER%
+if [ "$IMAGE_USER_NAME" != "%USER%" ]; then
+    usermod --login %USER% $IMAGE_USER_NAME
+fi
+if [ "$IMAGE_USER_HOME" != "$USER_HOME" ] && [ -d $IMAGE_USER_HOME ]; then
+    mv "$IMAGE_USER_HOME" "$USER_HOME"
+    usermod --home $USER_HOME %USER%
+fi
 mkdir -p $USER_HOME
 chown %USER%: $USER_HOME
 chmod 700 $USER_HOME
-usermod --home $USER_HOME %USER%
 
-USER_SHELL=$(getent passwd $(id -u %USER%) | cut -d: -f7)
+USER_SHELL=$(getent passwd %UID% | cut -d: -f7)
 BASH_PATH=$(command -v bash)
 if [ $USER_SHELL = /bin/sh ] && [ -n "$BASH_PATH" ]; then
 	usermod --shell $BASH_PATH %USER%
@@ -320,6 +329,7 @@ function create \
     chmod a+rx $tmpfile
 
     echo $BOOTSTRAP_SCRIPT \
+        | string replace -a '%UID%' (id -u) \
         | string replace -a '%USER%' $USER \
         | string replace -a '%ZONEINFO%' "$zoneinfo" >$tmpfile
     for cmd in $bootstrap_commands
