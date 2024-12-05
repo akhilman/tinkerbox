@@ -141,6 +141,7 @@ set -l LOGIN_SCRIPT '#!/bin/sh
 [ -n "$TINKERBOX_DEBUG" ] && set -x
 
 SHELL=$(getent passwd $(id -u) | cut -d: -f7)
+export SHELL
 exec $SHELL -l
 '
 
