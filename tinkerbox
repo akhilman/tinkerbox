@@ -271,11 +271,11 @@ function create \
         set --append podman_args --mount=type=bind,src=$XDG_RUNTIME_DIR/pulse,dst=$XDG_RUNTIME_DIR/pulse
     end
 
-    if set --query _flag_share_pipewire
+    if set --query _flag_share_pipewire; and command -q pw-cli
         set --append podman_args --annotation=ru.akhil.tinkerbox.share_pipewire=true
-        for socket in $XDG_RUNTIME_DIR/pipewire-?
-            set --append podman_args --mount=type=bind,src=$socket,dst=$socket
-        end
+        set -L socket (pw-cli ls | grep -A 5 "PipeWire:Interface:Core" | grep "core.name" | string replace -r '.*= "(.*)"' '$1')
+        set socket $XDG_RUNTIME_DIR/$socket
+        set --append podman_args --mount=type=bind,src=$socket,dst=$socket
     end
 
     if set --query _flag_share_dbus; and set --query XDG_RUNTIME_DIR
@@ -478,7 +478,6 @@ function list \
 
     exit 0
 end
-
 
 function remove \
     --inherit-variable REMOVE_HELP
