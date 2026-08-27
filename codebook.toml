@@ -1,0 +1,16 @@
+words = [
+    "Akhmetgaleev",
+    "Ildar",
+    "MKNOD",
+    "PULSEAUDIO",
+    "Podman",
+    "buildah",
+    "chmod",
+    "chown",
+    "cli",
+    "dbus",
+    "pipewire",
+    "setuptools",
+    "tinkerbox",
+    "udp",
+]
