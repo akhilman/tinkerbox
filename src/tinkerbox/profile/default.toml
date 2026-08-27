@@ -1,0 +1,53 @@
+description = "Default Tinkerbox container profile. Support images: alpine, archlinux, debian, fedora, opensuse/tumbleweed and ubuntu. Other images with apk, apt, dnf or zypper may work but not tested."
+
+[[container.mounts]]
+type = "tmpfs"
+destination = "/tmp"
+tmpfs-size = "256m"
+
+[[container.mounts]]
+type = "tmpfs"
+destination = "/run"
+tmpfs-size = "64m"
+
+[image]
+from = "debian"
+# entrypoint=["/usr/local/sbin/entrypoint.sh"]
+cmd = ["/usr/bin/sleep", "infinity"]
+
+[image.environment]
+CONTAINER_UID = "@{UID}"
+CONTAINER_GID = "@{GID}"
+CONTAINER_USER = "@{USER}"
+CONTAINER_HOME = "@{HOME}"
+
+[[image.add]]
+src = "/etc/localtime"
+dst = "/etc/localtime"
+chown = "root"
+
+[[image.add]]
+src = "default-entrypoint.sh"
+dst = "/usr/local/sbin/entrypoint-root.sh"
+chown = "root"
+chmod = "755"
+
+[[image.add]]
+content = """
+#!/bin/sh
+sudo /usr/local/sbin/entrypoint-root.sh
+sleep infinity
+"""
+dst = "/usr/local/sbin/entrypoint.sh"
+chown = "root"
+chmod = "755"
+
+[[image.add]]
+src = "default-bootstrap.sh"
+dst = "/usr/local/sbin/bootstrap.sh"
+chown = "root"
+chmod = "755"
+
+[[image.run]]
+command = "/usr/local/sbin/bootstrap.sh"
+user = "root"

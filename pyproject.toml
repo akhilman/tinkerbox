@@ -1,0 +1,52 @@
+[project]
+name = "tinkerbox"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Ildar Akhmetgaleev", email = "akhilman@gmail.com" }]
+requires-python = ">=3.13"
+dependencies = []
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Build Tools",
+  "Topic :: Software Development :: Testing",
+  "Topic :: System :: Containers",
+  "Topic :: Utilities",
+
+  # CLI related
+  "Environment :: Console",
+  "Environment :: POSIX",
+
+  "Operating System :: POSIX :: Linux",
+
+  # Programming
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+
+  "Natural Language :: English",
+
+  "Operating System :: OS Independent",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS",
+]
+
+
+[project.scripts]
+tinkerbox = "tinkerbox.cli.main:main"
+
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["tinkerbox"]
+
+[tool.setuptools.package-data]
+tinkerbox = ["profiles/*.toml", "resources/*.sh"]
