@@ -1,5 +1,6 @@
+.python-version
+.venv
+dist
+uv.lock
 **/__pycache__
 **/*.egg-info
-dist
-.venv
-uv.lock
