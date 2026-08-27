@@ -1,7 +1,7 @@
 from tinkerbox.utils import substitute
 from enum import StrEnum
 from typing import Self, Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 
 class DevicePermission(StrEnum):
@@ -102,10 +102,12 @@ class Device:
         return arg
 
     def substitute(self, variables: dict[str, str]) -> Self:
-        host_device = substitute(self.host_device, variables)
-        container_device = (
-            substitute(self.container_device, variables)
-            if self.container_device
-            else None
+        return replace(
+            self,
+            host_device=substitute(self.host_device, variables),
+            container_device=(
+                substitute(self.container_device, variables)
+                if self.container_device
+                else None
+            ),
         )
-        return type(self)(host_device, container_device, self.permissions)

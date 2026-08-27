@@ -1,7 +1,7 @@
 from tinkerbox.profile.run import Run
 from tinkerbox.alias_enum import AliasEnum
-from dataclasses import dataclass, field
-from typing import Any, Self, cast
+from dataclasses import dataclass, field, replace
+from typing import Any, Self
 
 from tinkerbox.utils import normalize_string_list, substitute
 
@@ -145,7 +145,7 @@ class ImageOptions:
         return obj
 
     def merge(self, other: Self) -> Self:
-        merged = ImageOptions()
+        merged = type(self)()
 
         merged.name = self.name
         if other.name is not None:
@@ -177,7 +177,7 @@ class ImageOptions:
 
         merged.override = self.override | other.override
 
-        return cast(Self, merged)
+        return merged
 
     def substitute(self, variables: dict[str, str]) -> Self:
         from_image = substitute(self.from_image, variables) if self.from_image else None
@@ -200,8 +200,13 @@ class ImageOptions:
         else:
             cmd = None
 
-        image = type(self)(
-            from_image, name, add, run, environment, entrypoint, cmd, self.override
+        return replace(
+            self,
+            from_image=from_image,
+            name=name,
+            add=add,
+            run=run,
+            environment=environment,
+            entrypoint=entrypoint,
+            cmd=cmd,
         )
-
-        return image

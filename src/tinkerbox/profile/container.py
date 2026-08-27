@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Self, cast
 
 from tinkerbox.alias_enum import AliasEnum
@@ -205,14 +205,10 @@ class ContainerOptions:
         mounts = [x.substitute(variables) for x in self.mounts]
         volumes = [x.substitute(variables) for x in self.volumes]
         # TODO: Substitute passthrough.
-        container = type(self)(
+        return replace(
+            self,
             environment=environment,
-            passthrough=self.passthrough,
             devices=devices,
             mounts=mounts,
             volumes=volumes,
-            networks=self.networks,
-            publish=self.publish,
-            override=self.override,
         )
-        return container

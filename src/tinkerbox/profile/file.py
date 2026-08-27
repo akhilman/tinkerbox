@@ -1,28 +1,27 @@
-from tinkerbox.utils import substitute
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Any, Self, cast
+from dataclasses import dataclass, replace, field
+from typing import Any, Self
+
+from tinkerbox.utils import substitute
 
 
+@dataclass
 class File(ABC):
-    def __init__(
-        self,
-        dst: str,
-        chmod: str | None = None,
-        chown: str | None = None,
-    ):
-        self.dst = dst
-        self.chmod = chmod
-        self.chown = chown
+    dst: str
+    chmod: str | None = None
+    chown: str | None = None
 
     @classmethod
-    def from_object(cls, obj: Any) -> Self:
+    def from_object(cls, obj: Any) -> File:
         if not isinstance(obj, dict):
             raise TypeError("File object must be a dict")
 
         if "src" in obj:
-            return cast(Self, CopyFile.from_object(obj))
+            return CopyFile.from_object(obj)
         elif "content" in obj:
-            return cast(Self, TextFile.from_object(obj))
+            return TextFile.from_object(obj)
         else:
             raise ValueError("File object must have either `src` or `content` field")
 
@@ -35,20 +34,9 @@ class File(ABC):
         raise NotImplementedError
 
 
+@dataclass
 class CopyFile(File):
-    def __init__(
-        self,
-        src: str,
-        dst: str,
-        chmod: str | None = None,
-        chown: str | None = None,
-    ):
-        self.src = src
-        super().__init__(
-            dst,
-            chmod,
-            chown,
-        )
+    src: str = field(kw_only=True)
 
     @classmethod
     def from_object(cls, obj: Any) -> Self:
@@ -84,16 +72,16 @@ class CopyFile(File):
                 f"File object has unexpected keys: {', '.join(obj.keys())}"
             )
 
-        return cls(src, dst, chmod, chown)
+        return cls(src=src, dst=dst, chmod=chmod, chown=chown)
 
     @classmethod
     def from_argument(cls, arg: str) -> Self:
         parts = arg.split(":")
         match parts:
             case [src]:
-                return cls(src, src)
+                return cls(src=src, dst=src)
             case [src, dst]:
-                return cls(src, dst)
+                return cls(src=src, dst=dst)
             case [src, dst, opts]:
                 pass
             case _:
@@ -122,7 +110,8 @@ class CopyFile(File):
         return obj
 
     def substitute(self, variables: dict[str, str]) -> Self:
-        return type(self)(
+        return replace(
+            self,
             src=substitute(self.src, variables),
             dst=substitute(self.dst, variables),
             chown=substitute(self.chown, variables) if self.chown else None,
@@ -130,22 +119,9 @@ class CopyFile(File):
         )
 
 
+@dataclass
 class TextFile(File):
-    content: str
-
-    def __init__(
-        self,
-        content: str,
-        dst: str,
-        chmod: str | None = None,
-        chown: str | None = None,
-    ):
-        self.content = content
-        super().__init__(
-            dst,
-            chmod,
-            chown,
-        )
+    content: str = field(kw_only=True)
 
     @classmethod
     def from_object(cls, obj: Any) -> Self:
@@ -181,7 +157,7 @@ class TextFile(File):
                 f"File object has unexpected keys: {', '.join(obj.keys())}"
             )
 
-        return cls(content, dst, chmod, chown)
+        return cls(content=content, dst=dst, chmod=chmod, chown=chown)
 
     def to_object(self) -> dict[str, str]:
         obj = {"content": self.content, "dst": self.dst}
@@ -192,7 +168,8 @@ class TextFile(File):
         return obj
 
     def substitute(self, variables: dict[str, str]) -> Self:
-        return type(self)(
+        return replace(
+            self,
             content=substitute(self.content, variables),
             dst=substitute(self.dst, variables),
             chown=substitute(self.chown, variables) if self.chown else None,
