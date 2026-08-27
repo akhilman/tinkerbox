@@ -12,12 +12,12 @@
 	- [ ] dump profile
 	- [ ] show
 - [ ] profile
-	- [ ] ls
-	- [ ] cat
-	- ~~[ ] create~~
-	- ~~[ ] edit~~
-	- ~~[ ] rm~~
-	- ~~[ ] rename~~
+	- [x] ls
+	- [x] cat
+	- [ ] ~~create~~
+	- [ ] ~~edit~~
+	- [ ] ~~rm~~
+	- [ ] ~~rename~~
 - [ ] volume
 	- [ ] ls
 	- [ ] rm
