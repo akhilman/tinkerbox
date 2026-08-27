@@ -1,6 +1,6 @@
 from tinkerbox.utils import substitute
 from typing import Any, Self
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 
 @dataclass
@@ -47,7 +47,7 @@ class Run:
         match parts:
             case [command]:
                 return cls(command, "root")
-            case [command, user]:
+            case [user, command]:
                 return cls(command, user)
             case _:
                 raise ValueError(f"Invalid volume format: {arg}")
@@ -61,7 +61,8 @@ class Run:
         return f"{self.user}:{self.command}"
 
     def substitute(self, variables: dict[str, str]) -> Self:
-        return type(self)(
+        return replace(
+            self,
             command=substitute(self.command, variables),
             user=substitute(self.user, variables),
         )

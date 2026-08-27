@@ -4,7 +4,7 @@ import logging
 import importlib.resources
 import json
 import tomllib
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Self, cast
 
@@ -153,10 +153,7 @@ class Profile:
 
         return merged
 
-    def substitute(self) -> Self:
-        """
-        Substitutes `@{VAR}` in fields.
-        """
+    def _variables(self) -> dict[str, str]:
         variables = {k: v for k, v in os.environ.items()}
 
         uid = os.getuid()
@@ -164,23 +161,42 @@ class Profile:
         user = self.user or pwd.getpwuid(uid).pw_name
         variables["UID"] = str(uid)
         variables["GID"] = str(gid)
+
         variables["USER"] = user
 
         home = substitute(self.home or pwd.getpwuid(uid).pw_dir, variables)
         variables["HOME"] = home
 
-        description = substitute(self.description or "", variables)
-
+        description = (
+            substitute(self.description, variables) if self.description else ""
+        )
         variables["DESCRIPTION"] = description
 
-        profile = type(self)(
-            name=self.name,
-            source=self.source,
-            description=self.description,
-            extends=self.extends,
-            image=self.image.substitute(variables),
-            container=self.container.substitute(variables),
+        return variables
+
+    def substitute_shallow(self) -> Self:
+        """
+        Substitutes `@{VAR}` only in top level fields, skipping `image` and `container`.
+        """
+        variables = self._variables()
+
+        return replace(
+            self,
+            user=variables["USER"],
+            home=variables["HOME"],
+            description=variables["DESCRIPTION"],
         )
+
+    def substitute(self) -> Self:
+        """
+        Substitutes `@{VAR}` in fields.
+        """
+
+        variables = self._variables()
+
+        profile = self.substitute_shallow()
+        profile.image = profile.image.substitute(variables)
+        profile.container = profile.container.substitute(variables)
 
         return profile
 

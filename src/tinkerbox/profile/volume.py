@@ -1,6 +1,6 @@
 from tinkerbox.utils import substitute
 from typing import Any, Self
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 
 @dataclass
@@ -86,6 +86,8 @@ class Volume:
         return arg
 
     def substitute(self, variables: dict[str, str]) -> Self:
-        target = substitute(self.target, variables)
-        source = substitute(self.source, variables) if self.source else None
-        return type(self)(target, source, self.options)
+        return replace(
+            self,
+            target=substitute(self.target, variables),
+            source=substitute(self.source, variables) if self.source else None,
+        )

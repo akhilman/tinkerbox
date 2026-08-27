@@ -1,6 +1,6 @@
 from tinkerbox.utils import substitute
 from typing import Any, Self
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 
 @dataclass
@@ -69,8 +69,10 @@ class Mount:
         return arg
 
     def substitute(self, variables: dict[str, str]) -> Self:
-        options = {
-            k: (substitute(v, variables) if v else None)
-            for k, v in self.options.items()
-        }
-        return type(self)(self.mount_type, options)
+        return replace(
+            self,
+            options={
+                k: (substitute(v, variables) if v else None)
+                for k, v in self.options.items()
+            },
+        )
