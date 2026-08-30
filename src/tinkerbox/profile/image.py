@@ -90,7 +90,7 @@ class ImageProfile(Profile):
             ):
                 pass
             elif isinstance(environment, list) and all(
-                isinstance(x, list) for x in environment
+                isinstance(x, str) for x in environment
             ):
                 environment: dict[str, str] = {
                     k: v for k, v in ((x.split("=", 1) + [""])[:2] for x in environment)
