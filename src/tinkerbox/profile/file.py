@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field, replace
+from dataclasses import asdict, dataclass, field, replace
 from typing import Any, Self
 
-from tinkerbox.utils import split_fields, substitute
+from tinkerbox.utils import normalize_bool_value, split_fields, substitute
 
 
 @dataclass
@@ -29,7 +29,7 @@ class File(ABC):
             raise ValueError("File object must have either `src` or `content` field")
 
     @abstractmethod
-    def to_object(self) -> dict[str, str]:
+    def to_object(self) -> dict[str, str | list[str] | bool | None]:
         raise NotImplementedError
 
     @abstractmethod
@@ -40,6 +40,11 @@ class File(ABC):
 @dataclass
 class CopyFile(File):
     src: str = field(kw_only=True)
+    keep_git_dir: bool | None = None
+    checksum: str | None = None
+    link: bool | None = None
+    unpack: bool | None = None
+    exclude: list[str] = field(default_factory=list)
 
     @classmethod
     def from_object(cls, obj: Any) -> Self:
@@ -70,12 +75,56 @@ class CopyFile(File):
         if not isinstance(chown, str | None):
             raise TypeError("File's `chown` field should be a string or null")
 
+        keep_git_dir = obj.pop("keep-git-dir", None)
+        if keep_git_dir is not None:
+            try:
+                keep_git_dir = normalize_bool_value(keep_git_dir)
+            except ValueError as err:
+                err.add_note("Failed to convert file's `keep-git-dir` field to bool")
+                raise err
+
+        checksum = obj.pop("checksum", None)
+        if not isinstance(checksum, str | None):
+            raise TypeError("File's `checksum` field should be a string or null")
+
+        link = obj.pop("link", None)
+        if link is not None:
+            try:
+                link = normalize_bool_value(link)
+            except ValueError as err:
+                err.add_note("Failed to convert file's `link` field to bool")
+                raise err
+
+        unpack = obj.pop("unpack", None)
+        if unpack is not None:
+            try:
+                unpack = normalize_bool_value(unpack)
+            except ValueError as err:
+                err.add_note("Failed to convert file's `unpack` field to bool")
+                raise err
+
+        exclude = obj.pop("exclude", [])
+        if not isinstance(exclude, list) or not all(
+            isinstance(x, str) for x in exclude
+        ):
+            raise TypeError("File's `exclude` field should be a list of strings")
+
         if obj:
             raise ValueError(
                 f"File object has unexpected keys: {', '.join(obj.keys())}"
             )
 
-        return cls(src=src, dst=dst, chmod=chmod, chown=chown)
+        return cls(
+            src=src,
+            dst=dst,
+            chmod=chmod,
+            chown=chown,
+            keep_git_dir=keep_git_dir,
+            checksum=checksum,
+            link=link,
+            unpack=unpack,
+            exclude=exclude,
+        )
 
     @classmethod
     def from_argument(cls, arg: str) -> Self:
@@ -101,6 +150,15 @@ class CopyFile(File):
         opts_obj = {}
         for part in parts:
             match split_fields(part, "=", 1):
+                case [key] if key in ["keep-git-dir", "link", "unpack"]:
+                    opts_obj[key] = True
+                case ["exclude", value]:
+                    if (exclude := opts_obj.get("exclude", None)) and isinstance(
+                        exclude, list
+                    ):
+                        exclude.append(value)
+                    else:
+                        opts_obj["exclude"] = [value]
                 case [key, value]:
                     opts_obj[key] = value
                 case _:
@@ -111,13 +169,8 @@ class CopyFile(File):
         except ValueError as exc:
             raise ValueError(f"Incorrect file argument: {arg}") from exc
 
-    def to_object(self) -> dict[str, str]:
-        obj = {"src": self.src, "dst": self.dst}
-        if self.chmod:
-            obj["chmod"] = self.chmod
-        if self.chown:
-            obj["chown"] = self.chown
-        return obj
+    def to_object(self) -> dict[str, str | list[str] | bool | None]:
+        return asdict(self)
 
     def substitute(self, variables: dict[str, str]) -> Self:
         # TODO: Handle files from config directories and built-ins.
@@ -126,7 +179,6 @@ class CopyFile(File):
             src=substitute(self.src, variables),
             dst=substitute(self.dst, variables),
             chown=substitute(self.chown, variables) if self.chown else None,
-            chmod=substitute(self.chmod, variables) if self.chmod else None,
         )
 
 
@@ -170,13 +222,8 @@ class TextFile(File):
 
         return cls(content=content, dst=dst, chmod=chmod, chown=chown)
 
-    def to_object(self) -> dict[str, str]:
-        obj = {"content": self.content, "dst": self.dst}
-        if self.chmod:
-            obj["chmod"] = self.chmod
-        if self.chown:
-            obj["chown"] = self.chown
-        return obj
+    def to_object(self) -> dict[str, str | list[str] | bool | None]:
+        return asdict(self)
 
     def substitute(self, variables: dict[str, str]) -> Self:
         return replace(

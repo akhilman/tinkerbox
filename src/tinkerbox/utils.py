@@ -5,6 +5,18 @@ import string
 from typing import Any
 
 
+def normalize_bool_value(value: str | int | bool) -> bool:
+    if isinstance(value, str):
+        if value.lower() in ["true", "yes", "y", "1"]:
+            return True
+        if value.lower() in ["false", "no", "n", "0"]:
+            return False
+    if isinstance(value, int):
+        return bool(value)
+    else:
+        raise ValueError(f"Can not convert value {value!r} to bool")
+
+
 def normalize_string_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         value = [value]
