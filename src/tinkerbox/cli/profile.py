@@ -1,12 +1,18 @@
-from tinkerbox.logging import setup_logging
 import argparse
 import json
 import sys
 
 import tinkerbox.profile
+from tinkerbox.logging import setup_logging
+from tinkerbox.profile import ProfileKind
+from tinkerbox.profile.container import ContainerProfile
+from tinkerbox.profile.image import ImageProfile
 
 
 def setup_argparse(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "kind", choices=list(ProfileKind.all_values()), help="profile kind to show"
+    )
     commands = parser.add_subparsers(
         dest="profile command",
         required=True,
@@ -29,7 +35,8 @@ def setup_argparse(parser: argparse.ArgumentParser):
 def list_profiles(args: argparse.Namespace):
     setup_logging(args.debug)
 
-    profiles = tinkerbox.profile.list_profiles()
+    kind = ProfileKind(args.kind)
+    profiles = tinkerbox.profile.list_profiles(kind)
     for name in profiles:
         sys.stdout.write(f"{name}\n")
 
@@ -38,7 +45,15 @@ def cat_profile(args: argparse.Namespace):
     setup_logging(args.debug)
 
     name = args.profile
-    profile = tinkerbox.profile.load_profile(name)
+    kind = ProfileKind(args.kind)
+    match kind:
+        case ProfileKind.CONTAINER:
+            profile = ContainerProfile.load(name)
+        case ProfileKind.IMAGE:
+            profile = ImageProfile.load(name)
+        case _:
+            raise ValueError(f"Unexpected profile kind: {kind}")
+
     if args.flatten:
         profile = profile.flatten()
     sys.stdout.write(

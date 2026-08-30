@@ -49,4 +49,9 @@ where = ["src"]
 include = ["tinkerbox"]
 
 [tool.setuptools.package-data]
-tinkerbox = ["profiles/*.toml", "resources/*.sh"]
+tinkerbox = [
+  "default-container.toml",
+  "default-image.toml",
+  "default-bootstrap.sh",
+  "default-entrypoint.sh",
+]

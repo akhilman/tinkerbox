@@ -1,9 +1,10 @@
 from dataclasses import dataclass, field, replace
-from typing import Any, Self, cast
+from typing import Any, Self
 
 from tinkerbox.alias_enum import AliasEnum
-from tinkerbox.utils import normalize_string_list, substitute
+from tinkerbox.utils import normalize_string_list, random_string, substitute
 
+from . import Profile, ProfileKind
 from .device import Device
 from .mount import Mount
 from .network import Network
@@ -55,7 +56,8 @@ class Passthrough(AliasEnum):
 
 
 @dataclass
-class ContainerOptions:
+class ContainerProfile(Profile):
+    name: str | None = None
     environment: dict[str, str] = field(default_factory=dict)
     passthrough: set[Passthrough] = field(default_factory=set)
     devices: list[Device] = field(default_factory=list)
@@ -65,13 +67,22 @@ class ContainerOptions:
     publish: list[Publish] = field(default_factory=list)
     override: set[ContainerOverride] = field(default_factory=set)
 
+    @staticmethod
+    def kind() -> ProfileKind:
+        return ProfileKind.CONTAINER
+
     @classmethod
     def from_object(cls, obj: Any) -> Self:
         if not isinstance(obj, dict):
             raise TypeError("Container profile must be a dict")
 
         obj = {**obj}
-        profile = cls()
+        profile = super().from_object(obj)
+
+        if name := obj.pop("name", None):
+            if not isinstance(name, str):
+                raise TypeError("Image's `name` field should be a string")
+            profile.name = name
 
         if environment := obj.pop("environment", obj.pop("env", None)):
             if isinstance(environment, dict) and all(
@@ -144,7 +155,9 @@ class ContainerOptions:
         return profile
 
     def to_object(self, fill_unset=False) -> dict[str, Any]:
-        obj = {}
+        obj = super().to_object(fill_unset)
+        if fill_unset or self.name:
+            obj["name"] = self.name
         if fill_unset or self.passthrough:
             obj["passthrough"] = list(sorted(map(str, self.passthrough)))
         if fill_unset or self.environment:
@@ -165,7 +178,11 @@ class ContainerOptions:
         return obj
 
     def merge(self, other: Self) -> Self:
-        merged = ContainerOptions()
+        merged = super().merge(other)
+
+        merged.name = self.name
+        if other.name is not None:
+            merged.name = other.name
 
         if not other.override & {ContainerOverride.ENV, ContainerOverride.ALL}:
             merged.environment.update(**self.environment)
@@ -197,16 +214,27 @@ class ContainerOptions:
 
         merged.override = self.override | other.override
 
-        return cast(Self, merged)
+        return merged
 
-    def substitute(self, variables: dict[str, str]) -> Self:
+    def variables(self) -> dict[str, str]:
+        variables = super().variables()
+        # TODO: Load variables form image.
+        variables["CONTAINER_NAME"] = (
+            substitute(self.name, variables)
+            if self.name
+            else variables["PROFILE_NAME"] + random_string()
+        )
+        return variables
+
+    def substitute(self, variables: dict[str, str] | None = None) -> Self:
+        variables = {**self.variables(), **(variables or {})}
         environment = {k: substitute(v, variables) for k, v in self.environment}
         devices = [x.substitute(variables) for x in self.devices]
         mounts = [x.substitute(variables) for x in self.mounts]
         volumes = [x.substitute(variables) for x in self.volumes]
         # TODO: Substitute passthrough.
         return replace(
-            self,
+            super().substitute(variables=variables),
             environment=environment,
             devices=devices,
             mounts=mounts,

@@ -1,33 +1,41 @@
 
 ## Subcommands
 
-- [ ] container
-	- [ ] create
-	- [ ] recreate
-	- [ ] run
-	- [ ] stop
-	- [ ] rm
-	- [ ] ls
-	- [ ] commit
-	- [ ] dump profile
-	- [ ] show
 - [ ] profile
-	- [x] ls
-	- [x] cat
-	- [ ] ~~create~~
-	- [ ] ~~edit~~
-	- [ ] ~~rm~~
-	- [ ] ~~rename~~
+	- [ ] container
+		- [ ] ls
+		- [ ] cat
+	- [ ] image
+		- [x] ls
+		- [x] cat
+		- [ ] ~~create~~
+		- [ ] ~~edit~~
+		- [ ] ~~rm~~
+		- [ ] ~~rename~~
+- [ ] image
+	- [ ] build
+	- [ ] info
+	- [ ] ls
+	- [ ] profile - cat profile
+	- [ ] rename
+	- [ ] rm
+	- [ ] tree
+- [ ] container
+	- [ ] commit
+	- [ ] create
+	- [ ] enter
+	- [ ] info
+	- [ ] ls
+	- [ ] profile - cat profile
+	- [ ] rebase
+	- [ ] recreate
+	- [ ] rm
+	- [ ] start
+	- [ ] stop
 - [ ] volume
 	- [ ] ls
 	- [ ] rm
-	- [ ] show
-- [ ] image
-	- [ ] build
-	- [ ] ls
-	- [ ] rm
-	- [ ] tree
-	- [ ] rename
+	- [ ] info
 
 The option `profile` must take a name or afile path, maybe even url. There could be a generic function to read content from URI (resource|file|url).
 
