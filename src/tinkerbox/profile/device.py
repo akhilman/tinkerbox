@@ -1,7 +1,8 @@
-from tinkerbox.utils import substitute
-from enum import StrEnum
-from typing import Self, Any
 from dataclasses import dataclass, field, replace
+from enum import StrEnum
+from typing import Any, Self
+
+from tinkerbox.utils import split_fields, substitute
 
 
 class DevicePermission(StrEnum):
@@ -60,7 +61,7 @@ class Device:
         """
         Converts from Podman `--device` format: `host-device[:container-device][:permissions]`
         """
-        parts = device.split(":", 2)
+        parts = split_fields(device, ":", 2)
 
         match parts:
             case [host_device]:

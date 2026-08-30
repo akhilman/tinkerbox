@@ -1,6 +1,8 @@
-from typing import Self, Any
-from enum import StrEnum
 from dataclasses import dataclass
+from enum import StrEnum
+from typing import Any, Self
+
+from tinkerbox.utils import split_fields
 
 
 class Protocol(StrEnum):
@@ -28,7 +30,7 @@ class PortRange:
     @classmethod
     def from_string(cls, port_range: str) -> Self:
         try:
-            start, end = port_range.split("-", 1)
+            start, end = split_fields(port_range, "-", 1)
             start = int(start)
             end = int(end)
         except ValueError as exc:
@@ -105,7 +107,7 @@ class Publish:
 
     @classmethod
     def from_argument(cls, publish: str) -> Self:
-        parts = publish.split(":", 2)
+        parts = split_fields(publish, ":", 2)
         ip = None
         host_port = None
         match parts:
@@ -118,7 +120,7 @@ class Publish:
             case _:
                 raise ValueError(f"Invalid publish format: {publish}")
 
-        parts = container_port_protocol.split("/")
+        parts = split_fields(container_port_protocol, "/")
         protocol = None
         match parts:
             case [container_port]:

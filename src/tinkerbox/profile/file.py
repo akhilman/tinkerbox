@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, replace, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Self
 
-from tinkerbox.utils import substitute
+from tinkerbox.utils import split_fields, substitute
 
 
 @dataclass
@@ -76,7 +76,7 @@ class CopyFile(File):
 
     @classmethod
     def from_argument(cls, arg: str) -> Self:
-        parts = arg.split(":")
+        parts = split_fields(arg, ":")
         match parts:
             case [src]:
                 return cls(src=src, dst=src)
@@ -87,10 +87,10 @@ class CopyFile(File):
             case _:
                 raise ValueError(f"Incorrect file argument format: {arg}")
 
-        parts = opts.split(",")
+        parts = split_fields(opts, ",")
         opts_obj = {}
         for part in parts:
-            match part.split("=", 1):
+            match split_fields(part, "=", 1):
                 case [key, value]:
                     opts_obj[key] = value
                 case _:
