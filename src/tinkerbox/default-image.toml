@@ -7,8 +7,8 @@ cmd = ["/usr/bin/sleep", "infinity"]
 [environment]
 CONTAINER_UID = "@{UID}"
 CONTAINER_GID = "@{GID}"
-CONTAINER_USER = "@{USER}"
-CONTAINER_HOME = "@{HOME}"
+CONTAINER_USER = "@{CONTAINER_USER}"
+CONTAINER_HOME = "@{CONTAINER_HOME}"
 
 [[add]]
 src = "/etc/localtime"

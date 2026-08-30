@@ -219,9 +219,9 @@ class ImageProfile(Profile):
             if self.name
             else variables["PROFILE_NAME"] + random_string()
         )
-        variables["USER"] = user
+        variables["CONTAINER_USER"] = user
         home = substitute(self.home or pwd.getpwuid(uid).pw_dir, variables)
-        variables["HOME"] = home
+        variables["CONTAINER_HOME"] = home
         return variables
 
     def substitute(self, variables: dict[str, str] | None = None) -> Self:
