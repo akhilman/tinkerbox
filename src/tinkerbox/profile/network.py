@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any, Self
 
+from tinkerbox.utils import split_fields
+
 
 @dataclass
 class Network:
@@ -38,7 +40,7 @@ class Network:
     @classmethod
     def from_argument(cls, volume: str) -> Self:
         """Parse from Podman --network format: MODE:MODE-SPECIFIC-OPTION[,...] string"""
-        parts = volume.split(":", 1)
+        parts = split_fields(volume, ":", 1)
 
         match parts:
             case [mode, options]:
@@ -49,8 +51,8 @@ class Network:
 
         obj = {"mode": mode}
 
-        for opt in options.split(","):
-            key_val = opt.split("=", 1)
+        for opt in split_fields(options, ","):
+            key_val = split_fields(opt, "=", 1)
             match key_val:
                 case [key, val]:
                     obj[key] = val

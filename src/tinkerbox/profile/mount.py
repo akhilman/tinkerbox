@@ -1,6 +1,7 @@
-from tinkerbox.utils import substitute
-from typing import Any, Self
 from dataclasses import dataclass, field, replace
+from typing import Any, Self
+
+from tinkerbox.utils import split_fields, substitute
 
 
 @dataclass
@@ -39,12 +40,12 @@ class Mount:
     @classmethod
     def from_argument(cls, volume: str) -> Self:
         """Parse from type=TYPE,TYPE-SPECIFIC-OPTION[,...] string"""
-        parts = volume.split(",")
+        parts = split_fields(volume, ",")
 
         obj = {}
 
         for part in parts:
-            key_val = part.split("=", 1)
+            key_val = split_fields(part, "=", 1)
             match key_val:
                 case [key, val]:
                     obj[key] = val

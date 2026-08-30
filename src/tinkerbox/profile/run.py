@@ -1,6 +1,7 @@
-from tinkerbox.utils import substitute
-from typing import Any, Self
 from dataclasses import dataclass, replace
+from typing import Any, Self
+
+from tinkerbox.utils import split_fields, substitute
 
 
 @dataclass
@@ -42,7 +43,7 @@ class Run:
     @classmethod
     def from_argument(cls, arg: str) -> Self:
         """Parse from [USER:]COMMAND string"""
-        parts = arg.split(":", 1)
+        parts = split_fields(arg, ":", 1)
 
         match parts:
             case [command]:

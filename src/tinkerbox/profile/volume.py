@@ -1,6 +1,7 @@
-from tinkerbox.utils import substitute
-from typing import Any, Self
 from dataclasses import dataclass, field, replace
+from typing import Any, Self
+
+from tinkerbox.utils import split_fields, substitute
 
 
 @dataclass
@@ -35,7 +36,7 @@ class Volume:
 
         options = obj.pop("options", list)
         if isinstance(options, str):
-            options = set(options.split(","))
+            options = set(split_fields(options, ","))
         elif not isinstance(options, list):
             raise TypeError(
                 "Volume's `options` field must be string or list of strings"
@@ -51,7 +52,7 @@ class Volume:
     @classmethod
     def from_argument(cls, volume: str) -> Self:
         """Parse from Podman --volume format: [SOURCE:]TARGET[:OPTIONS]"""
-        parts = volume.split(":", 2)
+        parts = split_fields(volume, ":", 2)
 
         match parts:
             case [target]:
@@ -59,7 +60,7 @@ class Volume:
             case [source, target]:
                 return cls(target=target, source=source)
             case [source, target, options]:
-                options = set(options.split(","))
+                options = set(split_fields(options, ","))
                 return cls(target=target, source=source, options=options)
             case _:
                 raise ValueError(f"Invalid volume format: {volume}")
