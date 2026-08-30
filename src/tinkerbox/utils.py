@@ -1,3 +1,5 @@
+import secrets
+import string
 import itertools
 import re
 from typing import Any
@@ -11,10 +13,13 @@ def normalize_string_list(value: Any) -> list[str]:
     return list(w.strip() for w in itertools.chain(*(v.split(",") for v in value)))
 
 
-_VAR = re.compile(r"@\{([A-Za-z_][A-Za-z0-9_]*)\}")
+def random_string(length: int = 8) -> str:
+    chars = string.ascii_letters + string.digits
+    return "".join(secrets.choice(chars) for _ in range(length))
 
 
 def substitute(text: str, variables: dict[str, str]) -> str:
+    _VAR = re.compile(r"@\{([A-Za-z_][A-Za-z0-9_]*)\}")
 
     def replace(match):
         name = match.group(1)

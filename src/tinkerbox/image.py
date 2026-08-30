@@ -1,7 +1,8 @@
 from pprint import pp
-from tinkerbox.profile import Profile
+
+from tinkerbox.profile.image import ImageProfile
 
 
-def build_image(profile: Profile, replace=False):
+def build_image(profile: ImageProfile, replace=False):
     pp(profile.flatten().substitute().to_object())
     # raise NotImplementedError

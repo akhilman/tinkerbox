@@ -1,10 +1,13 @@
-from tinkerbox.profile.run import Run
-from tinkerbox.alias_enum import AliasEnum
+import os
+import pwd
 from dataclasses import dataclass, field, replace
 from typing import Any, Self
 
-from tinkerbox.utils import normalize_string_list, substitute
+from tinkerbox.alias_enum import AliasEnum
+from tinkerbox.profile.run import Run
+from tinkerbox.utils import normalize_string_list, random_string, substitute
 
+from . import Profile, ProfileKind
 from .file import File
 
 
@@ -24,9 +27,11 @@ class ImageOverride(AliasEnum):
 
 
 @dataclass
-class ImageOptions:
+class ImageProfile(Profile):
     from_image: str | None = None
     name: str | None = None
+    user: str | None = None
+    home: str | None = None
     add: list[File] = field(default_factory=list)
     run: list[Run] = field(default_factory=list)
     environment: dict[str, str] = field(default_factory=dict)
@@ -34,13 +39,17 @@ class ImageOptions:
     cmd: list[str] | str | None = None
     override: set[ImageOverride] = field(default_factory=set)
 
+    @staticmethod
+    def kind() -> ProfileKind:
+        return ProfileKind.IMAGE
+
     @classmethod
     def from_object(cls, obj: Any) -> Self:
         if not isinstance(obj, dict):
             raise TypeError("Image profile must be a dict")
 
         obj = {**obj}
-        profile = cls()
+        profile = super().from_object(obj)
 
         if from_image := obj.pop("from", None):
             if not isinstance(from_image, str):
@@ -51,6 +60,16 @@ class ImageOptions:
             if not isinstance(name, str):
                 raise TypeError("Image's `name` field should be a string")
             profile.name = name
+
+        if user := obj.pop("user", None):
+            if not isinstance(user, str):
+                raise TypeError("Image's `user` field should be a string")
+            profile.user = user
+
+        if home := obj.pop("home", None):
+            if not isinstance(home, str):
+                raise TypeError("Image's `home` field should be a string")
+            profile.home = home
 
         if add := obj.pop("add", None):
             if not isinstance(add, list):
@@ -124,11 +143,15 @@ class ImageOptions:
 
     def to_object(self, fill_unset=False) -> dict[str, Any]:
 
-        obj = {}
+        obj = super().to_object(fill_unset)
         if fill_unset or self.from_image:
             obj["from"] = self.from_image
         if fill_unset or self.name:
             obj["name"] = self.name
+        if fill_unset or self.user:
+            obj["user"] = self.user
+        if fill_unset or self.home:
+            obj["home"] = self.home
         if fill_unset or self.add:
             obj["add"] = [x.to_object() for x in self.add]
         if fill_unset or self.run:
@@ -145,7 +168,7 @@ class ImageOptions:
         return obj
 
     def merge(self, other: Self) -> Self:
-        merged = type(self)()
+        merged = super().merge(other)
 
         merged.name = self.name
         if other.name is not None:
@@ -154,6 +177,14 @@ class ImageOptions:
         merged.from_image = self.from_image
         if other.from_image is not None:
             merged.from_image = other.from_image
+
+        merged.user = self.user
+        if other.user is not None:
+            merged.user = other.user
+
+        merged.home = self.home
+        if other.home is not None:
+            merged.home = other.home
 
         if not other.override & {ImageOverride.ADD, ImageOverride.ALL}:
             merged.add.extend(self.add)
@@ -179,9 +210,27 @@ class ImageOptions:
 
         return merged
 
-    def substitute(self, variables: dict[str, str]) -> Self:
+    def variables(self) -> dict[str, str]:
+        variables = super().variables()
+        uid = os.getuid()
+        user = self.user or pwd.getpwuid(uid).pw_name
+        variables["IMAGE_NAME"] = (
+            substitute(self.name, variables)
+            if self.name
+            else variables["PROFILE_NAME"] + random_string()
+        )
+        variables["USER"] = user
+        home = substitute(self.home or pwd.getpwuid(uid).pw_dir, variables)
+        variables["HOME"] = home
+        return variables
+
+    def substitute(self, variables: dict[str, str] | None = None) -> Self:
+        variables = {**self.variables(), **(variables or {})}
+
         from_image = substitute(self.from_image, variables) if self.from_image else None
-        name = substitute(self.name, variables) if self.name else None
+        name = variables["IMAGE_NAME"]
+        user = variables["USER"]
+        home = variables["HOME"]
         add = [x.substitute(variables) for x in self.add]
         run = [x.substitute(variables) for x in self.run]
         environment = {k: substitute(v, variables) for k, v in self.environment.items()}
@@ -201,9 +250,11 @@ class ImageOptions:
             cmd = None
 
         return replace(
-            self,
+            super().substitute(variables=variables),
             from_image=from_image,
             name=name,
+            user=user,
+            home=home,
             add=add,
             run=run,
             environment=environment,

@@ -2,8 +2,7 @@ import argparse
 
 import tinkerbox.image
 from tinkerbox.logging import setup_logging
-from tinkerbox.profile import Profile
-from tinkerbox.profile.image import ImageOverride
+from tinkerbox.profile.image import ImageOverride, ImageProfile
 
 
 def setup_argparse(parser: argparse.ArgumentParser):
@@ -73,9 +72,11 @@ def add_update_image_args(parser: argparse.ArgumentParser):
     )
 
 
-def profile_from_update_image_args(args: argparse.Namespace) -> Profile:
+def profile_from_update_image_args(args: argparse.Namespace) -> ImageProfile:
     update_image_args = [
         "name",
+        "user",
+        "home",
         "add",
         "run",
         "env",
@@ -84,9 +85,7 @@ def profile_from_update_image_args(args: argparse.Namespace) -> Profile:
         "override",
     ]
     image_options = {k: v for k, v in vars(args).items() if k in update_image_args}
-    profile = Profile.from_object(
-        {"user": args.user, "home": args.home, "image": image_options}
-    )
+    profile = ImageProfile.from_object(image_options)
     return profile
 
 

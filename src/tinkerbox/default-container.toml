@@ -1,0 +1,11 @@
+description = "Default Tinkerbox container profile. Meant to be used with default Tinkerbox image profile, but may work with other images."
+
+[[mounts]]
+type = "tmpfs"
+destination = "/tmp"
+tmpfs-size = "256m"
+
+[[mounts]]
+type = "tmpfs"
+destination = "/run"
+tmpfs-size = "64m"
