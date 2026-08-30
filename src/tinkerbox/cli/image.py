@@ -21,6 +21,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
         "build", aliases=["bd"], help="build an image from profile"
     )
     cmd.add_argument("--replace", action="store_true", help="replace image if exists")
+    cmd.add_argument("--keep-tmp", action="store_true", help="keep temporary files")
     add_image_args(cmd)
     cmd.set_defaults(func=build_image)
 
@@ -106,7 +107,7 @@ def build_image(args: argparse.Namespace):
     else:
         profile.extends = ["default"]
 
-    tinkerbox.image.build_image(profile, replace=args.override)
+    tinkerbox.image.build_image(profile, replace=args.override, keep_tmp=args.keep_tmp)
 
 
 def cat_image_profile(args: argparse.Namespace):
