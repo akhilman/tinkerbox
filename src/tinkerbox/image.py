@@ -96,10 +96,10 @@ def write_add(add: File, file: TextIO, temp_dir: Path):
         )
     assert isinstance(add, CopyFile)
 
-    if not (
-        add.src.startswith("./")
-        or add.src.startswith("../")
-        or add.src.startswith("/")
+    if add.src.startswith("./") or add.src.startswith("../"):
+        add = replace(add, src=str(Path(add.src).absolute()))
+    elif not (
+        add.src.startswith("/")
         or add.src.startswith("http://")
         or add.src.startswith("https://")
         or add.src.startswith("git://")
@@ -107,10 +107,27 @@ def write_add(add: File, file: TextIO, temp_dir: Path):
         add = replace(add, src=find_file(add.src))
 
     opts = []
-    if add.chmod:
-        opts.append(f"--chmod={add.chmod}")
-    if add.chmod:
-        opts.append(f"--chmod={add.chmod}")
+    for k, v in add.to_object().items():
+        if k in ("src", "dst"):
+            continue
+        k = k.replace("_", "-")
+        match v:
+            case None:
+                continue
+            case list(x):
+                for item in x:
+                    opts.append(f"--{k}={v}")
+                continue
+
+            case True:
+                v_str = "true"
+            case False:
+                v_str = "false"
+            case _:
+                v_str = str(v)
+
+        opts.append(f"--{k}={v_str}")
+
     file.write(f"ADD {' '.join(opts)} {add.src} {add.dst}\n")
 
 
