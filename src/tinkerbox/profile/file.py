@@ -9,12 +9,15 @@ from tinkerbox.utils import split_fields, substitute
 
 @dataclass
 class File(ABC):
+    # TODO: Allow more ADD arguments.
     dst: str
     chmod: str | None = None
     chown: str | None = None
 
     @classmethod
     def from_object(cls, obj: Any) -> File:
+        if isinstance(obj, str):
+            return CopyFile.from_argument(obj)
         if not isinstance(obj, dict):
             raise TypeError("File object must be a dict")
 
@@ -77,6 +80,13 @@ class CopyFile(File):
     @classmethod
     def from_argument(cls, arg: str) -> Self:
         parts = split_fields(arg, ":")
+        # Fix urls.
+        if parts[0] in ("git", "http", "https"):
+            try:
+                parts[0] = parts[0] + ":" + parts.pop(1)
+            except IndexError:
+                raise ValueError(f"Incorrect file argument format: {arg}")
+
         match parts:
             case [src]:
                 return cls(src=src, dst=src)
@@ -110,6 +120,7 @@ class CopyFile(File):
         return obj
 
     def substitute(self, variables: dict[str, str]) -> Self:
+        # TODO: Handle files from config directories and built-ins.
         return replace(
             self,
             src=substitute(self.src, variables),

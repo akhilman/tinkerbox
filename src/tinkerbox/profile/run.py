@@ -10,6 +10,9 @@ class Run:
     Represents a `buildah run` command.
     """
 
+    # TODO: Add more RUN arguments.
+    # TODO: Support run as list of strings.
+
     command: str
     user: str
 
