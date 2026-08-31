@@ -14,10 +14,10 @@ def main():
 
     commands = parser.add_subparsers(dest="command", required=True, title="commands")
 
-    cmd = commands.add_parser("profiles", aliases=["pr"], help="manage profiles")
+    cmd = commands.add_parser("profile", aliases=["pr"], help="manage profiles")
     profile.setup_argparse(cmd)
 
-    cmd = commands.add_parser("images", aliases=["im"], help="manage container images")
+    cmd = commands.add_parser("image", aliases=["im"], help="manage container images")
     image.setup_argparse(cmd)
 
     # Parse arguments
