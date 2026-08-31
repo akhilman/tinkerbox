@@ -10,14 +10,23 @@ CONTAINER_USER = "@{CONTAINER_USER}"
 CONTAINER_HOME = "@{CONTAINER_HOME}"
 
 [[add]]
+src = "default-bootstrap.sh"
+dst = "/usr/local/sbin/bootstrap.sh"
+chown = "root"
+chmod = "755"
+
+[[add]]
 src = "default-entrypoint.sh"
 dst = "/usr/local/sbin/entrypoint.sh"
 chown = "root"
 chmod = "755"
 
 [[add]]
-src = "default-bootstrap.sh"
-dst = "/usr/local/sbin/bootstrap.sh"
+content = """
+#!/bin/sh
+exec $(getent passwd $(whoami) | cut -d: -f7)
+"""
+dst = "/usr/local/bin/shell"
 chown = "root"
 chmod = "755"
 
