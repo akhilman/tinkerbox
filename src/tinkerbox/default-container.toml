@@ -9,3 +9,9 @@ tmpfs-size = "256m"
 type = "tmpfs"
 destination = "/run"
 tmpfs-size = "64m"
+
+[[mounts]]
+type = "bind"
+src = "/etc/localtime"
+dst = "/etc/localtime"
+ro = true

@@ -4,6 +4,9 @@ from importlib.metadata import packages_distributions
 from pathlib import Path
 
 
+APP_ID = "io.github.akhilman.tinkerbox"
+
+
 def package_name() -> str:
 
     package = __package__
