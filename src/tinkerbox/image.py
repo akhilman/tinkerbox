@@ -33,16 +33,12 @@ def build_image(profile: ImageProfile, keep_tmp=False):
             assert profile.user
             assert profile.home
             uid = os.getuid()
-            gid = os.getgid()
             f.write(f"FROM {profile.from_image}\n")
             f.write("USER root\n")
-            f.write(
-                f"RUN groupadd --gid {gid} {profile.user} "
-                f"&& useradd --create-home --uid {uid} --gid {gid} --home-dir {profile.home} {profile.user}\n"
-            )
 
             for add in profile.add:
-                write_add(add, f, temp_dir)
+                if add.chown not in [profile.user, str(uid)]:
+                    write_add(add, f, temp_dir)
 
             if environment := {k: v for k, v in profile.environment.items() if v}:
                 f.write("ENV")
@@ -56,9 +52,11 @@ def build_image(profile: ImageProfile, keep_tmp=False):
 
             for run in per_user_run.get("root", []):
                 write_run(run, f)
+            for run in per_user_run.get("0", []):
+                write_run(run, f)
 
             for user, runs in per_user_run.items():
-                if user in (profile.user, "root"):
+                if user in (profile.user, str(uid), "root", "0"):
                     continue
                 f.write(f"USER {user}\n")
                 for run in runs:
@@ -66,7 +64,14 @@ def build_image(profile: ImageProfile, keep_tmp=False):
 
             f.write(f"USER {profile.user}:{profile.user}\n")
             f.write(f"WORKDIR {profile.home}\n")
+
+            for add in profile.add:
+                if add.chown in (profile.user, str(uid)):
+                    write_add(add, f, temp_dir)
+
             for run in per_user_run.get(profile.user, []):
+                write_run(run, f)
+            for run in per_user_run.get(str(uid), []):
                 write_run(run, f)
 
             if profile.entrypoint:
