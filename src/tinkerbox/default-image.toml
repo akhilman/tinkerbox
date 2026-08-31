@@ -1,8 +1,7 @@
-description = "Default Tinkerbox image profile. Support images: alpine, archlinux, debian, fedora, opensuse/tumbleweed and ubuntu. Other images with apk, apt, dnf or zypper may work but not tested."
+description = "Default Tinkerbox image profile. Support images: alpine, archlinux, debian, fedora, opensuse/tumbleweed and ubuntu. Other images with apk, apt, dnf, pacman or zypper may work but not tested."
 
 from = "debian"
 cmd = ["sudo", "/usr/local/sbin/entrypoint.sh"]
-# cmd = ["/usr/bin/sleep", "infinity"]
 
 [environment]
 CONTAINER_UID = "@{UID}"
