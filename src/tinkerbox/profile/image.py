@@ -8,7 +8,7 @@ from tinkerbox.profile.run import Run
 from tinkerbox.utils import normalize_string_list, random_string, substitute
 
 from . import Profile, ProfileKind
-from .file import File
+from .add import Add
 
 
 class ImageOverride(AliasEnum):
@@ -32,7 +32,7 @@ class ImageProfile(Profile):
     name: str | None = None
     user: str | None = None
     home: str | None = None
-    add: list[File] = field(default_factory=list)
+    add: list[Add] = field(default_factory=list)
     run: list[Run] = field(default_factory=list)
     environment: dict[str, str] = field(default_factory=dict)
     entrypoint: list[str] | str | None = None
@@ -74,7 +74,7 @@ class ImageProfile(Profile):
         if add := obj.pop("add", None):
             if not isinstance(add, list):
                 raise TypeError("Image's `add` field must be a list of dicts")
-            profile.add = [File.from_object(x) for x in add]
+            profile.add = [Add.from_object(x) for x in add]
 
         if run := obj.pop("run", None):
             if not isinstance(run, list):
@@ -153,9 +153,9 @@ class ImageProfile(Profile):
         if fill_unset or self.home:
             obj["home"] = self.home
         if fill_unset or self.add:
-            obj["add"] = [x.to_object() for x in self.add]
+            obj["add"] = [x.to_object(fill_unset=fill_unset) for x in self.add]
         if fill_unset or self.run:
-            obj["run"] = [x.to_object() for x in self.run]
+            obj["run"] = [x.to_object(fill_unset=fill_unset) for x in self.run]
         if fill_unset or self.environment:
             obj["environment"] = self.environment
         if fill_unset or self.entrypoint:
@@ -229,8 +229,8 @@ class ImageProfile(Profile):
 
         from_image = substitute(self.from_image, variables) if self.from_image else None
         name = variables["IMAGE_NAME"]
-        user = variables["USER"]
-        home = variables["HOME"]
+        user = variables["CONTAINER_USER"]
+        home = variables["CONTAINER_HOME"]
         add = [x.substitute(variables) for x in self.add]
         run = [x.substitute(variables) for x in self.run]
         environment = {k: substitute(v, variables) for k, v in self.environment.items()}

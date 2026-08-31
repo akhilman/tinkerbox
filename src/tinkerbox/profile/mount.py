@@ -38,9 +38,9 @@ class Mount:
         return cls(mount_type, options=options)
 
     @classmethod
-    def from_argument(cls, volume: str) -> Self:
+    def from_argument(cls, arg: str) -> Self:
         """Parse from type=TYPE,TYPE-SPECIFIC-OPTION[,...] string"""
-        parts = split_fields(volume, ",")
+        parts = split_fields(arg, ",")
 
         obj = {}
 
@@ -50,7 +50,7 @@ class Mount:
                 case [key, val]:
                     obj[key] = val
                 case [key]:
-                    obj[key] = None
+                    obj[key] = True
 
         return cls.from_object(obj)
 

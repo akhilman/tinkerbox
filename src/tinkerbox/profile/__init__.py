@@ -1,6 +1,5 @@
 from __future__ import annotations
-from tinkerbox import package_name, config_paths
-from collections.abc import Iterator
+from tinkerbox import config_paths
 import tinkerbox
 
 import importlib.resources

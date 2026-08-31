@@ -1,8 +1,8 @@
 description = "Default Tinkerbox image profile. Support images: alpine, archlinux, debian, fedora, opensuse/tumbleweed and ubuntu. Other images with apk, apt, dnf or zypper may work but not tested."
 
 from = "debian"
-# entrypoint=["/usr/local/sbin/entrypoint.sh"]
-cmd = ["/usr/bin/sleep", "infinity"]
+cmd = ["sudo", "/usr/local/sbin/entrypoint.sh"]
+# cmd = ["/usr/bin/sleep", "infinity"]
 
 [environment]
 CONTAINER_UID = "@{UID}"
@@ -11,22 +11,7 @@ CONTAINER_USER = "@{CONTAINER_USER}"
 CONTAINER_HOME = "@{CONTAINER_HOME}"
 
 [[add]]
-src = "/etc/localtime"
-dst = "/etc/localtime"
-chown = "root"
-
-[[add]]
 src = "default-entrypoint.sh"
-dst = "/usr/local/sbin/entrypoint-root.sh"
-chown = "root"
-chmod = "755"
-
-[[add]]
-content = """
-#!/bin/sh
-sudo /usr/local/sbin/entrypoint-root.sh
-sleep infinity
-"""
 dst = "/usr/local/sbin/entrypoint.sh"
 chown = "root"
 chmod = "755"
@@ -38,5 +23,5 @@ chown = "root"
 chmod = "755"
 
 [[run]]
-command = "/usr/local/sbin/bootstrap.sh"
+command = ["/bin/sh", "/usr/local/sbin/bootstrap.sh"]
 user = "root"
