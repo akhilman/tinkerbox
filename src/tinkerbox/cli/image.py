@@ -74,6 +74,7 @@ def add_update_image_args(parser: argparse.ArgumentParser):
 
 def profile_from_update_image_args(args: argparse.Namespace) -> ImageProfile:
     update_image_args = [
+        "from",
         "name",
         "user",
         "home",
