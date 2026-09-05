@@ -21,15 +21,6 @@ dst = "/usr/local/sbin/entrypoint.sh"
 chown = "root"
 chmod = "755"
 
-[[add]]
-content = """
-#!/bin/sh
-exec $(getent passwd $(whoami) | cut -d: -f7)
-"""
-dst = "/usr/local/bin/shell"
-chown = "root"
-chmod = "755"
-
 [[run]]
 command = ["/bin/sh", "/usr/local/sbin/bootstrap.sh"]
 user = "root"

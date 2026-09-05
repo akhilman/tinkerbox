@@ -26,6 +26,10 @@ def setup_argparse(parser: argparse.ArgumentParser):
     add_container_profile_args(cmd)
     cmd.set_defaults(func=create_container)
 
+    cmd = commands.add_parser("enter", aliases=["en"], help="enter to the container")
+    add_enter_args(cmd)
+    cmd.set_defaults(func=enter_container)
+
     cmd = commands.add_parser("profile", aliases=["pr"], help="manage image profile")
     tinkerbox.cli.profile.setup_argparse(cmd)
 
@@ -142,3 +146,14 @@ def create_container(args: argparse.Namespace):
         profile.extends = ["default"]
 
     tinkerbox.container.create(profile)
+
+
+def add_enter_args(parser: argparse.ArgumentParser):
+    parser.add_argument("--command", "-c", help="command to run")
+    parser.add_argument("--user", "-u", help="set user or UID to use")
+    parser.add_argument("container", help="container to enter")
+
+
+def enter_container(args: argparse.Namespace):
+    setup_logging(args.debug)
+    tinkerbox.container.enter(args.container, command=args.command, user=args.user)

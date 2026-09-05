@@ -102,6 +102,32 @@ def create(profile: ContainerProfile):
         shell.run_podman("container", "exec", *args, container_id, *command)
 
 
+def start(container_name: str) -> str:
+    return shell.run_podman_capture("container", "start", container_name).strip()
+
+
+def enter(container_name: str, command: str | None = None, user: str | None = None):
+    profile = extract_profile(container_name)
+    args = []
+
+    if command:
+        pass
+    elif profile.enter_command:
+        command = profile.enter_command
+    else:
+        command = "sh"
+    cmd_args = shlex.split(command)
+
+    if user:
+        args.append(f"--user={user}")
+
+    for env in profile.pass_environment:
+        args.append(f"--env={env}")
+
+    start(container_name)
+    shell.run_podman("container", "exec", "-it", *args, container_name, *cmd_args)
+
+
 def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
     passtrhough = profile.passthrough
     pass_profile = ContainerProfile()

@@ -1,4 +1,20 @@
 description = "Default Tinkerbox container profile. Meant to be used with default Tinkerbox image profile, but may work with other images."
+enter_command = "sh -c 'exec $(getent passwd $(whoami) | cut -d: -f7)'"
+
+pass_environment = [
+  "COLORTERM",
+  "DISPLAY",
+  "KITTY_WINDOW_ID",
+  "KITTY_PUBLIC_KEY",
+  "XDG_DATA_DIRS",
+  "XDG_SESSION_DESKTOP",
+  "XDG_RUNTIME_DIR",
+  "XDG_SESSION_TYPE",
+  "XDG_CURRENT_DESKTOP",
+  "XDG_SESSION_CLASS",
+  "XDG_SESSION_ID",
+  "XDG_SEAT",
+]
 
 [environment]
 CONTAINER_MANAGER = "tinkerbox"
