@@ -8,11 +8,12 @@ from collections import defaultdict
 from dataclasses import asdict
 from hashlib import sha1
 from pathlib import Path
+from subprocess import CalledProcessError
 from typing import TextIO
 
 import tinkerbox
-from tinkerbox import APP_ID, config_paths
-from tinkerbox.podman import run_podman
+from tinkerbox import APP_ID, TinkerboxError, config_paths
+from tinkerbox.podman import run_podman, run_podman_capture
 from tinkerbox.profile.add import Add, AddFile, AddText, AddUrl
 from tinkerbox.profile.image import ImageProfile
 from tinkerbox.profile.run import Run
@@ -207,3 +208,48 @@ def find_file(path) -> Path:
         return Path(str(built_in))
 
     raise FileNotFoundError(f"File not found: {path!r}")
+
+
+def is_exists(name: str) -> bool:
+    try:
+        run_podman_capture("image", "exists", name)
+    except CalledProcessError as exc:
+        if "Error: no such object" in exc.stderr:
+            return False
+        raise exc
+
+    return True
+
+
+def extract_profile(name: str) -> ImageProfile:
+    try:
+        profile_json = run_podman_capture(
+            "inspect",
+            "--format",
+            '{{index .Config.Labels "io.github.akhilman.tinkerbox.profile"}}',
+            name,
+        ).strip()
+    except CalledProcessError as exc:
+        if "Error: no such object" in exc.stderr:
+            raise ImageNotFoundError(name) from exc
+        raise exc
+
+    if not profile_json:
+        raise NonNativeImageError(name)
+
+    obj = json.loads(profile_json)
+    obj["profile_name"] = name
+    obj["profile_source"] = f"image:{name}"
+    return ImageProfile.from_object(obj)
+
+
+class ImageNotFoundError(TinkerboxError):
+    def __init__(self, image_name: str):
+        super().__init__(f"Image {image_name!r} not exists")
+        self.image_name = image_name
+
+
+class NonNativeImageError(TinkerboxError):
+    def __init__(self, image_name: str):
+        super().__init__(f"Image {image_name!r} is not tinkerbox image")
+        self.image_name = image_name

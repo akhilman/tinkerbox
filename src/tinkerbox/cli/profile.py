@@ -29,6 +29,12 @@ def setup_argparse(parser: argparse.ArgumentParser):
     cmd_cat.add_argument("profile", help="profile to show")
     cmd_cat.set_defaults(func=cat_profile)
 
+    cmd_extract = commands.add_parser(
+        "extract", help="extract profile from image or container"
+    )
+    cmd_extract.add_argument("source", help="source image or container")
+    cmd_extract.set_defaults(func=extract_profile)
+
 
 def list_profiles(args: argparse.Namespace):
     setup_logging(args.debug)
@@ -54,6 +60,24 @@ def cat_profile(args: argparse.Namespace):
 
     if args.flatten:
         profile = profile.flatten()
+    sys.stdout.write(
+        json.dumps(profile.to_object(fill_unset=True), sort_keys=True, indent=2)
+    )
+    sys.stdout.write("\n")
+
+
+def extract_profile(args: argparse.Namespace):
+    setup_logging(args.debug)
+
+    source = args.source
+    kind = ProfileKind(args.entity)  # TODO: Get rid of this enum.
+    match kind:
+        case ProfileKind.CONTAINER:
+            raise NotImplementedError
+        case ProfileKind.IMAGE:
+            profile = tinkerbox.image.extract_profile(source)
+        case _:
+            raise ValueError(f"Unexpected profile kind: {kind}")
     sys.stdout.write(
         json.dumps(profile.to_object(fill_unset=True), sort_keys=True, indent=2)
     )
