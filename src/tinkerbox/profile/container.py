@@ -25,12 +25,14 @@ class ContainerOverride(AliasEnum):
     VOLUMES = "volumes"
     COPY = "copy"
     EXEC = "exec"
+    PASS_ENV = "pass-env"
 
     @classmethod
     def aliases(cls) -> dict[str, "ContainerOverride"]:
         return {
             "d": ContainerOverride.DEVICES,
             "e": ContainerOverride.ENV,
+            "E": ContainerOverride.PASS_ENV,
             "m": ContainerOverride.MOUNTS,
             "n": ContainerOverride.NETWORKS,
             "p": ContainerOverride.PUBLISH,
@@ -77,6 +79,8 @@ class ContainerProfile(Profile):
     copy: list[Copy] = field(default_factory=list)
     exec: list[Exec] = field(default_factory=list)
     override: set[ContainerOverride] = field(default_factory=set)
+    pass_environment: set[str] = field(default_factory=set)
+    enter_command: str | None = None
 
     @staticmethod
     def kind() -> ProfileKind:
@@ -164,6 +168,20 @@ class ContainerProfile(Profile):
                 raise TypeError("Container's `exec` field should be a list of dicts")
             profile.exec = [Exec.from_object(x) for x in exec]
 
+        if pass_environment := obj.pop("pass_environment", None):
+            try:
+                pass_environment = normalize_string_list(pass_environment)
+            except TypeError:
+                raise TypeError(
+                    "Container's `pass_environment` field should be either list of strings or string"
+                )
+            profile.pass_environment = set(pass_environment)
+
+        if enter_command := obj.pop("enter_command", None):
+            if not isinstance(enter_command, str):
+                raise TypeError("Image's `enter_command` field should be a string")
+            profile.enter_command = enter_command
+
         if override := obj.pop("override", None):
             try:
                 override = normalize_string_list(override)
@@ -206,6 +224,10 @@ class ContainerProfile(Profile):
             obj["exec"] = [x.to_object() for x in self.exec]
         if fill_unset or self.override:
             obj["override"] = list(sorted(map(str, self.override)))
+        if fill_unset or self.pass_environment:
+            obj["pass_environment"] = list(sorted(self.pass_environment))
+        if fill_unset or self.enter_command:
+            obj["enter_command"] = self.enter_command
 
         return obj
 
@@ -256,6 +278,14 @@ class ContainerProfile(Profile):
             merged.exec.extend(self.exec)
         merged.exec.extend(other.exec)
 
+        if not other.override & {ContainerOverride.PASS_ENV, ContainerOverride.ALL}:
+            merged.pass_environment.update(self.pass_environment)
+        merged.pass_environment.update(other.pass_environment)
+
+        merged.enter_command = self.enter_command
+        if other.enter_command is not None:
+            merged.enter_command = other.enter_command
+
         merged.override = self.override | other.override
 
         return merged
@@ -286,4 +316,9 @@ class ContainerProfile(Profile):
             volumes=[x.substitute(variables) for x in self.volumes],
             copy=[x.substitute(variables) for x in self.copy],
             exec=[x.substitute(variables) for x in self.exec],
+            enter_command=(
+                substitute(self.enter_command, variables)
+                if self.enter_command
+                else None
+            ),
         )
