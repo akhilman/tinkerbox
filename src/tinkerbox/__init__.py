@@ -40,3 +40,7 @@ def config_paths() -> Iterator[Path]:
         dir = dir / pkg_name
         if dir.is_dir():
             yield dir
+
+
+class TinkerboxError(Exception):
+    pass

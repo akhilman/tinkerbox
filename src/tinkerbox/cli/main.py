@@ -1,4 +1,7 @@
 import argparse
+import sys
+
+from tinkerbox import TinkerboxError
 
 from . import image
 
@@ -19,7 +22,11 @@ def main():
     # Parse arguments
     args = parser.parse_args()
 
-    args.func(args)
+    try:
+        args.func(args)
+    except TinkerboxError as exc:
+        sys.stderr.write(f"{exc}\n")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
