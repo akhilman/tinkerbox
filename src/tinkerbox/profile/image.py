@@ -250,7 +250,7 @@ class ImageProfile(Profile):
             cmd = None
 
         return replace(
-            super().substitute(variables=variables),
+            self,
             from_image=from_image,
             name=name,
             user=user,

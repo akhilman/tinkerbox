@@ -136,18 +136,12 @@ class Profile(ABC):
 
         return variables
 
+    @abstractmethod
     def substitute(self: T, variables: dict[str, str] | None = None) -> T:
         """
         Substitutes `@{VAR}` in fields.
         """
-
-        variables = {**self.variables(), **(variables or {})}
-
-        return replace(
-            self,
-            user=variables["USER"],
-            home=variables["HOME"],
-        )
+        raise NotImplementedError
 
     @classmethod
     def load(cls: type[T], name: str) -> T:
