@@ -23,6 +23,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
     )
     cmd.add_argument("--keep-tmp", action="store_true", help="keep temporary files")
     add_image_args(cmd)
+    add_image_profile_args(cmd)
     cmd.set_defaults(func=build_image)
 
     cmd = commands.add_parser("profile", aliases=["pr"], help="manage image profile")
@@ -33,10 +34,9 @@ def add_image_args(parser: argparse.ArgumentParser):
     parser.add_argument("--from", "-f", help="base image")
     parser.add_argument("name", help="image name")
     parser.add_argument("profile", nargs="*", help="profile to use")
-    add_update_image_args(parser)
 
 
-def add_update_image_args(parser: argparse.ArgumentParser):
+def add_image_profile_args(parser: argparse.ArgumentParser):
     parser.add_argument("--user", "-u", help="user name (host user name by default)")
     parser.add_argument(
         "--home", help="set user's home directory (same as host's by default)"
@@ -45,21 +45,21 @@ def add_update_image_args(parser: argparse.ArgumentParser):
         "--add",
         "-a",
         action="append",
-        help="add file to the image",
+        help="add a file to the image",
         metavar="[HOST-PATH|RESOURCE-NAME|URL:]CONTAINER-PATH[:[chown=USER,][chmod=MODE]]",
     )
     parser.add_argument(
         "--run",
         "-r",
         action="append",
-        help="run command inside the image",
+        help="run a command inside the image",
         metavar="[USER:]COMMAND",
     )
     parser.add_argument(
         "--env",
         "-e",
         action="append",
-        help="set environment variable",
+        help="set an environment variable",
         metavar="KEY=VAL",
     )
     parser.add_argument("--entrypoint", help="set the image entry point")
@@ -72,8 +72,9 @@ def add_update_image_args(parser: argparse.ArgumentParser):
     )
 
 
-def profile_from_update_image_args(args: argparse.Namespace) -> ImageProfile:
+def profile_opts_from_cli_args(args: argparse.Namespace) -> dict["str", Any]:
     update_image_args = [
+        "extends",
         "from",
         "name",
         "user",
@@ -85,9 +86,7 @@ def profile_from_update_image_args(args: argparse.Namespace) -> ImageProfile:
         "cmd",
         "override",
     ]
-    image_options = {k: v for k, v in vars(args).items() if k in update_image_args}
-    profile = ImageProfile.from_object(image_options)
-    return profile
+    return {k: v for k, v in vars(args).items() if k in update_image_args}
 
 
 def list_images(args: argparse.Namespace):
@@ -101,7 +100,8 @@ def build_image(args: argparse.Namespace):
     setup_logging(args.debug)
     print(args)
 
-    profile = profile_from_update_image_args(args)
+    obj = profile_opts_from_cli_args(args)
+    profile = ImageProfile.from_object(obj)
     if args.profile:
         profile.extends = args.profile
     else:
