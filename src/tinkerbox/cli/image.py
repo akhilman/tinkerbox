@@ -1,20 +1,21 @@
+from typing import Any
 import argparse
 
 import tinkerbox.image
+import tinkerbox.cli.profile
 from tinkerbox.logging import setup_logging
 from tinkerbox.profile.image import ImageOverride, ImageProfile
 
 
 def setup_argparse(parser: argparse.ArgumentParser):
     commands = parser.add_subparsers(
-        dest="image_command",
+        dest="command",
         required=True,
         title="image commands",
         metavar="COMMAND",
     )
 
     cmd = commands.add_parser("list", aliases=["ls"], help="list images")
-    add_image_args(cmd)
     cmd.set_defaults(func=list_images)
 
     cmd = commands.add_parser(
@@ -24,9 +25,8 @@ def setup_argparse(parser: argparse.ArgumentParser):
     add_image_args(cmd)
     cmd.set_defaults(func=build_image)
 
-    cmd = commands.add_parser("profile", aliases=["pr"], help="show image's profile")
-    add_image_args(cmd)
-    cmd.set_defaults(func=cat_image_profile)
+    cmd = commands.add_parser("profile", aliases=["pr"], help="manage image profile")
+    tinkerbox.cli.profile.setup_argparse(cmd)
 
 
 def add_image_args(parser: argparse.ArgumentParser):
