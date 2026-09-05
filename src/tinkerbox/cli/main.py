@@ -1,6 +1,5 @@
 import argparse
 
-from . import profile
 from . import image
 
 
@@ -12,12 +11,9 @@ def main():
 
     parser.add_argument("--debug", action="store_true", help="enable debug output")
 
-    commands = parser.add_subparsers(dest="command", required=True, title="commands")
+    entity = parser.add_subparsers(dest="entity", required=True, title="entities")
 
-    cmd = commands.add_parser("profile", aliases=["pr"], help="manage profiles")
-    profile.setup_argparse(cmd)
-
-    cmd = commands.add_parser("image", aliases=["im"], help="manage container images")
+    cmd = entity.add_parser("image", aliases=["im"], help="manage container images")
     image.setup_argparse(cmd)
 
     # Parse arguments

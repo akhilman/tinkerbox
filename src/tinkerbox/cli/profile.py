@@ -2,6 +2,7 @@ import argparse
 import json
 import sys
 
+import tinkerbox.image
 import tinkerbox.profile
 from tinkerbox.logging import setup_logging
 from tinkerbox.profile import ProfileKind
@@ -10,11 +11,8 @@ from tinkerbox.profile.image import ImageProfile
 
 
 def setup_argparse(parser: argparse.ArgumentParser):
-    parser.add_argument(
-        "kind", choices=list(ProfileKind.all_values()), help="profile kind to show"
-    )
     commands = parser.add_subparsers(
-        dest="profile command",
+        dest="sub_command",
         required=True,
         title="profile commands",
         metavar="COMMAND",
@@ -35,7 +33,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
 def list_profiles(args: argparse.Namespace):
     setup_logging(args.debug)
 
-    kind = ProfileKind(args.kind)
+    kind = ProfileKind(args.entity)
     profiles = tinkerbox.profile.list_profiles(kind)
     for name in profiles:
         sys.stdout.write(f"{name}\n")
@@ -45,7 +43,7 @@ def cat_profile(args: argparse.Namespace):
     setup_logging(args.debug)
 
     name = args.profile
-    kind = ProfileKind(args.kind)
+    kind = ProfileKind(args.entity)
     match kind:
         case ProfileKind.CONTAINER:
             profile = ContainerProfile.load(name)
