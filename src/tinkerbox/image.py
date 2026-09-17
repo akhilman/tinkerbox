@@ -13,10 +13,10 @@ from typing import TextIO
 
 import tinkerbox
 from tinkerbox import APP_ID, TinkerboxError, config_paths
-from tinkerbox.podman import run_podman, run_podman_capture
 from tinkerbox.profile.add import Add, AddFile, AddText, AddUrl
 from tinkerbox.profile.image import ImageProfile
 from tinkerbox.profile.run import Run
+from tinkerbox import shell
 
 
 def build_image(profile: ImageProfile, keep_tmp=False):
@@ -96,7 +96,7 @@ def build_image(profile: ImageProfile, keep_tmp=False):
             f.write(f"LABEL {APP_ID}.manager=true\n")
             f.write(f"LABEL {APP_ID}.profile={json.dumps(profile_json)}\n")
 
-        run_podman("build", f"--tag={profile.name}", str(temp_dir))
+        shell.run_podman("build", f"--tag={profile.name}", str(temp_dir))
 
 
 def write_add(add: Add, file: TextIO, temp_dir: Path):
@@ -212,7 +212,7 @@ def find_file(path) -> Path:
 
 def is_exists(name: str) -> bool:
     try:
-        run_podman_capture("image", "exists", name)
+        shell.run_podman_capture("image", "exists", name)
     except CalledProcessError as exc:
         if "Error: no such object" in exc.stderr:
             return False
@@ -223,10 +223,9 @@ def is_exists(name: str) -> bool:
 
 def extract_profile(name: str) -> ImageProfile:
     try:
-        profile_json = run_podman_capture(
+        profile_json = shell.run_podman_capture(
             "inspect",
-            "--format",
-            '{{index .Config.Labels "io.github.akhilman.tinkerbox.profile"}}',
+            f'--format={{{{index .Config.Labels "{APP_ID}.profile"}}}}',
             name,
         ).strip()
     except CalledProcessError as exc:
