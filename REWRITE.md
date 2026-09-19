@@ -1,16 +1,12 @@
+## TODO
+- [ ] Update container timezone.
+- [ ] Add `--pull` to `image build`.
+- [ ] Add `--replace` to `container create`.
+- [ ] Make container name in `container create` optional and use image name instead.
+- [ ] The option `profile` must take a name or a file path, maybe even url. There could be a generic function to read content from URI (resource|file|url).
+- [ ] Expand `~` to the actual home path inside containers for the image's copy option.
 
-## Subcommands
-- [ ] ~~profile~~ move to image/container
-	- [ ] container
-		- [ ] ls
-		- [ ] cat
-	- [ ] image
-		- [x] ls
-		- [x] cat
-		- [ ] ~~create~~
-		- [ ] ~~edit~~
-		- [ ] ~~rm~~
-		- [ ] ~~rename~~
+### Subcommands
 - [ ] image
 	- [x] build
 	- [ ] info
@@ -19,12 +15,12 @@
 	- [ ] rm
 	- [ ] tree
 	- [ ] profile
-		- [ ] ls
-		- [ ] cat
-		- [ ] extract <- same as cat, but dumps profile from image
+		- [x] ls
+		- [x] cat
+		- [x] extract - same as cat, but dumps profile from image
 - [ ] container
 	- [ ] commit
-	- [ ] create
+	- [x] create
 	- [ ] enter
 	- [ ] exec - executes single command in chosen container
 	- [ ] info
@@ -35,18 +31,20 @@
 	- [ ] start
 	- [ ] stop
 	- [ ] profile
-		- [ ] ls
-		- [ ] cat
-		- [ ] dump <- same as cat, but dumps profile from image
+		- [x] ls
+		- [x] cat
+		- [x] extract - same as cat, but dumps profile from image
 - [ ] volume
 	- [ ] ls
 	- [ ] rm
 	- [ ] info
-- [ ] run <image> <command> - run task in ephemeral container and delete it immediately
+- [ ] create - shortcut to build an image and create an container with less control using only container profile (maybe use untagged images)
+- [ ] ls - list containers and volumes
+- [ ] upgrade - update an image and rebase the container, works only with containers without customized images
+- [ ] stop - alias for container stop
+- [ ] enter - alias for container enter
+- [ ] rm - removes the container and removes the image if it is not customized and not used anywhere else
 
-Make container name in `container create` optional and use image name instead.
-
-The option `profile` must take a name or a file path, maybe even url. There could be a generic function to read content from URI (resource|file|url).
 
 ## Notes
 ### Enter to container
