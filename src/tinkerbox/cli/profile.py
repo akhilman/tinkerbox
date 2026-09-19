@@ -2,6 +2,7 @@ import argparse
 import json
 import sys
 
+import tinkerbox.container
 import tinkerbox.image
 import tinkerbox.profile
 from tinkerbox.logging import setup_logging
@@ -73,7 +74,7 @@ def extract_profile(args: argparse.Namespace):
     kind = ProfileKind(args.entity)  # TODO: Get rid of this enum.
     match kind:
         case ProfileKind.CONTAINER:
-            raise NotImplementedError
+            profile = tinkerbox.container.extract_profile(source)
         case ProfileKind.IMAGE:
             profile = tinkerbox.image.extract_profile(source)
         case _:

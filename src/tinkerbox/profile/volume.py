@@ -34,9 +34,9 @@ class Volume:
         if not isinstance(source, str | None):
             raise TypeError("Volume's `source` field should be a string")
 
-        options = obj.pop("options", list)
+        options = obj.pop("options", [])
         if isinstance(options, str):
-            options = set(split_fields(options, ","))
+            options = split_fields(options, ",")
         elif not isinstance(options, list):
             raise TypeError(
                 "Volume's `options` field must be string or list of strings"
@@ -47,7 +47,7 @@ class Volume:
                 f"Volume object has unexpected fields: {', '.join(obj.keys())}"
             )
 
-        return cls(target=target, source=source, options=options)
+        return cls(target=target, source=source, options=set(options))
 
     @classmethod
     def from_argument(cls, volume: str) -> Self:
