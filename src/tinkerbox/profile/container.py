@@ -1,3 +1,5 @@
+from tinkerbox.profile.copy import Copy
+from tinkerbox.profile.exec import Exec
 from dataclasses import dataclass, field, replace
 from typing import Any, Self
 
@@ -21,6 +23,8 @@ class ContainerOverride(AliasEnum):
     PASSTHROUGH = "passthrough"
     PUBLISH = "publish"
     VOLUMES = "volumes"
+    COPY = "copy"
+    EXEC = "exec"
 
     @classmethod
     def aliases(cls) -> dict[str, "ContainerOverride"]:
@@ -32,10 +36,13 @@ class ContainerOverride(AliasEnum):
             "p": ContainerOverride.PUBLISH,
             "s": ContainerOverride.PASSTHROUGH,
             "v": ContainerOverride.VOLUMES,
+            "c": ContainerOverride.COPY,
+            "x": ContainerOverride.EXEC,
         }
 
 
 class Passthrough(AliasEnum):
+    ALL = "all"
     DBUS = "dbus"
     GPU = "gpu"
     PIPEWIRE = "pipewire"
@@ -46,18 +53,20 @@ class Passthrough(AliasEnum):
     @classmethod
     def aliases(cls) -> dict[str, "Passthrough"]:
         return {
+            "a": Passthrough.ALL,
             "pw": Passthrough.PIPEWIRE,
             "pa": Passthrough.PULSEAUDIO,
             "x": Passthrough.X11,
             "w": Passthrough.WAYLAND,
             "g": Passthrough.GPU,
-            "d": Passthrough.DBUS,
+            "b": Passthrough.DBUS,
         }
 
 
 @dataclass
 class ContainerProfile(Profile):
     name: str | None = None
+    image: str | None = None
     environment: dict[str, str] = field(default_factory=dict)
     passthrough: set[Passthrough] = field(default_factory=set)
     devices: list[Device] = field(default_factory=list)
@@ -65,6 +74,8 @@ class ContainerProfile(Profile):
     volumes: list[Volume] = field(default_factory=list)
     networks: list[Network] = field(default_factory=list)
     publish: list[Publish] = field(default_factory=list)
+    copy: list[Copy] = field(default_factory=list)
+    exec: list[Exec] = field(default_factory=list)
     override: set[ContainerOverride] = field(default_factory=set)
 
     @staticmethod
@@ -83,6 +94,11 @@ class ContainerProfile(Profile):
             if not isinstance(name, str):
                 raise TypeError("Image's `name` field should be a string")
             profile.name = name
+
+        if image := obj.pop("image", None):
+            if not isinstance(image, str):
+                raise TypeError("Image's `image` field should be a string")
+            profile.image = image
 
         if environment := obj.pop("environment", obj.pop("env", None)):
             if isinstance(environment, dict) and all(
@@ -138,6 +154,16 @@ class ContainerProfile(Profile):
                 raise TypeError("Container's `publish` field should be a list of dicts")
             profile.publish = [Publish.from_object(x) for x in publish]
 
+        if copy := obj.pop("copy", None):
+            if not isinstance(copy, list):
+                raise TypeError("Container's `copy` field should be a list of dicts")
+            profile.copy = [Copy.from_object(x) for x in copy]
+
+        if exec := obj.pop("exec", None):
+            if not isinstance(exec, list):
+                raise TypeError("Container's `exec` field should be a list of dicts")
+            profile.exec = [Exec.from_object(x) for x in exec]
+
         if override := obj.pop("override", None):
             try:
                 override = normalize_string_list(override)
@@ -158,6 +184,8 @@ class ContainerProfile(Profile):
         obj = super().to_object(fill_unset)
         if fill_unset or self.name:
             obj["name"] = self.name
+        if fill_unset or self.image:
+            obj["image"] = self.image
         if fill_unset or self.passthrough:
             obj["passthrough"] = list(sorted(map(str, self.passthrough)))
         if fill_unset or self.environment:
@@ -172,6 +200,10 @@ class ContainerProfile(Profile):
             obj["publish"] = [x.to_object() for x in self.publish]
         if fill_unset or self.devices:
             obj["devices"] = [x.to_object() for x in self.devices]
+        if fill_unset or self.copy:
+            obj["copy"] = [x.to_object() for x in self.copy]
+        if fill_unset or self.exec:
+            obj["exec"] = [x.to_object() for x in self.exec]
         if fill_unset or self.override:
             obj["override"] = list(sorted(map(str, self.override)))
 
@@ -183,6 +215,10 @@ class ContainerProfile(Profile):
         merged.name = self.name
         if other.name is not None:
             merged.name = other.name
+
+        merged.image = self.image
+        if other.image is not None:
+            merged.image = other.image
 
         if not other.override & {ContainerOverride.ENV, ContainerOverride.ALL}:
             merged.environment.update(**self.environment)
@@ -212,6 +248,14 @@ class ContainerProfile(Profile):
             merged.publish.extend(self.publish)
         merged.publish.extend(other.publish)
 
+        if not other.override & {ContainerOverride.COPY, ContainerOverride.ALL}:
+            merged.copy.extend(self.copy)
+        merged.copy.extend(other.copy)
+
+        if not other.override & {ContainerOverride.EXEC, ContainerOverride.ALL}:
+            merged.exec.extend(self.exec)
+        merged.exec.extend(other.exec)
+
         merged.override = self.override | other.override
 
         return merged
@@ -219,6 +263,8 @@ class ContainerProfile(Profile):
     def variables(self) -> dict[str, str]:
         variables = super().variables()
         # TODO: Load variables form image.
+        if image := self.image:
+            variables["CONTAINER_IMAGE"] = image
         variables["CONTAINER_NAME"] = (
             substitute(self.name, variables)
             if self.name
@@ -228,15 +274,16 @@ class ContainerProfile(Profile):
 
     def substitute(self, variables: dict[str, str] | None = None) -> Self:
         variables = {**self.variables(), **(variables or {})}
-        environment = {k: substitute(v, variables) for k, v in self.environment}
-        devices = [x.substitute(variables) for x in self.devices]
-        mounts = [x.substitute(variables) for x in self.mounts]
-        volumes = [x.substitute(variables) for x in self.volumes]
-        # TODO: Substitute passthrough.
         return replace(
-            super().substitute(variables=variables),
-            environment=environment,
-            devices=devices,
-            mounts=mounts,
-            volumes=volumes,
+            self,
+            name=variables.get("CONTAINER_NAME", self.name),
+            image=variables.get("CONTAINER_IMAGE", self.image),
+            environment={
+                k: substitute(v, variables) for k, v in self.environment.items()
+            },
+            devices=[x.substitute(variables) for x in self.devices],
+            mounts=[x.substitute(variables) for x in self.mounts],
+            volumes=[x.substitute(variables) for x in self.volumes],
+            copy=[x.substitute(variables) for x in self.copy],
+            exec=[x.substitute(variables) for x in self.exec],
         )

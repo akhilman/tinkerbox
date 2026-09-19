@@ -3,7 +3,7 @@ import sys
 
 from tinkerbox import TinkerboxError
 
-from . import image
+from . import container, image
 
 
 def main():
@@ -18,6 +18,11 @@ def main():
 
     cmd = entity.add_parser("image", aliases=["im"], help="manage container images")
     image.setup_argparse(cmd)
+
+    cmd = entity.add_parser(
+        "container", aliases=["ct"], help="manage container containers"
+    )
+    container.setup_argparse(cmd)
 
     # Parse arguments
     args = parser.parse_args()

@@ -242,6 +242,25 @@ def extract_profile(name: str) -> ImageProfile:
     return ImageProfile.from_object(obj)
 
 
+def extract_user_and_group(name: str) -> tuple[str, str]:
+    try:
+        user_group = shell.run_podman_capture(
+            "inspect",
+            "--format={{.Config.User}}",
+            name,
+        ).strip()
+    except CalledProcessError as exc:
+        if "Error: no such object" in exc.stderr:
+            raise ImageNotFoundError(name) from exc
+        raise exc
+
+    assert user_group
+    assert ":" in user_group
+
+    user, group = user_group.rsplit(":", 1)
+    return (user, group)
+
+
 class ImageNotFoundError(TinkerboxError):
     def __init__(self, image_name: str):
         super().__init__(f"Image {image_name!r} not exists")

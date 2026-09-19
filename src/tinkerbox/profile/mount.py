@@ -11,7 +11,7 @@ class Mount:
     """
 
     mount_type: str
-    options: dict[str, str | None] = field(default_factory=dict)
+    options: dict[str, str | bool | None] = field(default_factory=dict)
 
     @classmethod
     def from_object(cls, obj: Any) -> Self:
@@ -31,7 +31,8 @@ class Mount:
 
         options = {k: (v if v else None) for k, v in obj.items()}
         if not all(
-            isinstance(k, str) and isinstance(v, str | None) for k, v in options.items()
+            isinstance(k, str) and isinstance(v, str | bool | None)
+            for k, v in options.items()
         ):
             raise TypeError("Mount options should be strings or nils")
 
@@ -39,10 +40,16 @@ class Mount:
 
     @classmethod
     def from_argument(cls, arg: str) -> Self:
-        """Parse from type=TYPE,TYPE-SPECIFIC-OPTION[,...] string"""
-        parts = split_fields(arg, ",")
-
+        """Parse from (type=TYPE,|TYPE:)TYPE-SPECIFIC-OPTION[,...] string"""
+        parts = split_fields(arg, ":", 1)
         obj = {}
+        match parts:
+            case [mount_type, rest]:
+                obj["type"] = mount_type
+            case [rest]:
+                pass
+
+        parts = split_fields(rest, ",")
 
         for part in parts:
             key_val = split_fields(part, "=", 1)
@@ -54,13 +61,13 @@ class Mount:
 
         return cls.from_object(obj)
 
-    def to_object(self) -> dict[str, str | None]:
+    def to_object(self) -> dict[str, str | bool | None]:
         return {"type": self.mount_type, **self.options}
 
     def to_argument(self) -> str:
-        """Convert to Podman --volume format: type=TYPE,TYPE-SPECIFIC-OPTION[,...]"""
+        """Convert to Podman --mount format: type=TYPE,TYPE-SPECIFIC-OPTION[,...]"""
 
-        arg = f"{self.mount_type}"
+        arg = f"type={self.mount_type}"
         for key, val in self.options.items():
             if val:
                 arg += f",{key}={val}"
@@ -73,7 +80,7 @@ class Mount:
         return replace(
             self,
             options={
-                k: (substitute(v, variables) if v else None)
+                k: (substitute(v, variables) if isinstance(v, str) else v)
                 for k, v in self.options.items()
             },
         )

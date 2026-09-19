@@ -2,16 +2,14 @@ description = "Default Tinkerbox container profile. Meant to be used with defaul
 
 [[mounts]]
 type = "tmpfs"
-destination = "/tmp"
-tmpfs-size = "256m"
+dst = "/tmp"
+tmpfs-size = "1g"
 
 [[mounts]]
 type = "tmpfs"
-destination = "/run"
+dst = "/run"
 tmpfs-size = "64m"
 
-[[mounts]]
-type = "bind"
-src = "/etc/localtime"
-dst = "/etc/localtime"
-ro = true
+[[volumes]]
+target = "/home"
+source = "@{CONTAINER_NAME}-home"
