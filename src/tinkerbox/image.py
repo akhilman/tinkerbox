@@ -91,8 +91,7 @@ def build_image(profile: ImageProfile, keep_tmp=False):
                     f.write(profile.cmd)
                 f.write("\n")
 
-            profile_json = json.dumps(profile.to_object(), separators=(",", ":"))
-            f.write('LABEL manager="tinkerbox"\n')
+            profile_json = json.dumps(profile.to_object())
             f.write(f"LABEL {APP_ID}.manager=true\n")
             f.write(f"LABEL {APP_ID}.profile={json.dumps(profile_json)}\n")
 
@@ -221,37 +220,43 @@ def is_exists(name: str) -> bool:
     return True
 
 
-def extract_profile(name: str) -> ImageProfile:
+def extract_profile(image_name: str) -> ImageProfile:
     try:
         profile_json = shell.run_podman_capture(
+            "image",
             "inspect",
             f'--format={{{{index .Config.Labels "{APP_ID}.profile"}}}}',
-            name,
+            image_name,
         ).strip()
     except CalledProcessError as exc:
         if "Error: no such object" in exc.stderr:
-            raise ImageNotFoundError(name) from exc
+            raise ImageNotFoundError(image_name) from exc
         raise exc
 
     if not profile_json:
-        raise NonNativeImageError(name)
+        raise NonNativeImageError(image_name)
 
     obj = json.loads(profile_json)
-    obj["profile_name"] = name
-    obj["profile_source"] = f"image:{name}"
+
+    if not isinstance(obj, dict):
+        raise NonNativeImageError(image_name)
+
+    obj["profile_name"] = image_name
+    obj["profile_source"] = f"image:{image_name}"
+
     return ImageProfile.from_object(obj)
 
 
-def extract_user_and_group(name: str) -> tuple[str, str]:
+def extract_user_and_group(image_name: str) -> tuple[str, str]:
     try:
         user_group = shell.run_podman_capture(
             "inspect",
             "--format={{.Config.User}}",
-            name,
+            image_name,
         ).strip()
     except CalledProcessError as exc:
         if "Error: no such object" in exc.stderr:
-            raise ImageNotFoundError(name) from exc
+            raise ImageNotFoundError(image_name) from exc
         raise exc
 
     assert user_group

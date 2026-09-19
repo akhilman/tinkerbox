@@ -26,6 +26,7 @@ def create(profile: ContainerProfile):
 
     image_profile = tinkerbox.image.extract_profile(image)
     profile = flat_profile.substitute(image_profile.variables())
+
     args = []
 
     if profile.passthrough:
@@ -41,11 +42,6 @@ def create(profile: ContainerProfile):
     # Keep user and group ids.
     args.append("--userns=keep-id")
     args.append("--group-add=keep-groups")
-
-    profile_json = json.dumps(profile.to_object(), separators=(",", ":"))
-    args.append('--label=manager="tinkerbox"')
-    args.append(f"--label={APP_ID}.manager=true")
-    args.append(f"--label={APP_ID}.profile={json.dumps(profile_json)}")
 
     # Bypass SELinux restrictions on Fedora host.
     args.append("--security-opt=label=type:container_runtime_t")
@@ -67,6 +63,10 @@ def create(profile: ContainerProfile):
 
     for pub in profile.publish:
         args.append(f"--publish={pub.to_argument()}")
+
+    profile_json = json.dumps(flat_profile.to_object())
+    args.append(f"--label={APP_ID}.manager=true")
+    args.append(f"--label={APP_ID}.profile={profile_json}")
 
     container_id = shell.run_podman_capture(
         "run",
@@ -245,8 +245,42 @@ def is_exists(name: str) -> bool:
     return True
 
 
-def extract_profile(container: str) -> ContainerProfile:
-    raise NotImplementedError
+def extract_profile(container_name: str) -> ContainerProfile:
+    try:
+        profile_json = shell.run_podman_capture(
+            "container",
+            "inspect",
+            f'--format={{{{index .Config.Labels "{APP_ID}.profile"}}}}',
+            container_name,
+        ).strip()
+    except CalledProcessError as exc:
+        if "Error: no such object" in exc.stderr:
+            raise ContainerNotFoundError(container_name) from exc
+        raise exc
+
+    if not profile_json:
+        raise NonNativeContainerError(container_name)
+
+    obj = json.loads(profile_json)
+    if not isinstance(obj, dict):
+        raise NonNativeContainerError(container_name)
+
+    obj["profile_name"] = container_name
+    obj["profile_source"] = f"container:{container_name}"
+
+    return ContainerProfile.from_object(obj)
+
+
+class ContainerNotFoundError(TinkerboxError):
+    def __init__(self, container_name: str):
+        super().__init__(f"Container {container_name!r} not exists")
+        self.image_name = container_name
+
+
+class NonNativeContainerError(TinkerboxError):
+    def __init__(self, container_name: str):
+        super().__init__(f"Container {container_name!r} is not tinkerbox container")
+        self.image_name = container_name
 
 
 class ImageNotSpecifiedError(TinkerboxError):
