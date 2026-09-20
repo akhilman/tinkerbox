@@ -1,5 +1,10 @@
 description = "Default Tinkerbox container profile. Meant to be used with default Tinkerbox image profile, but may work with other images."
 
+[environment]
+CONTAINER_MANAGER = "tinkerbox"
+HOME = "@{CONTAINER_HOME}"
+USER = "@{CONTAINER_USER}"
+
 [[mounts]]
 type = "tmpfs"
 dst = "/tmp"
