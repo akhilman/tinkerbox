@@ -71,7 +71,7 @@ def add_container_profile_args(parser: argparse.ArgumentParser):
         "-x",
         action="append",
         help="execute a command inside the container",
-        metavar="[USER:]COMMAND",
+        metavar="[USER:[WORKDIR:]]COMMAND",
     )
     parser.add_argument(
         "--mount",
