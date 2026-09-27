@@ -1,5 +1,3 @@
-from tinkerbox.profile.copy import Copy
-from tinkerbox.profile.exec import Exec
 from dataclasses import dataclass, field, replace
 from typing import Any, Self
 
@@ -7,7 +5,9 @@ from tinkerbox.alias_enum import AliasEnum
 from tinkerbox.utils import normalize_string_list, random_string, substitute
 
 from . import Profile, ProfileKind
+from .copy import Copy
 from .device import Device
+from .exec import Exec
 from .mount import Mount
 from .network import Network
 from .publish import Publish
