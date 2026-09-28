@@ -1,5 +1,5 @@
 ## TODO
-- [ ] Update container timezone.
+- [ ] Update container timezone (see below).
 - [ ] Add `--pull` to `image build`.
 - [ ] Add `--replace` to `container create`.
 - [ ] Make container name in `container create` optional and use image name instead.
@@ -74,3 +74,43 @@ If the new container has a new or empty mountpoint in place of directory in the 
 ### Passthrough
 - Try `--gpus`.
 - Try `pw-dump` to get current pipewire socket name
+
+### Timezone
+
+```
+import os
+
+def get_timezone_flags() -> list[str]:
+    flags = []
+    
+    # 1. Проверяем и пробрасываем /etc/localtime (работает на всех дистрибутивах)
+    if os.path.exists("/etc/localtime"):
+        flags.extend(["-v", "/etc/localtime:/etc/localtime:ro"])
+        
+    # 2. Проверяем и пробрасываем /etc/timezone (нужно для Debian/Ubuntu образов)
+    if os.path.exists("/etc/timezone"):
+        flags.extend(["-v", "/etc/timezone:/etc/timezone:ro"])
+        
+    return flags
+```
+
+or
+
+```
+import os
+import time
+
+def get_timezone_env() -> list[str]:
+    # time.tzname вернет системное имя таймзоны хоста (например, 'MSK' или 'UTC')
+    # Но для Linux надежнее прочитать симлинк /etc/localtime, если он есть
+    try:
+        # Извлекаем что-то вроде "Europe/Moscow" из симлинка
+        tz_path = os.readlink("/etc/localtime")
+        tz_name = "/".join(tz_path.split("/")[-2:])
+        return ["-e", f"TZ={tz_name}"]
+    except Exception:
+        # Фолбэк на стандартную переменную хоста или UTC
+        tz_name = os.environ.get("TZ", "UTC")
+        return ["-e", f"TZ={tz_name}"]
+```
+
