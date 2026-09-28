@@ -2,7 +2,8 @@
 - [ ] Update container timezone (see below).
 - [ ] Add `--pull` to `image build`.
 - [ ] Add `--replace` to `container create`.
-- [ ] Make container name in `container create` optional and use image name instead.
+- [ ] Make image name in `image build` optional.
+- [ ] Make container name in `container create` optional.
 - [ ] The option `profile` must take a name or a file path, maybe even url. There could be a generic function to read content from URI (resource|file|url).
 - [ ] Expand `~` to the actual home path inside containers for the image's copy option.
 - [ ] Add `ignore_failure` to container's exec option.
