@@ -21,19 +21,19 @@ def setup_argparse(parser: argparse.ArgumentParser):
     cmd = commands.add_parser(
         "build", aliases=["bd"], help="build an image from profile"
     )
-    cmd.add_argument("--keep-tmp", action="store_true", help="keep temporary files")
-    add_image_args(cmd)
-    add_image_profile_args(cmd)
+    add_build_args(cmd)
     cmd.set_defaults(func=build_image)
 
     cmd = commands.add_parser("profile", aliases=["pr"], help="manage image profile")
     tinkerbox.cli.profile.setup_argparse(cmd)
 
 
-def add_image_args(parser: argparse.ArgumentParser):
+def add_build_args(parser: argparse.ArgumentParser):
+    parser.add_argument("--keep-tmp", action="store_true", help="keep temporary files")
     parser.add_argument("--from", "-f", help="base image")
     parser.add_argument("name", help="image name")
     parser.add_argument("profile", nargs="*", help="profile to use")
+    add_image_profile_args(parser)
 
 
 def add_image_profile_args(parser: argparse.ArgumentParser):
