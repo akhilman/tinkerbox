@@ -12,11 +12,10 @@ from subprocess import CalledProcessError
 from typing import TextIO
 
 import tinkerbox
-from tinkerbox import APP_ID, TinkerboxError, config_paths
+from tinkerbox import APP_ID, TinkerboxError, config_paths, shell
 from tinkerbox.profile.add import Add, AddFile, AddText, AddUrl
 from tinkerbox.profile.image import ImageProfile
 from tinkerbox.profile.run import Run
-from tinkerbox import shell
 
 
 def build_image(profile: ImageProfile, keep_tmp=False):

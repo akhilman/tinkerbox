@@ -98,7 +98,6 @@ def list_images(args: argparse.Namespace):
 
 def build_image(args: argparse.Namespace):
     setup_logging(args.debug)
-    print(args)
 
     obj = profile_opts_from_cli_args(args)
     profile = ImageProfile.from_object(obj)

@@ -133,7 +133,6 @@ def profile_opts_from_cli_args(args: argparse.Namespace) -> dict[str, Any]:
 
 def create_container(args: argparse.Namespace):
     setup_logging(args.debug)
-    print(args)
 
     obj = profile_opts_from_cli_args(args)
     profile = ContainerProfile.from_object(obj)
