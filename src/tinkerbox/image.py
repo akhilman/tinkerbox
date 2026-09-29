@@ -12,7 +12,7 @@ from subprocess import CalledProcessError
 from typing import TextIO
 
 import tinkerbox
-from tinkerbox import APP_ID, TinkerboxError, config_paths, shell
+from tinkerbox import APP_ID, TinkerboxError, config_paths, subprocess
 from tinkerbox.profile.add import Add, AddFile, AddText, AddUrl
 from tinkerbox.profile.image import ImageProfile
 from tinkerbox.profile.run import Run
@@ -94,7 +94,7 @@ def build_image(profile: ImageProfile, keep_tmp=False):
             f.write(f"LABEL {APP_ID}.manager=true\n")
             f.write(f"LABEL {APP_ID}.profile={json.dumps(profile_json)}\n")
 
-        shell.run_podman("build", f"--tag={profile.name}", str(temp_dir))
+        subprocess.run_podman("build", f"--tag={profile.name}", str(temp_dir))
 
 
 def write_add(add: Add, file: TextIO, temp_dir: Path):
@@ -210,7 +210,7 @@ def find_file(path) -> Path:
 
 def is_exists(name: str) -> bool:
     try:
-        shell.run_podman_capture("image", "exists", name)
+        subprocess.run_podman_capture("image", "exists", name)
     except CalledProcessError as exc:
         if "Error: no such object" in exc.stderr:
             return False
@@ -221,7 +221,7 @@ def is_exists(name: str) -> bool:
 
 def extract_profile(image_name: str) -> ImageProfile:
     try:
-        profile_json = shell.run_podman_capture(
+        profile_json = subprocess.run_podman_capture(
             "image",
             "inspect",
             f'--format={{{{index .Config.Labels "{APP_ID}.profile"}}}}',
@@ -248,7 +248,7 @@ def extract_profile(image_name: str) -> ImageProfile:
 
 def extract_user_and_group(image_name: str) -> tuple[str, str]:
     try:
-        user_group = shell.run_podman_capture(
+        user_group = subprocess.run_podman_capture(
             "inspect",
             "--format={{.Config.User}}",
             image_name,
