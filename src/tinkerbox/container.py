@@ -7,7 +7,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 
 import tinkerbox.image
-from tinkerbox import APP_ID, TinkerboxError, shell
+from tinkerbox import APP_ID, TinkerboxError, subprocess
 from tinkerbox.profile.container import ContainerProfile, Passthrough
 from tinkerbox.profile.device import Device, DevicePermission
 from tinkerbox.profile.exec import Exec
@@ -66,7 +66,7 @@ def create(profile: ContainerProfile):
     args.append(f"--label={APP_ID}.manager=true")
     args.append(f"--label={APP_ID}.profile={profile_json}")
 
-    container_id = shell.run_podman_capture(
+    container_id = subprocess.run_podman_capture(
         "run",
         "-d",
         *args,
@@ -85,7 +85,7 @@ def create(profile: ContainerProfile):
         else:
             dst = cp.src
         dst = f"{container_id}:{dst}"
-        shell.run_podman("container", "cp", src, dst)
+        subprocess.run_podman("container", "cp", src, dst)
 
     for exec in profile.exec:
         if isinstance(exec.command, list):
@@ -99,11 +99,11 @@ def create(profile: ContainerProfile):
         if exec.work_dir:
             args.append(f"--workdir={exec.work_dir}")
 
-        shell.run_podman("container", "exec", *args, container_id, *command)
+        subprocess.run_podman("container", "exec", *args, container_id, *command)
 
 
 def start(container_name: str) -> str:
-    return shell.run_podman_capture("container", "start", container_name).strip()
+    return subprocess.run_podman_capture("container", "start", container_name).strip()
 
 
 def enter(container_name: str, command: str | None = None, user: str | None = None):
@@ -125,7 +125,7 @@ def enter(container_name: str, command: str | None = None, user: str | None = No
         args.append(f"--env={env}")
 
     start(container_name)
-    shell.run_podman("container", "exec", "-it", *args, container_name, *cmd_args)
+    subprocess.run_podman("container", "exec", "-it", *args, container_name, *cmd_args)
 
 
 def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
@@ -152,7 +152,7 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
         )
 
     if passtrhough & {Passthrough.ALL, Passthrough.PIPEWIRE}:
-        pw_cli_output = shell.run_capture("pw-cli", "ls")
+        pw_cli_output = subprocess.run_capture("pw-cli", "ls")
         match = re.search(
             r'PipeWire:Interface:Core.*?core\.name\s*=\s*"([^"]+)"',
             pw_cli_output,
@@ -262,7 +262,7 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
 
 def is_exists(name: str) -> bool:
     try:
-        shell.run_podman("container", "exists", name)
+        subprocess.run_podman("container", "exists", name)
     except CalledProcessError:
         return False
 
@@ -271,7 +271,7 @@ def is_exists(name: str) -> bool:
 
 def extract_profile(container_name: str) -> ContainerProfile:
     try:
-        profile_json = shell.run_podman_capture(
+        profile_json = subprocess.run_podman_capture(
             "container",
             "inspect",
             f'--format={{{{index .Config.Labels "{APP_ID}.profile"}}}}',
