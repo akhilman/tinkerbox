@@ -8,7 +8,6 @@ from collections import defaultdict
 from dataclasses import asdict
 from hashlib import sha1
 from pathlib import Path
-from subprocess import CalledProcessError
 from typing import TextIO
 
 import tinkerbox
@@ -16,9 +15,13 @@ from tinkerbox import APP_ID, TinkerboxError, config_paths, subprocess
 from tinkerbox.profile.add import Add, AddFile, AddText, AddUrl
 from tinkerbox.profile.image import ImageProfile
 from tinkerbox.profile.run import Run
+from tinkerbox.subprocess import CalledProcessError
 
 
-def build_image(profile: ImageProfile, keep_tmp=False):
+def build_image(profile: ImageProfile, keep_tmp=False) -> str:
+    """
+    Returns image id.
+    """
     flat_profile = profile.flatten()
     profile = flat_profile.substitute()
 
@@ -94,7 +97,13 @@ def build_image(profile: ImageProfile, keep_tmp=False):
             f.write(f"LABEL {APP_ID}.manager=true\n")
             f.write(f"LABEL {APP_ID}.profile={json.dumps(profile_json)}\n")
 
-        subprocess.run_podman("build", f"--tag={profile.name}", str(temp_dir))
+        output = subprocess.run_podman_capture("build", str(temp_dir), echo_output=True)
+        image_id = output.rstrip().split("\n")[-1]
+
+        if profile.name:
+            subprocess.run_podman("image", "tag", image_id, profile.name)
+
+        return image_id
 
 
 def write_add(add: Add, file: TextIO, temp_dir: Path):
@@ -211,10 +220,8 @@ def find_file(path) -> Path:
 def is_exists(name: str) -> bool:
     try:
         subprocess.run_podman_capture("image", "exists", name)
-    except CalledProcessError as exc:
-        if "Error: no such object" in exc.stderr:
-            return False
-        raise exc
+    except CalledProcessError:
+        return False
 
     return True
 
@@ -228,7 +235,7 @@ def extract_profile(image_name: str) -> ImageProfile:
             image_name,
         ).strip()
     except CalledProcessError as exc:
-        if "Error: no such object" in exc.stderr:
+        if exc.stderr and "image not known" in exc.stderr:
             raise ImageNotFoundError(image_name) from exc
         raise exc
 
@@ -254,7 +261,7 @@ def extract_user_and_group(image_name: str) -> tuple[str, str]:
             image_name,
         ).strip()
     except CalledProcessError as exc:
-        if "Error: no such object" in exc.stderr:
+        if exc.stderr and "image not known" in exc.stderr:
             raise ImageNotFoundError(image_name) from exc
         raise exc
 
@@ -267,7 +274,7 @@ def extract_user_and_group(image_name: str) -> tuple[str, str]:
 
 class ImageNotFoundError(TinkerboxError):
     def __init__(self, image_name: str):
-        super().__init__(f"Image {image_name!r} not exists")
+        super().__init__(f"Image {image_name!r} not found")
         self.image_name = image_name
 
 

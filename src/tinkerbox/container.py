@@ -4,7 +4,6 @@ import re
 import shlex
 import stat
 from pathlib import Path
-from subprocess import CalledProcessError
 
 import tinkerbox.image
 from tinkerbox import APP_ID, TinkerboxError, subprocess
@@ -12,9 +11,13 @@ from tinkerbox.profile.container import ContainerProfile, Passthrough
 from tinkerbox.profile.device import Device, DevicePermission
 from tinkerbox.profile.exec import Exec
 from tinkerbox.profile.mount import Mount
+from tinkerbox.subprocess import CalledProcessError
 
 
-def create(profile: ContainerProfile):
+def create(profile: ContainerProfile) -> str:
+    """
+    Returns container id.
+    """
     flat_profile = profile.flatten()
 
     image = flat_profile.image
@@ -71,6 +74,7 @@ def create(profile: ContainerProfile):
         "-d",
         *args,
         image,
+        echo_output=True,
     )
     container_id = container_id.strip()
 
@@ -100,6 +104,8 @@ def create(profile: ContainerProfile):
             args.append(f"--workdir={exec.work_dir}")
 
         subprocess.run_podman("container", "exec", *args, container_id, *command)
+
+    return container_id
 
 
 def start(container_name: str) -> str:
@@ -278,7 +284,7 @@ def extract_profile(container_name: str) -> ContainerProfile:
             container_name,
         ).strip()
     except CalledProcessError as exc:
-        if "Error: no such object" in exc.stderr:
+        if exc.stderr and "Error: no such container" in exc.stderr:
             raise ContainerNotFoundError(container_name) from exc
         raise exc
 
