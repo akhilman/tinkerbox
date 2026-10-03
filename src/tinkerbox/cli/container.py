@@ -112,7 +112,7 @@ def add_container_profile_args(parser: argparse.ArgumentParser):
         "--override",
         metavar="{" + ",".join(ContainerOverride.all_values()) + "}",
         action="append",
-        help="override image options from profile",
+        help="override inherited configuration for the specified options, replacing rather than merging lists, sets and maps",
     )
 
 

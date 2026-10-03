@@ -68,7 +68,7 @@ def add_image_profile_args(parser: argparse.ArgumentParser):
         "--override",
         metavar="{" + ",".join(ImageOverride.all_values()) + "}",
         action="append",
-        help="override image options from profile",
+        help="override inherited configuration for the specified options, replacing rather than merging lists, sets and maps",
     )
 
 
