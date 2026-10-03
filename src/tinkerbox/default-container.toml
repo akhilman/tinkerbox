@@ -24,7 +24,7 @@ USER = "@{CONTAINER_USER}"
 [[mounts]]
 type = "tmpfs"
 dst = "/tmp"
-tmpfs-size = "1g"
+tmpfs-size = "5g"
 
 [[mounts]]
 type = "tmpfs"
