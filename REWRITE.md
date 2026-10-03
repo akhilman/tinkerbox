@@ -8,6 +8,8 @@
 - [ ] Expand `~` to the actual home path inside containers for the image's copy option.
 - [ ] Add `ignore_failure` to container's exec option.
 - [ ] Add `ignore_missing` to container's copy option.
+- [ ] Deduplicate volumes and mounts.
+- [ ] Support env variable expansion like `PATH=@{PATH}:/foo`, and then `PATH=@{PATH}:/bar`.
 
 ### Subcommands
 - [ ] image
