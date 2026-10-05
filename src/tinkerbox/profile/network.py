@@ -18,22 +18,22 @@ class Network:
         if isinstance(obj, str):
             return cls.from_argument(obj)
         elif not isinstance(obj, dict):
-            raise TypeError("Network should be either a dict or a string")
+            raise TypeError("network should be either a dict or a string")
 
         obj = {**obj}
 
         try:
             mode = obj.pop("mode")
         except KeyError:
-            raise ValueError("Network should have at least `mode` field")
+            raise ValueError("network should have at least `mode` field")
         if not isinstance(mode, str):
-            raise TypeError("Network's `mode` field should be a string")
+            raise TypeError("network's `mode` field should be a string")
 
         options = {k: (v if v else None) for k, v in obj.items()}
         if not all(
             isinstance(k, str) and isinstance(v, str | None) for k, v in options.items()
         ):
-            raise TypeError("Network options should be strings or nils")
+            raise TypeError("network options should be strings or nils")
 
         return cls(mode, options=options)
 

@@ -22,18 +22,18 @@ class Device:
         if isinstance(device, str):
             return cls.from_argument(device)
         elif not isinstance(device, dict):
-            raise TypeError("Device should be either a dict or a string")
+            raise TypeError("device should be either a dict or a string")
 
         try:
             host_device = device.pop("host_device")
         except KeyError:
-            raise ValueError("Device should have at least `host_device` field")
+            raise ValueError("device should have at least `host_device` field")
         if not isinstance(host_device, str):
-            raise TypeError("Device's `host_device` field should be a string")
+            raise TypeError("device's `host_device` field should be a string")
 
         container_device = device.pop("container_device", None)
         if not isinstance(container_device, str | None):
-            raise TypeError("Device's `container_device` field should be a string")
+            raise TypeError("device's `container_device` field should be a string")
 
         permissions = device.pop("permissions", list)
         if isinstance(permissions, str):
@@ -42,12 +42,12 @@ class Device:
             permissions = set(map(DevicePermission, permissions))
         else:
             raise TypeError(
-                "Device's `permissions` field must be string or list of strings"
+                "device's `permissions` field must be string or list of strings"
             )
 
         if device:
             raise ValueError(
-                f"Device has unexpected fields: {', '.join(device.keys())}"
+                f"device has unexpected fields: {', '.join(device.keys())}"
             )
 
         return cls(
@@ -76,7 +76,7 @@ class Device:
                     permissions=permissions,
                 )
             case _:
-                raise ValueError(f"Invalid device format: {device}")
+                raise ValueError(f"invalid device format: {device}")
 
     def to_object(self) -> dict[str, str | list[str]]:
         obj = {"host_device": self.host_device}

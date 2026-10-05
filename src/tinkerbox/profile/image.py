@@ -1,13 +1,19 @@
 import os
 import pwd
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 from typing import Any, Self
 
 from tinkerbox.alias_enum import AliasEnum
 from tinkerbox.profile.run import Run
 from tinkerbox.utils import normalize_string_list, random_string, substitute
 
-from . import Profile, ProfileKind
+from . import (
+    InvalidFieldError,
+    Profile,
+    ProfileKind,
+    UnexpectedFieldsError,
+)
 from .add import Add
 
 
@@ -44,44 +50,96 @@ class ImageProfile(Profile):
         return ProfileKind.IMAGE
 
     @classmethod
-    def from_object(cls, obj: Any) -> Self:
-        if not isinstance(obj, dict):
-            raise TypeError("Image profile must be a dict")
+    def from_object(
+        cls, obj: dict[str, Any], profile_source: str | Path | None = None
+    ) -> Self:
 
         obj = {**obj}
-        profile = super().from_object(obj)
+        profile = super().from_object(obj, profile_source=profile_source)
 
         if from_image := obj.pop("from", None):
             if not isinstance(from_image, str):
-                raise TypeError("Image's `from` field should be a string")
+                raise InvalidFieldError(
+                    msg="image's `from` field should be a string",
+                    cls=cls,
+                    field="from_image",
+                    value=from_image,
+                    source=profile_source,
+                )
             profile.from_image = from_image
 
         if name := obj.pop("name", None):
             if not isinstance(name, str):
-                raise TypeError("Image's `name` field should be a string")
+                raise InvalidFieldError(
+                    msg="image's `name` field should be a string",
+                    cls=cls,
+                    field="name",
+                    value=name,
+                    source=profile_source,
+                )
             profile.name = name
 
         if user := obj.pop("user", None):
             if not isinstance(user, str):
-                raise TypeError("Image's `user` field should be a string")
+                raise InvalidFieldError(
+                    msg="image's `user` field should be a string",
+                    cls=cls,
+                    field="user",
+                    value=user,
+                    source=profile_source,
+                )
             profile.user = user
 
         if home := obj.pop("home", None):
             if not isinstance(home, str):
-                raise TypeError("Image's `home` field should be a string")
+                raise InvalidFieldError(
+                    msg="image's `home` field should be a string",
+                    cls=cls,
+                    field="home",
+                    value=home,
+                    source=profile_source,
+                )
             profile.home = home
 
         if add := obj.pop("add", None):
             if not isinstance(add, list):
-                raise TypeError("Image's `add` field must be a list of dicts")
-            profile.add = [Add.from_object(x) for x in add]
+                raise InvalidFieldError(
+                    msg="image's `add` field must be a list of dicts or list of strings",
+                    cls=cls,
+                    field="add",
+                    value=add,
+                    source=profile_source,
+                )
+            try:
+                profile.add = [Add.from_object(x) for x in add]
+            except (TypeError, ValueError, KeyError) as exc:
+                raise InvalidFieldError(
+                    msg=str(exc),
+                    cls=cls,
+                    field="add",
+                    value=add,
+                    source=profile_source,
+                )
 
         if run := obj.pop("run", None):
             if not isinstance(run, list):
-                raise TypeError(
-                    "Image's `run` field must be a list of strings or list of dicts"
+                raise InvalidFieldError(
+                    msg="image's `run` field must be a list of strings or list of dicts",
+                    cls=cls,
+                    field="run",
+                    value=run,
+                    source=profile_source,
                 )
-            profile.run = [Run.from_object(x) for x in run]
+            try:
+                profile.run = [Run.from_object(x) for x in run]
+            except (TypeError, ValueError, KeyError) as exc:
+                raise InvalidFieldError(
+                    msg=str(exc),
+                    cls=cls,
+                    field="run",
+                    value=run,
+                    source=profile_source,
+                )
 
         if environment := obj.pop("environment", obj.pop("env", None)):
             if isinstance(environment, dict) and all(
@@ -96,8 +154,12 @@ class ImageProfile(Profile):
                     k: v for k, v in ((x.split("=", 1) + [""])[:2] for x in environment)
                 }
             else:
-                raise TypeError(
-                    "Image's `environment` field should be a dict with string keys and values or list of strings in `KEY=VAL` format"
+                raise InvalidFieldError(
+                    msg="image's `environment` field should be a dict with string keys and values or list of strings in `KEY=VAL` format",
+                    cls=cls,
+                    field="environment",
+                    value=environment,
+                    source=profile_source,
                 )
             profile.environment = environment
 
@@ -109,8 +171,12 @@ class ImageProfile(Profile):
                     for x in entrypoint
                 )
             ):
-                raise TypeError(
-                    "Image's `entrypoint` field must be a list of strings or list of lists of strings"
+                raise InvalidFieldError(
+                    msg="image's `entrypoint` field must be a list of strings or list of lists of strings",
+                    cls=cls,
+                    field="entrypoint",
+                    value=entrypoint,
+                    source=profile_source,
                 )
             profile.entrypoint = entrypoint
 
@@ -122,8 +188,12 @@ class ImageProfile(Profile):
                     for x in cmd
                 )
             ):
-                raise TypeError(
-                    "Image's `cmd` field must be a list of strings or list of lists of strings"
+                raise InvalidFieldError(
+                    msg="image's `cmd` field must be a list of strings or list of lists of strings",
+                    cls=cls,
+                    field="cmd",
+                    value=cmd,
+                    source=profile_source,
                 )
             profile.cmd = cmd
 
@@ -131,13 +201,30 @@ class ImageProfile(Profile):
             try:
                 override = normalize_string_list(override)
             except TypeError:
-                raise TypeError(
-                    "Image's `override` field should be either list of strings or string"
+                raise InvalidFieldError(
+                    msg="image's `override` field should be either list of strings or string",
+                    cls=cls,
+                    field="override",
+                    value=override,
+                    source=profile_source,
                 )
-            profile.override = {ImageOverride(o) for o in override}
+            try:
+                profile.override = {ImageOverride(o) for o in override}
+            except (TypeError, ValueError, KeyError) as exc:
+                raise InvalidFieldError(
+                    msg=str(exc),
+                    cls=cls,
+                    field="override",
+                    value=override,
+                    source=profile_source,
+                )
 
         if obj:
-            raise ValueError(f"Profile has unexpected fields: {', '.join(obj.keys())}")
+            raise UnexpectedFieldsError(
+                fields=list(obj.keys()),
+                cls=cls,
+                source=profile_source,
+            )
 
         return profile
 

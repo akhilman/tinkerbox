@@ -15,7 +15,7 @@ def package_name() -> str:
     distributions = packages_distributions().get(module_name, [])
 
     if not distributions:
-        raise RuntimeError(f"Could not determine distribution for {module_name!r}")
+        raise RuntimeError(f"could not determine distribution for {module_name!r}")
 
     return distributions[0]
 
