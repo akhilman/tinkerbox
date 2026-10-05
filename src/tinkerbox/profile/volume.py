@@ -19,32 +19,32 @@ class Volume:
         if isinstance(obj, str):
             return cls.from_argument(obj)
         elif not isinstance(obj, dict):
-            raise TypeError("Volume should be either a dict or a string")
+            raise TypeError("volume should be either a dict or a string")
 
         obj = {**obj}
 
         try:
             target = obj.pop("target")
         except KeyError:
-            raise ValueError("Volume should have at least `target` field")
+            raise ValueError("volume should have at least `target` field")
         if not isinstance(target, str):
-            raise TypeError("Volume's `target` field should be a string")
+            raise TypeError("volume's `target` field should be a string")
 
         source = obj.pop("source", None)
         if not isinstance(source, str | None):
-            raise TypeError("Volume's `source` field should be a string")
+            raise TypeError("volume's `source` field should be a string")
 
         options = obj.pop("options", [])
         if isinstance(options, str):
             options = split_fields(options, ",")
         elif not isinstance(options, list):
             raise TypeError(
-                "Volume's `options` field must be string or list of strings"
+                "volume's `options` field must be string or list of strings"
             )
 
         if obj:
             raise ValueError(
-                f"Volume object has unexpected fields: {', '.join(obj.keys())}"
+                f"volume object has unexpected fields: {', '.join(obj.keys())}"
             )
 
         return cls(target=target, source=source, options=set(options))
@@ -63,7 +63,7 @@ class Volume:
                 options = set(split_fields(options, ","))
                 return cls(target=target, source=source, options=options)
             case _:
-                raise ValueError(f"Invalid volume format: {volume}")
+                raise ValueError(f"invalid volume format: {volume}")
 
     def to_object(self) -> dict[str, str | list[str]]:
         obj = {"target": self.target}

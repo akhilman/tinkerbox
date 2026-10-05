@@ -152,7 +152,7 @@ def write_add(add: Add, file: TextIO, temp_dir: Path):
             k: v for k, v in asdict(add).items() if k not in ("src", "dst")
         }
     else:
-        raise TypeError(f"Unexpected Add type: {type(add)}")
+        raise TypeError(f"unexpected Add type: {type(add)}")
 
     file.write("ADD")
     for k, v in opts.items():
@@ -214,7 +214,7 @@ def find_file(path) -> Path:
         built_in = importlib.resources.files(tinkerbox.__package__) / path
         return Path(str(built_in))
 
-    raise FileNotFoundError(f"File not found: {path!r}")
+    raise FileNotFoundError(f"file not found: {path!r}")
 
 
 def is_exists(name: str) -> bool:
@@ -248,9 +248,8 @@ def extract_profile(image_name: str) -> ImageProfile:
         raise NonNativeImageError(image_name)
 
     obj["profile_name"] = image_name
-    obj["profile_source"] = f"image:{image_name}"
 
-    return ImageProfile.from_object(obj)
+    return ImageProfile.from_object(obj, profile_source=f"image:{image_name}")
 
 
 def extract_user_and_group(image_name: str) -> tuple[str, str]:

@@ -139,7 +139,7 @@ def create_container(args: argparse.Namespace):
     setup_logging(args.debug)
 
     obj = profile_opts_from_cli_args(args)
-    profile = ContainerProfile.from_object(obj)
+    profile = ContainerProfile.from_object(obj, profile_source="command line")
     if args.profile:
         profile.extends = args.profile
     else:

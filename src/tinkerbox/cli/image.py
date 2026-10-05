@@ -100,7 +100,7 @@ def build_image(args: argparse.Namespace):
     setup_logging(args.debug)
 
     obj = profile_opts_from_cli_args(args)
-    profile = ImageProfile.from_object(obj)
+    profile = ImageProfile.from_object(obj, profile_source="command line")
     if args.profile:
         profile.extends = args.profile
     else:

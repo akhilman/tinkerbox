@@ -1,4 +1,5 @@
 import argparse
+import logging
 import sys
 
 from tinkerbox import TinkerboxError
@@ -7,6 +8,7 @@ from . import container, image
 
 
 def main():
+    logger = logging.getLogger(__name__)
     parser = argparse.ArgumentParser(
         prog="tinkerbox",
         description="Tinkerbox is a tool to manage interactive podman containers for experiments and development.",
@@ -30,6 +32,7 @@ def main():
     try:
         args.func(args)
     except TinkerboxError as exc:
+        logger.debug("Exception is raised", exc_info=True)
         sys.stderr.write(f"{exc}\n")
         sys.exit(1)
 

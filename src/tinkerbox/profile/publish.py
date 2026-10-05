@@ -34,7 +34,7 @@ class PortRange:
             start = int(start)
             end = int(end)
         except ValueError as exc:
-            raise ValueError(f"Invalid port range format: {port_range}") from exc
+            raise ValueError(f"invalid port range format: {port_range}") from exc
         return cls(start, end)
 
     def __str__(self) -> str:
@@ -56,7 +56,7 @@ class Publish:
         if isinstance(obj, str):
             return cls.from_argument(obj)
         if not isinstance(obj, dict):
-            raise TypeError("Publish object should be a dict")
+            raise TypeError("publish object should be a dict")
 
         obj = {**obj}
 
@@ -64,14 +64,14 @@ class Publish:
             container_port = obj.pop("container_port", obj.pop("port"))
         except KeyError:
             raise KeyError(
-                "Publish object should have at least `container_port` or `port` field"
+                "publish object should have at least `container_port` or `port` field"
             )
 
         try:
             container_port = normalize_port(container_port)
         except Exception as exc:
             raise ValueError(
-                "Invalid `container_port` or `port` field of the publish object"
+                "invalid `container_port` or `port` field of the publish object"
             ) from exc
 
         host_port = obj.pop("host_port", None)
@@ -80,27 +80,27 @@ class Publish:
                 host_port = normalize_port(host_port)
             except Exception as exc:
                 raise ValueError(
-                    "Invalid `host_port` field of the publish object"
+                    "invalid `host_port` field of the publish object"
                 ) from exc
 
         ip = obj.pop("ip", None)
         if ip and not isinstance(ip, str):
-            raise TypeError("Publish object's `ip` field should be a string")
+            raise TypeError("publish object's `ip` field should be a string")
 
         protocol = obj.pop("protocol", None)
         if protocol is not None:
             if not isinstance(protocol, str):
-                raise TypeError("Publish object's `protocol` field should be a string")
+                raise TypeError("publish object's `protocol` field should be a string")
             try:
                 protocol = Protocol(protocol.lower())
             except Exception as exc:
                 raise ValueError(
-                    "Invalid `protocol` field fo the publish object"
+                    "invalid `protocol` field fo the publish object"
                 ) from exc
 
         if obj:
             raise ValueError(
-                f"Publish object has unexpected fields: {', '.join(obj.keys())}"
+                f"publish object has unexpected fields: {', '.join(obj.keys())}"
             )
 
         return cls(container_port, host_port, ip, protocol)
@@ -118,7 +118,7 @@ class Publish:
             case [host_port, ip, container_port_protocol]:
                 pass
             case _:
-                raise ValueError(f"Invalid publish format: {publish}")
+                raise ValueError(f"invalid publish format: {publish}")
 
         parts = split_fields(container_port_protocol, "/")
         protocol = None
@@ -128,18 +128,18 @@ class Publish:
             case [container_port, protocol]:
                 pass
             case _:
-                raise ValueError(f"Invalid publish format: {publish}")
+                raise ValueError(f"invalid publish format: {publish}")
 
         try:
             container_port = normalize_port(container_port)
         except Exception as exc:
-            raise ValueError(f"Invalid container port format {publish}") from exc
+            raise ValueError(f"invalid container port format {publish}") from exc
 
         if host_port is not None:
             try:
                 host_port = normalize_port(host_port)
             except Exception as exc:
-                raise ValueError(f"Invalid host port format {publish}") from exc
+                raise ValueError(f"invalid host port format {publish}") from exc
 
         if protocol is not None:
             try:

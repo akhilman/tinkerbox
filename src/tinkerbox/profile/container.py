@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 from typing import Any, Self
 
 from tinkerbox.alias_enum import AliasEnum
 from tinkerbox.utils import normalize_string_list, random_string, substitute
 
-from . import Profile, ProfileKind
+from . import InvalidFieldError, Profile, ProfileKind, UnexpectedFieldsError
 from .copy import Copy
 from .device import Device
 from .exec import Exec
@@ -87,21 +88,33 @@ class ContainerProfile(Profile):
         return ProfileKind.CONTAINER
 
     @classmethod
-    def from_object(cls, obj: Any) -> Self:
-        if not isinstance(obj, dict):
-            raise TypeError("Container profile must be a dict")
+    def from_object(
+        cls, obj: dict[str, Any], profile_source: str | Path | None = None
+    ) -> Self:
 
         obj = {**obj}
         profile = super().from_object(obj)
 
         if name := obj.pop("name", None):
             if not isinstance(name, str):
-                raise TypeError("Image's `name` field should be a string")
+                raise InvalidFieldError(
+                    msg="image's `name` field should be a string",
+                    cls=cls,
+                    field="name",
+                    value=name,
+                    source=profile_source,
+                )
             profile.name = name
 
         if image := obj.pop("image", None):
             if not isinstance(image, str):
-                raise TypeError("Image's `image` field should be a string")
+                raise InvalidFieldError(
+                    msg="image's `image` field should be a string",
+                    cls=cls,
+                    field="image",
+                    value=image,
+                    source=profile_source,
+                )
             profile.image = image
 
         if environment := obj.pop("environment", obj.pop("env", None)):
@@ -117,8 +130,12 @@ class ContainerProfile(Profile):
                     k: v for k, v in ((x.split("=", 1) + [""])[:2] for x in environment)
                 }
             else:
-                raise TypeError(
-                    'Container\'s `environment` field should be a dict with string keys and values or list of strings in "KEY=VAL" format'
+                raise InvalidFieldError(
+                    msg='container\'s `environment` field should be a dict with string keys and values or list of strings in "KEY=VAL" format',
+                    cls=cls,
+                    field="environment",
+                    value=environment,
+                    source=profile_source,
                 )
             profile.environment = environment
 
@@ -126,74 +143,197 @@ class ContainerProfile(Profile):
             try:
                 passthrough = normalize_string_list(passthrough)
             except TypeError:
-                raise TypeError(
-                    "Container's `passthrough` field should be either list of strings or string"
+                raise InvalidFieldError(
+                    msg="container's `passthrough` field should be either list of strings or string",
+                    cls=cls,
+                    field="passthrough",
+                    value=passthrough,
+                    source=profile_source,
                 )
             profile.passthrough = {Passthrough(s) for s in passthrough}
 
         if devices := obj.pop("devices", None):
             if not isinstance(devices, list):
-                raise TypeError("Container's `devices` field should be a list of dicts")
-            profile.devices = [Device.from_object(x) for x in devices]
+                raise InvalidFieldError(
+                    msg="container's `devices` field should be a list of dicts",
+                    cls=cls,
+                    field="devices",
+                    value=devices,
+                    source=profile_source,
+                )
+            try:
+                profile.devices = [Device.from_object(x) for x in devices]
+            except (TypeError, ValueError, KeyError) as exc:
+                raise InvalidFieldError(
+                    msg=str(exc),
+                    cls=cls,
+                    field="devices",
+                    value=devices,
+                    source=profile_source,
+                )
 
         if mounts := obj.pop("mounts", None):
             if not isinstance(mounts, list):
-                raise TypeError("Container's `mounts` field should be a list of dicts")
-            profile.mounts = [Mount.from_object(x) for x in mounts]
+                raise InvalidFieldError(
+                    msg="container's `mounts` field should be a list of dicts",
+                    cls=cls,
+                    field="mounts",
+                    value=mounts,
+                    source=profile_source,
+                )
+            try:
+                profile.mounts = [Mount.from_object(x) for x in mounts]
+            except (TypeError, ValueError, KeyError) as exc:
+                raise InvalidFieldError(
+                    msg=str(exc),
+                    cls=cls,
+                    field="mounts",
+                    value=mounts,
+                    source=profile_source,
+                )
 
         if volumes := obj.pop("volumes", None):
             if not isinstance(volumes, list):
-                raise TypeError("Container's `volumes` field should be a list of dicts")
-            profile.volumes = [Volume.from_object(x) for x in volumes]
+                raise InvalidFieldError(
+                    msg="container's `volumes` field should be a list of dicts",
+                    cls=cls,
+                    field="volumes",
+                    value=volumes,
+                    source=profile_source,
+                )
+            try:
+                profile.volumes = [Volume.from_object(x) for x in volumes]
+            except (TypeError, ValueError, KeyError) as exc:
+                raise InvalidFieldError(
+                    msg=str(exc),
+                    cls=cls,
+                    field="volumes",
+                    value=volumes,
+                    source=profile_source,
+                )
 
         if networks := obj.pop("networks", None):
             if not isinstance(networks, list):
-                raise TypeError(
-                    "Container's `networks` field should be a list of dicts"
+                raise InvalidFieldError(
+                    msg="container's `networks` field should be a list of dicts",
+                    cls=cls,
+                    field="networks",
+                    value=networks,
+                    source=profile_source,
                 )
-            profile.networks = [Network.from_object(x) for x in networks]
+            try:
+                profile.networks = [Network.from_object(x) for x in networks]
+            except (TypeError, ValueError, KeyError) as exc:
+                raise InvalidFieldError(
+                    msg=str(exc),
+                    cls=cls,
+                    field="networks ",
+                    value=networks,
+                    source=profile_source,
+                )
 
         if publish := obj.pop("publish", None):
             if not isinstance(publish, list):
-                raise TypeError("Container's `publish` field should be a list of dicts")
-            profile.publish = [Publish.from_object(x) for x in publish]
+                raise InvalidFieldError(
+                    msg="container's `publish` field should be a list of dicts",
+                    cls=cls,
+                    field="publish",
+                    value=publish,
+                    source=profile_source,
+                )
+            try:
+                profile.publish = [Publish.from_object(x) for x in publish]
+            except (TypeError, ValueError, KeyError) as exc:
+                raise InvalidFieldError(
+                    msg=str(exc),
+                    cls=cls,
+                    field="publish ",
+                    value=publish,
+                    source=profile_source,
+                )
 
         if copy := obj.pop("copy", None):
             if not isinstance(copy, list):
-                raise TypeError("Container's `copy` field should be a list of dicts")
-            profile.copy = [Copy.from_object(x) for x in copy]
+                raise InvalidFieldError(
+                    msg="container's `copy` field should be a list of dicts",
+                    cls=cls,
+                    field="copy",
+                    value=copy,
+                    source=profile_source,
+                )
+            try:
+                profile.copy = [Copy.from_object(x) for x in copy]
+            except (TypeError, ValueError, KeyError) as exc:
+                raise InvalidFieldError(
+                    msg=str(exc),
+                    cls=cls,
+                    field="copy",
+                    value=copy,
+                    source=profile_source,
+                )
 
         if exec := obj.pop("exec", None):
             if not isinstance(exec, list):
-                raise TypeError("Container's `exec` field should be a list of dicts")
-            profile.exec = [Exec.from_object(x) for x in exec]
+                raise InvalidFieldError(
+                    msg="container's `exec` field should be a list of dicts",
+                    cls=cls,
+                    field="exec",
+                    value=exec,
+                    source=profile_source,
+                )
+            try:
+                profile.exec = [Exec.from_object(x) for x in exec]
+            except (TypeError, ValueError, KeyError) as exc:
+                raise InvalidFieldError(
+                    msg=str(exc),
+                    cls=cls,
+                    field="exec",
+                    value=exec,
+                    source=profile_source,
+                )
 
         if pass_environment := obj.pop("pass_environment", None):
             try:
                 pass_environment = normalize_string_list(pass_environment)
             except TypeError:
-                raise TypeError(
-                    "Container's `pass_environment` field should be either list of strings or string"
+                raise InvalidFieldError(
+                    msg="container's `pass_environment` field should be either list of strings or string",
+                    cls=cls,
+                    field="pass_environment",
+                    value=pass_environment,
+                    source=profile_source,
                 )
             profile.pass_environment = set(pass_environment)
 
         if enter_command := obj.pop("enter_command", None):
             if not isinstance(enter_command, str):
-                raise TypeError("Image's `enter_command` field should be a string")
+                raise InvalidFieldError(
+                    msg="image's `enter_command` field should be a string",
+                    cls=cls,
+                    field="enter_command",
+                    value=enter_command,
+                    source=profile_source,
+                )
             profile.enter_command = enter_command
 
         if override := obj.pop("override", None):
             try:
                 override = normalize_string_list(override)
             except TypeError:
-                raise TypeError(
-                    "Container's `override` field should be either list of strings or string"
+                raise InvalidFieldError(
+                    msg="container's `override` field should be either list of strings or string",
+                    cls=cls,
+                    field="override",
+                    value=override,
+                    source=profile_source,
                 )
             profile.override = {ContainerOverride(o) for o in override}
 
         if obj:
-            raise ValueError(
-                f"Container has unexpected fields: {', '.join(obj.keys())}"
+            raise UnexpectedFieldsError(
+                fields=list(obj.keys()),
+                cls=cls,
+                source=profile_source,
             )
 
         return profile

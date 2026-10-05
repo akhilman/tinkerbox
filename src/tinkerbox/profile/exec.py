@@ -19,32 +19,32 @@ class Exec:
         if isinstance(obj, str):
             return cls.from_argument(obj)
         elif not isinstance(obj, dict):
-            raise TypeError("Exec should be either a dict or a string")
+            raise TypeError("exec should be either a dict or a string")
 
         obj = {**obj}
 
         try:
             command = obj.pop("command")
         except KeyError:
-            raise ValueError("Exec should have at least `command` field")
+            raise ValueError("exec should have at least `command` field")
         if not isinstance(command, str) and not (
             isinstance(command, list) and all(isinstance(x, str) for x in command)
         ):
             raise TypeError(
-                "Exec's `command` field should be a string or list of strings"
+                "exec's `command` field should be a string or list of strings"
             )
 
         user = obj.pop("user", None)
         if not isinstance(user, str | None):
-            raise TypeError("Exec's `user` field should be a string or nil")
+            raise TypeError("exec's `user` field should be a string or nil")
 
         work_dir = obj.pop("mount", None)
         if not isinstance(user, str | None):
-            raise TypeError("Exec's `work_dir` field should be a string or nil")
+            raise TypeError("exec's `work_dir` field should be a string or nil")
 
         if obj:
             raise ValueError(
-                f"Exec object has unexpected fields: {', '.join(obj.keys())}"
+                f"exec object has unexpected fields: {', '.join(obj.keys())}"
             )
 
         return cls(
@@ -66,7 +66,7 @@ class Exec:
             case [user, work_dir, command]:
                 return cls(command, user, work_dir)
             case _:
-                raise ValueError(f"Invalid exec format: {arg}")
+                raise ValueError(f"invalid exec format: {arg}")
 
     def to_object(
         self, fill_unset=False

@@ -21,24 +21,24 @@ class Run:
         if isinstance(obj, str):
             return cls.from_argument(obj)
         elif not isinstance(obj, dict):
-            raise TypeError("Run should be either a dict or a string")
+            raise TypeError("run should be either a dict or a string")
 
         obj = {**obj}
 
         try:
             command = obj.pop("command")
         except KeyError:
-            raise ValueError("Run should have at least `command` field")
+            raise ValueError("run should have at least `command` field")
         if not isinstance(command, str) and not (
             isinstance(command, list) and all(isinstance(x, str) for x in command)
         ):
             raise TypeError(
-                "Run's `command` field should be a string or a list of strings"
+                "run's `command` field should be a string or a list of strings"
             )
 
         user = obj.pop("user", "root")
         if not isinstance(user, str):
-            raise TypeError("Run's `user` field should be a string")
+            raise TypeError("run's `user` field should be a string")
 
         mount = obj.pop("mount", None)
 
@@ -53,19 +53,19 @@ class Run:
                 for x in mount
             )
         ):
-            raise TypeError("Run's `mount` field should be a dict or list of dicts")
+            raise TypeError("run's `mount` field should be a dict or list of dicts")
 
         network = obj.pop("network", None)
         if not isinstance(network, str | None):
-            raise TypeError("Run's `network` field should be a string")
+            raise TypeError("run's `network` field should be a string")
 
         security = obj.pop("security", None)
         if not isinstance(security, str | None):
-            raise TypeError("Run's `security` field should be a string")
+            raise TypeError("run's `security` field should be a string")
 
         if obj:
             raise ValueError(
-                f"Run object has unexpected fields: {', '.join(obj.keys())}"
+                f"run object has unexpected fields: {', '.join(obj.keys())}"
             )
 
         return cls(command, user)
@@ -91,7 +91,7 @@ class Run:
                                     (k, v) = split_fields(arg, "=", 1)
                                 except Exception as exc:
                                     raise ValueError(
-                                        f"Incorrect run option: {opt}"
+                                        f"incorrect run option: {opt}"
                                     ) from exc
                                 mount_args[k] = v
                             kwargs["mount"] = [*kwargs.get("mount", []), mount_args]
@@ -100,11 +100,11 @@ class Run:
                         case ["security", value]:
                             kwargs["security"] = value
                         case _:
-                            raise ValueError(f"Incorrect run option: {opt}")
+                            raise ValueError(f"incorrect run option: {opt}")
                 return cls(command=command, user=user, **kwargs)
 
             case _:
-                raise ValueError(f"Invalid run format: {arg}")
+                raise ValueError(f"invalid run format: {arg}")
 
     def to_object(
         self, fill_unset=False

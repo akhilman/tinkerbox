@@ -20,7 +20,7 @@ class Add(ABC):
         if isinstance(obj, str):
             return AddFile.from_argument(obj)
         if not isinstance(obj, dict):
-            raise TypeError("File object must be a dict")
+            raise TypeError("file object must be a dict or string")
 
         if "src" in obj:
             return AddFile.from_object(obj)
@@ -30,7 +30,7 @@ class Add(ABC):
             return AddText.from_object(obj)
         else:
             raise ValueError(
-                "File object must have either `src`, `url` or `content` field"
+                "file object must have either `src`, `url` or `content` field"
             )
 
     @abstractmethod
@@ -56,24 +56,24 @@ class AddFile(Add):
     @classmethod
     def from_object(cls, obj: Any) -> Self:
         if not isinstance(obj, dict):
-            raise TypeError("Add value must be a dict")
+            raise TypeError("add value must be a dict")
 
         rest = {**obj}
 
         try:
             src = rest.pop("src")
         except KeyError:
-            raise KeyError("Copy file object must have a `src` field")
+            raise KeyError("copy file object must have a `src` field")
         if not isinstance(src, str):
-            raise TypeError("File object's `src` field must be a string")
+            raise TypeError("file object's `src` field must be a string")
         src = Path(src)
 
         try:
             dst = rest.pop("dst")
         except KeyError:
-            raise KeyError("Copy file object must have a `dst` field")
+            raise KeyError("copy file object must have a `dst` field")
         if not isinstance(dst, str):
-            raise TypeError("File object's `dst` field must be a string")
+            raise TypeError("file object's `dst` field must be a string")
         dst = Path(dst)
 
         base_kwargs, rest = base_obj_to_kwargs(rest)
@@ -81,7 +81,7 @@ class AddFile(Add):
 
         if rest:
             raise ValueError(
-                f"File object has unexpected keys: {', '.join(rest.keys())}"
+                f"file object has unexpected keys: {', '.join(rest.keys())}"
             )
 
         return replace(
@@ -101,7 +101,7 @@ class AddFile(Add):
             case [src, dst, opts]:
                 pass
             case _:
-                raise ValueError(f"Incorrect file argument format: {arg}")
+                raise ValueError(f"incorrect file argument format: {arg}")
 
         parts = split_fields(opts, ",")
         opts_obj = {}
@@ -119,12 +119,12 @@ class AddFile(Add):
                 case [key, value]:
                     opts_obj[key] = value
                 case _:
-                    raise ValueError(f"Incorrect file argument format: {arg}")
+                    raise ValueError(f"incorrect file argument format: {arg}")
 
         try:
             return cls.from_object({"src": src, "dst": dst, **opts_obj})
         except ValueError as exc:
-            raise ValueError(f"Incorrect file argument: {arg}") from exc
+            raise ValueError(f"incorrect file argument: {arg}") from exc
 
     def to_object(self, fill_unset=False) -> dict[str, str | list[str] | bool | None]:
         return {
@@ -154,23 +154,23 @@ class AddUrl(Add):
     @classmethod
     def from_object(cls, obj: Any) -> Self:
         if not isinstance(obj, dict):
-            raise TypeError("Add value must be a dict")
+            raise TypeError("add value must be a dict")
 
         rest = {**obj}
 
         try:
             url = rest.pop("url")
         except KeyError:
-            raise KeyError("Copy file object must have a `url` field")
+            raise KeyError("copy file object must have a `url` field")
         if not isinstance(url, str):
-            raise TypeError("File object's `url` field must be a string")
+            raise TypeError("file object's `url` field must be a string")
 
         try:
             dst = rest.pop("dst")
         except KeyError:
-            raise KeyError("Copy file object must have a `dst` field")
+            raise KeyError("copy file object must have a `dst` field")
         if not isinstance(dst, str):
-            raise TypeError("File object's `dst` field must be a string")
+            raise TypeError("file object's `dst` field must be a string")
         dst = Path(dst)
 
         base_kwargs, rest = base_obj_to_kwargs(rest)
@@ -179,7 +179,7 @@ class AddUrl(Add):
 
         if rest:
             raise ValueError(
-                f"File object has unexpected keys: {', '.join(rest.keys())}"
+                f"file object has unexpected keys: {', '.join(rest.keys())}"
             )
 
         return replace(
@@ -212,29 +212,29 @@ class AddText(Add):
     @classmethod
     def from_object(cls, obj: Any) -> Self:
         if not isinstance(obj, dict):
-            raise TypeError("File object must be a dict")
+            raise TypeError("file object must be a dict")
 
         rest = {**obj}
 
         try:
             content = rest.pop("content")
         except KeyError:
-            raise KeyError("Copy file object must have a `content` field")
+            raise KeyError("copy file object must have a `content` field")
         if not isinstance(content, str):
-            raise TypeError("File object's `content` field must be a string")
+            raise TypeError("file object's `content` field must be a string")
 
         try:
             dst = rest.pop("dst")
         except KeyError:
-            raise KeyError("Copy file object must have a `dst` field")
+            raise KeyError("copy file object must have a `dst` field")
         if not isinstance(dst, str):
-            raise TypeError("File object's `dst` field must be a string")
+            raise TypeError("file object's `dst` field must be a string")
 
         base_kwargs, rest = base_obj_to_kwargs(rest)
 
         if rest:
             raise ValueError(
-                f"File object has unexpected keys: {', '.join(rest.keys())}"
+                f"file object has unexpected keys: {', '.join(rest.keys())}"
             )
 
         return replace(
@@ -260,17 +260,17 @@ class AddText(Add):
 
 def base_obj_to_kwargs(obj: Any) -> tuple[dict[str, str | None], dict[str, Any]]:
     if not isinstance(obj, dict):
-        raise TypeError("Add value must be a dict")
+        raise TypeError("add value must be a dict")
 
     rest = {**obj}
 
     chmod = rest.pop("chmod", None)
     if not isinstance(chmod, str | None):
-        raise TypeError("File's `chmod` field should be a string or null")
+        raise TypeError("file's `chmod` field should be a string or null")
 
     chown = rest.pop("chown", None)
     if not isinstance(chown, str | None):
-        raise TypeError("File's `chown` field should be a string or null")
+        raise TypeError("file's `chown` field should be a string or null")
 
     validated = {
         "chmod": chmod,
@@ -283,7 +283,7 @@ def file_and_url_obj_to_kwargs(
     obj: Any,
 ) -> tuple[dict[str, str | list[str] | bool | None], dict[str, Any]]:
     if not isinstance(obj, dict):
-        raise TypeError("Add value must be a dict")
+        raise TypeError("add value must be a dict")
 
     rest = {**obj}
 
@@ -305,7 +305,7 @@ def file_and_url_obj_to_kwargs(
 
     exclude = rest.pop("exclude", [])
     if not isinstance(exclude, list) or not all(isinstance(x, str) for x in exclude):
-        raise TypeError("File's `exclude` field should be a list of strings")
+        raise TypeError("file's `exclude` field should be a list of strings")
 
     validated = {
         "link": link,
@@ -317,7 +317,7 @@ def file_and_url_obj_to_kwargs(
 
 def url_obj_to_kwargs(obj: Any) -> tuple[dict[str, str | bool | None], dict[str, Any]]:
     if not isinstance(obj, dict):
-        raise TypeError("Add value must be a dict")
+        raise TypeError("add value must be a dict")
 
     rest = {**obj}
 
@@ -331,7 +331,7 @@ def url_obj_to_kwargs(obj: Any) -> tuple[dict[str, str | bool | None], dict[str,
 
     checksum = rest.pop("checksum", None)
     if not isinstance(checksum, str | None):
-        raise TypeError("File's `checksum` field should be a string or null")
+        raise TypeError("file's `checksum` field should be a string or null")
 
     validated = {
         "keep_git_dir": keep_git_dir,

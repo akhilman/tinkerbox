@@ -1,6 +1,4 @@
 from __future__ import annotations
-from tinkerbox import config_paths
-import tinkerbox
 
 import importlib.resources
 import json
@@ -12,6 +10,8 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, TypeVar
 
+import tinkerbox
+from tinkerbox import TinkerboxError, config_paths
 from tinkerbox.alias_enum import AliasEnum
 from tinkerbox.utils import normalize_string_list
 
@@ -42,33 +42,44 @@ class Profile(ABC):
         raise NotImplementedError
 
     @classmethod
-    def from_object(cls, obj):
-        if not isinstance(obj, dict):
-            raise TypeError("Profile value should be a dict")
+    def from_object(cls, obj: dict[str, Any], profile_source: str | Path | None = None):
 
         profile = cls()
 
+        profile.profile_source = profile_source
+
         if profile_name := obj.pop("profile_name", None):
             if not isinstance(profile_name, str):
-                raise TypeError("Profile name should be a string")
+                raise InvalidFieldError(
+                    msg="profile name should be a string",
+                    cls=cls,
+                    field="profile_name",
+                    value=profile_name,
+                    source=profile_source,
+                )
             profile.profile_name = profile_name
-
-        if profile_source := obj.pop("profile_source", None):
-            if not isinstance(profile_source, str | Path):
-                raise TypeError("Profile's `source` field should be a string")
-            profile.profile_source = profile_source
 
         if description := obj.pop("description", None):
             if not isinstance(description, str):
-                raise TypeError("Profile's `description` field should be a string")
+                raise InvalidFieldError(
+                    msg="profile's `description` field should be a string",
+                    cls=cls,
+                    field="description",
+                    value=description,
+                    source=profile_source,
+                )
             profile.description = description
 
         if extends := obj.pop("extends", None):
             try:
                 extends = normalize_string_list(extends)
             except TypeError:
-                raise TypeError(
-                    "Profile's `extends` field should be either list of strings or string"
+                raise InvalidFieldError(
+                    msg="profile's `extends` field should be either list of strings or string",
+                    cls=cls,
+                    field="description",
+                    value=description,
+                    source=profile_source,
                 )
             profile.extends = extends
 
@@ -76,10 +87,6 @@ class Profile(ABC):
 
     def to_object(self, fill_unset=False) -> dict[str, Any]:
         obj = {}
-        if fill_unset or self.profile_name:
-            obj["profile_name"] = self.profile_name
-        if fill_unset or self.profile_source:
-            obj["profile_source"] = str(self.profile_source)
         if fill_unset or self.description:
             obj["description"] = self.description
         if fill_unset or self.extends:
@@ -141,6 +148,7 @@ class Profile(ABC):
         """
         Substitutes `@{VAR}` in fields.
         """
+        _ = variables
         raise NotImplementedError
 
     @classmethod
@@ -150,20 +158,22 @@ class Profile(ABC):
                 path = dir / cls.kind().value / f"{name}.{suffix}"
                 if path.is_file():
                     logging.debug('Loading %s profile form "%s"', cls.kind(), path)
-                    profile = None
+                    obj = None
                     try:
                         if suffix == "json":
                             with path.open("r") as f:
-                                profile = cls.from_object(json.load(f))
+                                obj = json.load(f)
                         if suffix == "toml":
                             with path.open("br") as f:
-                                profile = cls.from_object(tomllib.load(f))
+                                obj = tomllib.load(f)
                     except Exception as exc:
                         exc.add_note(f"Profile source: {path}")
                         raise exc
-                    if profile:
-                        profile.profile_name = name
-                        profile.profile_source = path
+                    if obj:
+                        if not isinstance(obj, dict):
+                            raise ProfileNotObjectError(cls=cls, source=path)
+                        obj["profile_name"] = name
+                        profile = cls.from_object(obj, profile_source=path)
                         return profile
 
         if name == "default":
@@ -174,13 +184,12 @@ class Profile(ABC):
             if resource_path.is_file():
                 with importlib.resources.as_file(resource_path) as f:
                     logging.debug('Loading build-in %s profile "%s"', cls.kind(), name)
-                    text = f.read_text()
-                    profile = cls.from_object(tomllib.loads(text))
-                    profile.profile_name = name
-                    profile.profile_source = "built-in"
+                    obj = tomllib.loads(f.read_text())
+                    obj["profile_name"] = name
+                    profile = cls.from_object(obj, profile_source="built-in")
                     return profile
 
-        raise FileNotFoundError(f"Can not find {cls.kind()} profile {name}")
+        raise ProfileNotFoundError(cls.kind(), name)
 
 
 T = TypeVar("T", bound=Profile)
@@ -198,3 +207,86 @@ def list_profiles(kind: ProfileKind) -> set[str]:
                 profiles.add(name)
 
     return profiles
+
+
+@dataclass
+class InvalidProfileError(TinkerboxError):
+    cls: type | None = None
+    source: str | Path | None = None
+
+
+class ProfileNotObjectError(InvalidProfileError):
+    def __str__(self) -> str:
+        parts = []
+        if self.cls:
+            parts.append(self.cls.__name__)
+        else:
+            parts.append("Profile")
+
+        parts.append("should be an object")
+
+        if self.source is not None:
+            parts.append(f"[{self.source}]")
+
+        return " ".join(parts)
+
+
+@dataclass
+class InvalidFieldError(InvalidProfileError):
+    msg: str = field(kw_only=True)
+    field: str | None = None
+    value: Any = None
+
+    def __str__(self) -> str:
+        parts: list[str] = []
+
+        # "object.field" prefix
+        prefix = ".".join(
+            filter(None, (self.cls.__name__ if self.cls else None, self.field))
+        )
+        if prefix:
+            parts.append(f"{prefix}:")
+
+        # main message
+        parts.append(self.msg)
+
+        # value
+        if self.value is not None:
+            parts.append(f"(got {self.value!r})")
+
+        # source
+        if self.source is not None:
+            parts.append(f"[{self.source}]")
+
+        return " ".join(parts)
+
+
+@dataclass
+class UnexpectedFieldsError(InvalidProfileError):
+    cls: type | None = None
+    fields: list[str] = field(default_factory=list)
+    source: str | Path | None = None
+
+    def __str__(self) -> str:
+        parts = []
+
+        if self.cls:
+            parts.append(f"unexpected fields for {self.cls.__name__}:")
+        else:
+            parts.append("unexpected fields:")
+
+        parts.append(", ".join(f"'{f}'" for f in self.fields))
+
+        if self.source:
+            parts.append(f"[{self.source}]")
+
+        return " ".join(parts)
+
+
+@dataclass
+class ProfileNotFoundError(TinkerboxError):
+    kind: ProfileKind
+    name: str
+
+    def __str__(self):
+        return f"Unable to find {self.kind!r} profile {self.name!r}"

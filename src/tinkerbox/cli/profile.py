@@ -57,7 +57,7 @@ def cat_profile(args: argparse.Namespace):
         case ProfileKind.IMAGE:
             profile = ImageProfile.load(name)
         case _:
-            raise ValueError(f"Unexpected profile kind: {kind}")
+            raise ValueError(f"unexpected profile kind: {kind}")
 
     if args.flatten:
         profile = profile.flatten()
@@ -78,7 +78,7 @@ def extract_profile(args: argparse.Namespace):
         case ProfileKind.IMAGE:
             profile = tinkerbox.image.extract_profile(source)
         case _:
-            raise ValueError(f"Unexpected profile kind: {kind}")
+            raise ValueError(f"unexpected profile kind: {kind}")
     sys.stdout.write(
         json.dumps(profile.to_object(fill_unset=True), sort_keys=True, indent=2)
     )

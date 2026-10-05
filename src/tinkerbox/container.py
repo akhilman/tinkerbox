@@ -296,9 +296,10 @@ def extract_profile(container_name: str) -> ContainerProfile:
         raise NonNativeContainerError(container_name)
 
     obj["profile_name"] = container_name
-    obj["profile_source"] = f"container:{container_name}"
 
-    return ContainerProfile.from_object(obj)
+    return ContainerProfile.from_object(
+        obj, profile_source=f"container:{container_name}"
+    )
 
 
 class ContainerNotFoundError(TinkerboxError):

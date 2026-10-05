@@ -20,26 +20,26 @@ class Copy:
         if isinstance(obj, str):
             return cls.from_argument(obj)
         elif not isinstance(obj, dict):
-            raise TypeError("Copy should be either a dict or a string")
+            raise TypeError("copy should be either a dict or a string")
 
         obj = {**obj}
 
         try:
             src = obj.pop("src")
         except KeyError:
-            raise ValueError("Copy should have at least a `src` field")
+            raise ValueError("copy should have at least a `src` field")
         if not isinstance(src, str):
             raise TypeError(
-                "Copy's `src` field should be a string or a list of strings"
+                "copy's `src` field should be a string or a list of strings"
             )
 
         dst = obj.pop("dst", None)
         if dst is not None and not isinstance(dst, str):
-            raise TypeError("Copy's `dst` field should be a string or nil")
+            raise TypeError("copy's `dst` field should be a string or nil")
 
         src_container = obj.pop("src_container", None)
         if src_container is not None and not isinstance(src_container, str):
-            raise TypeError("Copy's `src_container` field should be a string or nil")
+            raise TypeError("copy's `src_container` field should be a string or nil")
 
         return cls(src=Path(src), dst=Path(dst), src_container=src_container)
 
@@ -61,7 +61,7 @@ class Copy:
             case [src_container, src, dst]:
                 return cls(Path(src), dst=Path(dst), src_container=src_container)
             case _:
-                raise ValueError(f"Invalid copy format: {arg}")
+                raise ValueError(f"invalid copy format: {arg}")
 
     def to_object(
         self, fill_unset=False

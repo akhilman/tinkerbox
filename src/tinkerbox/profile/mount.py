@@ -18,23 +18,23 @@ class Mount:
         if isinstance(obj, str):
             return cls.from_argument(obj)
         elif not isinstance(obj, dict):
-            raise TypeError("Mount should be either a dict or a string")
+            raise TypeError("mount should be either a dict or a string")
 
         obj = {**obj}
 
         try:
             mount_type = obj.pop("type")
         except KeyError:
-            raise ValueError("Mount should have at least `type` field")
+            raise ValueError("mount should have at least `type` field")
         if not isinstance(mount_type, str):
-            raise TypeError("Mount's `type` field should be a string")
+            raise TypeError("mount's `type` field should be a string")
 
         options = {k: (v if v else None) for k, v in obj.items()}
         if not all(
             isinstance(k, str) and isinstance(v, str | bool | None)
             for k, v in options.items()
         ):
-            raise TypeError("Mount options should be strings or nils")
+            raise TypeError("mount options should be strings or nils")
 
         return cls(mount_type, options=options)
 
