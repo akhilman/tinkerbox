@@ -32,9 +32,27 @@ class ImageOverride(AliasEnum):
         }
 
 
+class PullPolicy(AliasEnum):
+    ALWAYS = "always"
+    MISSING = "missing"
+    NEVER = "never"
+    NEWER = "newer"
+
+    @classmethod
+    def aliases(cls) -> dict[str, "PullPolicy"]:
+        return {
+            "a": PullPolicy.ALWAYS,
+            "m": PullPolicy.MISSING,
+            "n": PullPolicy.NEVER,
+            "update": PullPolicy.NEWER,
+            "u": PullPolicy.NEWER,
+        }
+
+
 @dataclass
 class ImageProfile(Profile):
     from_image: str | None = None
+    pull: PullPolicy | None = None
     name: str | None = None
     user: str | None = None
     home: str | None = None
@@ -67,6 +85,26 @@ class ImageProfile(Profile):
                     source=profile_source,
                 )
             profile.from_image = from_image
+
+        if pull := obj.pop("pull", None):
+            if not isinstance(pull, str):
+                raise InvalidFieldError(
+                    msg="image's `pull` field should be a string",
+                    cls=cls,
+                    field="pull",
+                    value=pull,
+                    source=profile_source,
+                )
+            try:
+                profile.pull = PullPolicy(pull)
+            except (TypeError, ValueError, KeyError) as exc:
+                raise InvalidFieldError(
+                    msg=str(exc),
+                    cls=cls,
+                    field="pull",
+                    value=pull,
+                    source=profile_source,
+                )
 
         if name := obj.pop("name", None):
             if not isinstance(name, str):
@@ -233,6 +271,8 @@ class ImageProfile(Profile):
         obj = super().to_object(fill_unset)
         if fill_unset or self.from_image:
             obj["from"] = self.from_image
+        if fill_unset or self.pull:
+            obj["pull"] = self.pull
         if fill_unset or self.name:
             obj["name"] = self.name
         if fill_unset or self.user:
@@ -264,6 +304,10 @@ class ImageProfile(Profile):
         merged.from_image = self.from_image
         if other.from_image is not None:
             merged.from_image = other.from_image
+
+        merged.pull = self.pull
+        if other.pull is not None:
+            merged.pull = other.pull
 
         merged.user = self.user
         if other.user is not None:
