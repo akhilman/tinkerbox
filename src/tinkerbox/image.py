@@ -98,7 +98,16 @@ def build_image(profile: ImageProfile, keep_tmp=False) -> str:
             f.write(f"LABEL {APP_ID}.manager=true\n")
             f.write(f"LABEL {APP_ID}.profile={json.dumps(profile_json)}\n")
 
-        output = subprocess.run_podman_capture("build", str(temp_dir), echo_output=True)
+        args = []
+        if profile.pull:
+            args.append(f"--pull={profile.pull}")
+
+        output = subprocess.run_podman_capture(
+            "build",
+            *args,
+            str(temp_dir),
+            echo_output=True,
+        )
         image_id = output.rstrip().split("\n")[-1]
 
         if profile.name:

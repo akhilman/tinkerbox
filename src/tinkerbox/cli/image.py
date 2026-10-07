@@ -5,7 +5,7 @@ from typing import Any
 import tinkerbox.cli.profile
 import tinkerbox.image
 from tinkerbox.logging import setup_logging
-from tinkerbox.profile.image import ImageOverride, ImageProfile
+from tinkerbox.profile.image import ImageOverride, ImageProfile, PullPolicy
 
 
 def setup_argparse(parser: argparse.ArgumentParser):
@@ -31,13 +31,19 @@ def setup_argparse(parser: argparse.ArgumentParser):
 
 def add_build_args(parser: argparse.ArgumentParser):
     parser.add_argument("--keep-tmp", action="store_true", help="keep temporary files")
-    parser.add_argument("--from", "-f", help="base image")
     parser.add_argument("name", help="image name")
     parser.add_argument("profile", nargs="*", help="profile to use")
     add_image_profile_args(parser)
 
 
 def add_image_profile_args(parser: argparse.ArgumentParser):
+    parser.add_argument("--from", "-f", help="base image")
+    parser.add_argument(
+        "--pull",
+        "-p",
+        help="pull image policy. The default is missing",
+        choices=list(PullPolicy.all_values()),
+    )
     parser.add_argument("--user", "-u", help="user name (host user name by default)")
     parser.add_argument(
         "--home", help="set user's home directory (same as host's by default)"
@@ -77,6 +83,7 @@ def profile_opts_from_cli_args(args: argparse.Namespace) -> dict["str", Any]:
     update_image_args = [
         "extends",
         "from",
+        "pull",
         "name",
         "user",
         "home",

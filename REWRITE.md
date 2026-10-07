@@ -1,6 +1,6 @@
 ## TODO
 - [x] Update container timezone (see below).
-- [ ] Add `--pull` to `image build`.
+- [x] Add `--pull` to `image build`.
 - [ ] Add `--replace` to `container create`.
 - [ ] Add `--enter` to `container create` and stop container after creation if `--enter` is not specified.
 - [ ] Make image name in `image build` optional.
