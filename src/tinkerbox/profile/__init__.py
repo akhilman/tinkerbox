@@ -11,9 +11,10 @@ from pathlib import Path
 from typing import Any, TypeVar
 
 import tinkerbox
+import tinkerbox.utils
 from tinkerbox import TinkerboxError, config_paths
 from tinkerbox.alias_enum import AliasEnum
-from tinkerbox.utils import normalize_string_list
+from tinkerbox.utils import normalize_string_list, timezone
 
 
 class ProfileKind(AliasEnum):
@@ -140,6 +141,9 @@ class Profile(ABC):
         variables["PROFILE_NAME"] = (
             self.profile_name if self.profile_name else "unnamed"
         )
+
+        if tz := timezone():
+            variables["TZ"] = tz
 
         return variables
 

@@ -2,7 +2,10 @@ import itertools
 import re
 import secrets
 import string
+from pathlib import Path
 from typing import Any
+
+from tinkerbox.subprocess import DependencyError, run_capture
 
 
 def normalize_bool_value(value: str | int | bool) -> bool:
@@ -95,3 +98,22 @@ def substitute(text: str, variables: dict[str, str]) -> str:
         raise ValueError(f"variable {name!r} is not defined")
 
     return _SUBSTITUTE_VAR.sub(replace, text)
+
+
+def timezone() -> str | None:
+    try:
+        timezone = run_capture(
+            "timedatectl", "show", "--property=Timezone", "--value"
+        ).strip()
+    except DependencyError:
+        pass
+    else:
+        return timezone
+
+    zone_file = Path("/etc/localtime")
+    if zone_file.is_symlink():
+        timezone = zone_file.resolve().relative_to("/usr/share/zoneinfo")
+        timezone = str(timezone)
+        return timezone
+
+    return None
