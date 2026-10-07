@@ -1,4 +1,5 @@
 import argparse
+import sys
 from typing import Any
 
 import tinkerbox.cli.profile
@@ -32,6 +33,9 @@ def setup_argparse(parser: argparse.ArgumentParser):
 
     cmd = commands.add_parser("profile", aliases=["pr"], help="manage image profile")
     tinkerbox.cli.profile.setup_argparse(cmd)
+
+    cmd = commands.add_parser("list", aliases=["ls"], help="list images")
+    cmd.set_defaults(func=list_images)
 
 
 def add_container_args(parser: argparse.ArgumentParser):
@@ -133,6 +137,13 @@ def profile_opts_from_cli_args(args: argparse.Namespace) -> dict[str, Any]:
         "override",
     ]
     return {k: v for k, v in vars(args).items() if k in update_image_args}
+
+
+def list_images(args: argparse.Namespace):
+    setup_logging(args.debug)
+
+    for name in tinkerbox.container.list_images():
+        sys.stdout.write(f"{name}\n")
 
 
 def create_container(args: argparse.Namespace):

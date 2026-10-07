@@ -29,7 +29,7 @@
 	- [ ] enter
 	- [ ] exec - executes single command in chosen container
 	- [ ] info
-	- [ ] ls
+	- [x] ls
 	- [ ] rebase
 	- [ ] recreate
 	- [ ] rm
