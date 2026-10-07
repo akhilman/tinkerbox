@@ -2,6 +2,7 @@
 - [ ] Update container timezone (see below).
 - [ ] Add `--pull` to `image build`.
 - [ ] Add `--replace` to `container create`.
+- [ ] Add `--enter` to `container create` and stop container after creation if `--enter` is not specified.
 - [ ] Make image name in `image build` optional.
 - [ ] Make container name in `container create` optional.
 - [ ] The option `profile` must take a name or a file path, maybe even url. There could be a generic function to read content from URI (resource|file|url).
