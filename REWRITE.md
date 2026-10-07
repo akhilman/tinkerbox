@@ -15,7 +15,7 @@
 - [ ] image
 	- [x] build
 	- [ ] info
-	- [ ] ls
+	- [x] ls
 	- [ ] rename
 	- [ ] rm
 	- [ ] tree

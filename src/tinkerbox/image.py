@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 import importlib.resources
 import json
 import logging
@@ -269,6 +270,21 @@ def extract_user_and_group(image_name: str) -> tuple[str, str]:
 
     user, group = user_group.rsplit(":", 1)
     return (user, group)
+
+
+def list_images() -> Iterator[str]:
+    images = json.loads(
+        subprocess.run_podman_capture(
+            "image", "ls", "--format=json", f"--filter=label={APP_ID}.manager=true"
+        )
+    )
+    for img in images:
+        if names := img.get("Names"):
+            if names:
+                yield names[0]
+                continue
+
+        yield img["Id"]
 
 
 class ImageNotFoundError(TinkerboxError):
