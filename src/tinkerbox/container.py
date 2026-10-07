@@ -3,6 +3,7 @@ import os
 import re
 import shlex
 import stat
+from collections.abc import Iterator
 from pathlib import Path
 
 import tinkerbox.image
@@ -300,6 +301,21 @@ def extract_profile(container_name: str) -> ContainerProfile:
     return ContainerProfile.from_object(
         obj, profile_source=f"container:{container_name}"
     )
+
+
+def list_images() -> Iterator[str]:
+    images = json.loads(
+        subprocess.run_podman_capture(
+            "container", "ls", "--format=json", f"--filter=label={APP_ID}.manager=true"
+        )
+    )
+    for img in images:
+        if names := img.get("Names"):
+            if names:
+                yield names[0]
+                continue
+
+        yield img["Id"]
 
 
 class ContainerNotFoundError(TinkerboxError):
