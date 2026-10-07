@@ -1,8 +1,9 @@
-from typing import Any
 import argparse
+import sys
+from typing import Any
 
-import tinkerbox.image
 import tinkerbox.cli.profile
+import tinkerbox.image
 from tinkerbox.logging import setup_logging
 from tinkerbox.profile.image import ImageOverride, ImageProfile
 
@@ -15,9 +16,6 @@ def setup_argparse(parser: argparse.ArgumentParser):
         metavar="COMMAND",
     )
 
-    cmd = commands.add_parser("list", aliases=["ls"], help="list images")
-    cmd.set_defaults(func=list_images)
-
     cmd = commands.add_parser(
         "build", aliases=["bd"], help="build an image from profile"
     )
@@ -26,6 +24,9 @@ def setup_argparse(parser: argparse.ArgumentParser):
 
     cmd = commands.add_parser("profile", aliases=["pr"], help="manage image profile")
     tinkerbox.cli.profile.setup_argparse(cmd)
+
+    cmd = commands.add_parser("list", aliases=["ls"], help="list images")
+    cmd.set_defaults(func=list_images)
 
 
 def add_build_args(parser: argparse.ArgumentParser):
@@ -92,8 +93,8 @@ def profile_opts_from_cli_args(args: argparse.Namespace) -> dict["str", Any]:
 def list_images(args: argparse.Namespace):
     setup_logging(args.debug)
 
-    print("list_images")
-    print(args)
+    for name in tinkerbox.image.list_images():
+        sys.stdout.write(f"{name}\n")
 
 
 def build_image(args: argparse.Namespace):
