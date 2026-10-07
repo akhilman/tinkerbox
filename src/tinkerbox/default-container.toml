@@ -20,6 +20,7 @@ pass_environment = [
 CONTAINER_MANAGER = "tinkerbox"
 HOME = "@{CONTAINER_HOME}"
 USER = "@{CONTAINER_USER}"
+TZ = "@{TZ?}"
 
 [[mounts]]
 type = "tmpfs"

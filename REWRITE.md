@@ -1,5 +1,5 @@
 ## TODO
-- [ ] Update container timezone (see below).
+- [x] Update container timezone (see below).
 - [ ] Add `--pull` to `image build`.
 - [ ] Add `--replace` to `container create`.
 - [ ] Add `--enter` to `container create` and stop container after creation if `--enter` is not specified.
