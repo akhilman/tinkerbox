@@ -11,6 +11,7 @@
 - [ ] Add `ignore_missing` to container's copy option.
 - [ ] Deduplicate volumes and mounts.
 - [ ] Support env variable expansion like `PATH=@{PATH}:/foo`, and then `PATH=@{PATH}:/bar`.
+- [ ] Do we need `random_string` from `utils.py`?
 
 ### Subcommands
 - [ ] image
