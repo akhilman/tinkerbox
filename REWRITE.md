@@ -1,17 +1,21 @@
 ## TODO
 - [x] Update container timezone (see below).
 - [x] Add `--pull` to `image build`.
+- [ ] Remove container if creation is failed.
 - [ ] Add `--replace` to `container create`.
 - [ ] Add `--enter` to `container create` and stop container after creation if `--enter` is not specified.
-- [ ] Make image name in `image build` optional.
-- [ ] Make container name in `container create` optional.
-- [ ] The option `profile` must take a name or a file path, maybe even url. There could be a generic function to read content from URI (resource|file|url).
-- [ ] Expand `~` to the actual home path inside containers for the image's copy option.
+- [ ] Do we need `random_string` from `utils.py`?
 - [ ] Add `ignore_failure` to container's exec option.
 - [ ] Add `ignore_missing` to container's copy option.
+- [ ] Maybe Support multiple names for containers and images.
+	- [ ] ~Make image name in `image build` optional.~
+	- [ ] ~Make container name in `container create` optional.~
+- [ ] Get more info from `container list`: image, size, status.
+- [ ] Get more info from `image list`: containers, size.
 - [ ] Deduplicate volumes and mounts.
 - [ ] Support env variable expansion like `PATH=@{PATH}:/foo`, and then `PATH=@{PATH}:/bar`.
-- [ ] Do we need `random_string` from `utils.py`?
+- [ ] Expand `~` to the actual home path inside containers for the image's copy option.
+- [ ] The option `profile` must take a name or a file path, maybe even url. There could be a generic function to read content from URI (resource|file|url).
 
 ### Subcommands
 - [ ] image
