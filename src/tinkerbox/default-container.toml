@@ -2,6 +2,7 @@ description = "Default Tinkerbox container profile. Meant to be used with defaul
 enter_command = "sh -c 'exec $(getent passwd $(whoami) | cut -d: -f7)'"
 
 pass_environment = [
+  "TERM",
   "COLORTERM",
   "DISPLAY",
   "KITTY_WINDOW_ID",
