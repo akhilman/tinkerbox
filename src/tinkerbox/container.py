@@ -92,6 +92,8 @@ def create(profile: ContainerProfile) -> str:
         dst = f"{container_id}:{dst}"
         subprocess.run_podman("container", "cp", src, dst)
 
+    pass_env_args = [f"--env={env}" for env in profile.pass_environment]
+
     for exec in profile.exec:
         if isinstance(exec.command, list):
             command = exec.command
@@ -104,7 +106,14 @@ def create(profile: ContainerProfile) -> str:
         if exec.work_dir:
             args.append(f"--workdir={exec.work_dir}")
 
-        subprocess.run_podman("container", "exec", *args, container_id, *command)
+        subprocess.run_podman(
+            "container",
+            "exec",
+            *args,
+            *pass_env_args,
+            container_id,
+            *command,
+        )
 
     return container_id
 
