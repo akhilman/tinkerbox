@@ -119,4 +119,5 @@ class CalledProcessError(TinkerboxError):
     stderr: str | None = None
 
     def __str__(self):
-        return f"Subprocess returned non zero exit code: {self.return_code}"
+        cmd = shlex.join(self.args)
+        return f"Subprocess returned non zero ({self.return_code}) exit code: {cmd}"

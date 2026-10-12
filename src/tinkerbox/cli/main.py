@@ -3,6 +3,7 @@ import logging
 import sys
 
 from tinkerbox import TinkerboxError
+from tinkerbox.subprocess import CalledProcessError
 
 from . import container, image
 
@@ -34,7 +35,10 @@ def main():
     except TinkerboxError as exc:
         logger.debug("Exception is raised", exc_info=True)
         sys.stderr.write(f"{exc}\n")
-        sys.exit(1)
+        return_code = 1
+        if isinstance(exc, CalledProcessError):
+            return_code = exc.return_code
+        sys.exit(return_code)
 
 
 if __name__ == "__main__":
