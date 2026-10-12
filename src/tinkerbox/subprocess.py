@@ -3,7 +3,7 @@ import shlex
 import subprocess
 import sys
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from tinkerbox import TinkerboxError
 
