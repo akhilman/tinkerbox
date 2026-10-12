@@ -1,7 +1,7 @@
 ## TODO
 - [x] Update container timezone (see below).
 - [x] Add `--pull` to `image build`.
-- [ ] Remove container if creation is failed.
+- [x] Remove container if creation is failed.
 - [ ] Add `--replace` to `container create`.
 - [ ] Add `--enter` to `container create` and stop container after creation if `--enter` is not specified.
 - [ ] Do we need `random_string` from `utils.py`?
