@@ -12,7 +12,7 @@ from tinkerbox.profile.container import ContainerProfile, Passthrough
 from tinkerbox.profile.device import Device, DevicePermission
 from tinkerbox.profile.exec import Exec
 from tinkerbox.profile.mount import Mount
-from tinkerbox.subprocess import CalledProcessError
+from tinkerbox.subprocess import CalledProcessError, run_podman
 
 
 def create(profile: ContainerProfile) -> str:
@@ -35,7 +35,6 @@ def create(profile: ContainerProfile) -> str:
         profile = apply_passthrough(profile)
 
     if profile.name:
-        args.append(f"--name={profile.name}")
         args.append(f"--hostname={profile.name}")
 
     user, group = tinkerbox.image.extract_user_and_group(image)
@@ -70,56 +69,58 @@ def create(profile: ContainerProfile) -> str:
     args.append(f"--label={APP_ID}.manager=true")
     args.append(f"--label={APP_ID}.profile={profile_json}")
 
-    container_id = subprocess.run_podman_capture(
-        "run",
-        "-d",
-        *args,
-        image,
-        echo_output=True,
-    )
+    container_id = subprocess.run_podman_capture("run", "-d", *args, image)
     container_id = container_id.strip()
 
-    for cp in profile.copy:
-        if cp.src_container:
-            src = f"{cp.src_container}:{cp.src}"
-        else:
-            src = str(cp.src.expanduser())
+    try:
+        for cp in profile.copy:
+            if cp.src_container:
+                src = f"{cp.src_container}:{cp.src}"
+            else:
+                src = str(cp.src.expanduser())
 
-        if cp.dst:
-            dst = cp.dst
-        else:
-            dst = cp.src
-        dst = f"{container_id}:{dst}"
-        subprocess.run_podman("container", "cp", src, dst)
+            if cp.dst:
+                dst = cp.dst
+            else:
+                dst = cp.src
+            dst = f"{container_id}:{dst}"
+            subprocess.run_podman("container", "cp", src, dst)
 
-    pass_env_args = [f"--env={env}" for env in profile.pass_environment]
+        pass_env_args = [f"--env={env}" for env in profile.pass_environment]
 
-    for exec in profile.exec:
-        if isinstance(exec.command, list):
-            command = exec.command
-        else:
-            command = shlex.split(exec.command)
+        for exec in profile.exec:
+            if isinstance(exec.command, list):
+                command = exec.command
+            else:
+                command = shlex.split(exec.command)
 
-        args = []
-        if exec.user:
-            args.append(f"--user={exec.user}")
-        if exec.work_dir:
-            args.append(f"--workdir={exec.work_dir}")
+            args = []
+            if exec.user:
+                args.append(f"--user={exec.user}")
+            if exec.work_dir:
+                args.append(f"--workdir={exec.work_dir}")
 
-        subprocess.run_podman(
-            "container",
-            "exec",
-            *args,
-            *pass_env_args,
-            container_id,
-            *command,
-        )
+            subprocess.run_podman(
+                "container",
+                "exec",
+                *args,
+                *pass_env_args,
+                container_id,
+                *command,
+            )
+    except:
+        stop(container_id)
+        remove(container_id)
+        raise
+
+    if name := profile.name:
+        run_podman("container", "rename", container_id, name)
 
     return container_id
 
 
-def start(container_name: str) -> str:
-    return subprocess.run_podman_capture("container", "start", container_name).strip()
+def start(container_name: str):
+    subprocess.run_podman_capture("container", "start", container_name)
 
 
 def enter(container_name: str, command: str | None = None, user: str | None = None):
@@ -142,6 +143,45 @@ def enter(container_name: str, command: str | None = None, user: str | None = No
 
     start(container_name)
     subprocess.run_podman("container", "exec", "-it", *args, container_name, *cmd_args)
+
+
+def stop(container_name: str):
+    subprocess.run_podman_capture("container", "stop", container_name)
+
+
+def remove(container_name: str):
+    subprocess.run_podman_capture("container", "stop", container_name)
+
+
+def is_exists(container_name: str) -> bool:
+    try:
+        subprocess.run_podman("container", "exists", container_name)
+    except CalledProcessError:
+        return False
+
+    return True
+
+
+def is_running(container_name: str) -> bool:
+    running = subprocess.run_podman_capture(
+        "podman",
+        "container",
+        "inspect",
+        "--format='{{.State.Running}}'",
+        container_name,
+    ).strip()
+    return running == "true"
+
+
+def is_paused(container_name: str) -> bool:
+    running = subprocess.run_podman_capture(
+        "podman",
+        "container",
+        "inspect",
+        "--format='{{.State.Paused}}'",
+        container_name,
+    ).strip()
+    return running == "true"
 
 
 def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
@@ -274,15 +314,6 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
     pass_profile = pass_profile.merge(profile)
 
     return pass_profile
-
-
-def is_exists(name: str) -> bool:
-    try:
-        subprocess.run_podman("container", "exists", name)
-    except CalledProcessError:
-        return False
-
-    return True
 
 
 def extract_profile(container_name: str) -> ContainerProfile:
