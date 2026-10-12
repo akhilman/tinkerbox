@@ -30,6 +30,13 @@ def run(cmd: str, *args: str):
         )
     except FileNotFoundError as exc:
         raise DependencyError(f"{cmd} executable not found") from exc
+    except subprocess.CalledProcessError as exc:
+        raise CalledProcessError(
+            exc.returncode,
+            command,
+            output=exc.output,
+            stderr=exc.stderr,
+        )
 
     return result.returncode
 
