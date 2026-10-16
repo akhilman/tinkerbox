@@ -25,6 +25,10 @@ def setup_argparse(parser: argparse.ArgumentParser):
     cmd = commands.add_parser("profile", aliases=["pr"], help="manage image profile")
     tinkerbox.cli.profile.setup_argparse(cmd)
 
+    cmd = commands.add_parser("remove", aliases=["rm"], help="remove an image")
+    cmd.add_argument("image", nargs="+", help="image to remove")
+    cmd.set_defaults(func=remove_image)
+
     cmd = commands.add_parser("list", aliases=["ls"], help="list images")
     cmd.set_defaults(func=list_images)
 
@@ -127,8 +131,7 @@ def cat_image_profile(args: argparse.Namespace):
 def remove_image(args: argparse.Namespace):
     setup_logging(args.debug)
 
-    print("remove_image")
-    print(args)
+    tinkerbox.image.remove_images(args.image)
 
 
 def rename_image(args: argparse.Namespace):

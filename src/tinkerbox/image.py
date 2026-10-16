@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Iterator, Iterable
 import importlib.resources
 import json
 import logging
@@ -296,6 +296,12 @@ def list_images() -> Iterator[str]:
                 continue
 
         yield img["Id"]
+
+
+def remove_images(images: Iterable[str]):
+    image_list = list(images)
+    logger.info("Removing images: %s", ", ".join(image_list))
+    subprocess.run_podman("image", "rm", *image_list)
 
 
 class ImageNotFoundError(TinkerboxError):
