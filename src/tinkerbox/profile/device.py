@@ -18,24 +18,24 @@ class Device:
     permissions: set[DevicePermission] = field(default_factory=set)
 
     @classmethod
-    def from_object(cls, device: Any) -> Self:
-        if isinstance(device, str):
-            return cls.from_argument(device)
-        elif not isinstance(device, dict):
+    def from_object(cls, obj: Any) -> Self:
+        if isinstance(obj, str):
+            return cls.from_argument(obj)
+        elif not isinstance(obj, dict):
             raise TypeError("device should be either a dict or a string")
 
         try:
-            host_device = device.pop("host_device")
+            host_device = obj.pop("host_device")
         except KeyError:
             raise ValueError("device should have at least `host_device` field")
         if not isinstance(host_device, str):
             raise TypeError("device's `host_device` field should be a string")
 
-        container_device = device.pop("container_device", None)
+        container_device = obj.pop("container_device", None)
         if not isinstance(container_device, str | None):
             raise TypeError("device's `container_device` field should be a string")
 
-        permissions = device.pop("permissions", list)
+        permissions = obj.pop("permissions", list)
         if isinstance(permissions, str):
             permissions = set(map(DevicePermission, permissions.replace(",", "")))
         elif isinstance(permissions, list):
@@ -45,10 +45,8 @@ class Device:
                 "device's `permissions` field must be string or list of strings"
             )
 
-        if device:
-            raise ValueError(
-                f"device has unexpected fields: {', '.join(device.keys())}"
-            )
+        if obj:
+            raise ValueError(f"device has unexpected fields: {', '.join(obj.keys())}")
 
         return cls(
             host_device=host_device,

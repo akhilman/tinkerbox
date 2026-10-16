@@ -1,9 +1,7 @@
-import itertools
 import re
 import secrets
 import string
 from pathlib import Path
-from typing import Any
 
 from tinkerbox.subprocess import DependencyError, run_capture
 
@@ -18,14 +16,6 @@ def normalize_bool_value(value: str | int | bool) -> bool:
         return bool(value)
     else:
         raise ValueError(f"can not convert value {value!r} to bool")
-
-
-def normalize_string_list(value: Any) -> list[str]:
-    if not isinstance(value, list):
-        value = [value]
-    if not all(isinstance(v, str) for v in value):
-        raise TypeError("value should be either string or list of strings")
-    return list(w.strip() for w in itertools.chain(*(v.split(",") for v in value)))
 
 
 def random_string(length: int = 8) -> str:
