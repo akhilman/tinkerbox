@@ -23,7 +23,7 @@
 	- [ ] info
 	- [x] ls
 	- [ ] rename
-	- [ ] rm
+	- [x] rm
 	- [ ] tree
 	- [ ] profile
 		- [x] ls
