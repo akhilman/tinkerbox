@@ -18,6 +18,8 @@ from tinkerbox.profile.image import ImageProfile
 from tinkerbox.profile.run import Run
 from tinkerbox.subprocess import CalledProcessError
 
+logger = logging.getLogger(__name__)
+
 
 def build_image(profile: ImageProfile, keep_tmp=False) -> str:
     """
@@ -31,7 +33,7 @@ def build_image(profile: ImageProfile, keep_tmp=False) -> str:
         delete=(not keep_tmp),
     ) as temp_dir:
         temp_dir = Path(temp_dir)
-        logging.debug(f"Using temporary directory: {temp_dir}")
+        logger.debug(f"Using temporary directory: {temp_dir}")
         container_file = temp_dir / "Containerfile"
         with (container_file).open("w") as f:
             assert profile.user
@@ -124,7 +126,7 @@ def write_add(add: Add, file: TextIO, temp_dir: Path):
         )
         text.parent.mkdir(parents=True, exist_ok=True)
         with text.open("w") as f:
-            logging.debug("Writing file content to `%s`", text)
+            logger.debug("Writing file content to `%s`", text)
             f.write(add.content)
         src = str(text.relative_to(temp_dir))
         dst = str(add.dst)
@@ -149,12 +151,12 @@ def write_add(add: Add, file: TextIO, temp_dir: Path):
         )
         src_copy.parent.mkdir(parents=True, exist_ok=True)
         if src_orig.is_dir():
-            logging.debug("Copying `%s` directory to `%s`", src_orig, src_copy)
+            logger.debug("Copying `%s` directory to `%s`", src_orig, src_copy)
             shutil.copytree(
                 src_orig, src_copy, symlinks=True, ignore_dangling_symlinks=True
             )
         else:
-            logging.debug("Copying `%s` file to `%s`", src_orig, src_copy)
+            logger.debug("Copying `%s` file to `%s`", src_orig, src_copy)
             shutil.copy(src_orig, src_copy, follow_symlinks=True)
         src = str(src_copy.relative_to(temp_dir))
         dst = str(add.dst)
