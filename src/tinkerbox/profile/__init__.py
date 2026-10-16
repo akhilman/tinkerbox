@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import importlib.resources
+import itertools
 import json
 import logging
 import os
 import tomllib
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, TypeVar
@@ -14,7 +16,6 @@ import tinkerbox
 import tinkerbox.utils
 from tinkerbox import TinkerboxError, config_paths
 from tinkerbox.alias_enum import AliasEnum
-from tinkerbox.utils import normalize_string_list, timezone
 
 
 class ProfileKind(AliasEnum):
@@ -50,39 +51,27 @@ class Profile(ABC):
         profile.profile_source = profile_source
 
         if profile_name := obj.pop("profile_name", None):
-            if not isinstance(profile_name, str):
-                raise InvalidFieldError(
-                    msg="profile name should be a string",
-                    cls=cls,
-                    field="profile_name",
-                    value=profile_name,
-                    source=profile_source,
-                )
-            profile.profile_name = profile_name
-
+            profile.profile_name = parse_string(
+                profile_name,
+                cls,
+                "profile_name",
+                profile_source,
+            )
         if description := obj.pop("description", None):
-            if not isinstance(description, str):
-                raise InvalidFieldError(
-                    msg="profile's `description` field should be a string",
-                    cls=cls,
-                    field="description",
-                    value=description,
-                    source=profile_source,
-                )
-            profile.description = description
+            profile.description = parse_string(
+                description,
+                cls,
+                "description",
+                profile_source,
+            )
 
         if extends := obj.pop("extends", None):
-            try:
-                extends = normalize_string_list(extends)
-            except TypeError:
-                raise InvalidFieldError(
-                    msg="profile's `extends` field should be either list of strings or string",
-                    cls=cls,
-                    field="description",
-                    value=description,
-                    source=profile_source,
-                )
-            profile.extends = extends
+            profile.extends = parse_string_list(
+                extends,
+                cls,
+                "extends",
+                profile_source,
+            )
 
         return profile
 
@@ -142,7 +131,7 @@ class Profile(ABC):
             self.profile_name if self.profile_name else "unnamed"
         )
 
-        if tz := timezone():
+        if tz := tinkerbox.utils.timezone():
             variables["TZ"] = tz
 
         return variables
@@ -294,3 +283,167 @@ class ProfileNotFoundError(TinkerboxError):
 
     def __str__(self):
         return f"Unable to find {self.kind!r} profile {self.name!r}"
+
+
+Obj = TypeVar("Obj")
+
+
+def parse_enum(
+    value: Any,
+    factory: Callable[[Any], Obj],
+    profile_cls: type,
+    profile_field: str,
+    profile_source: str | Path | None,
+) -> Obj:
+    if not isinstance(value, str):
+        raise InvalidFieldError(
+            msg="expecting a string",
+            cls=profile_cls,
+            field=profile_field,
+            value=value,
+            source=profile_source,
+        )
+    try:
+        return factory(value)
+    except (TypeError, ValueError, KeyError) as exc:
+        raise InvalidFieldError(
+            msg=str(exc),
+            cls=profile_cls,
+            field=profile_field,
+            value=value,
+            source=profile_source,
+        )
+
+
+def parse_enum_set(
+    value: Any,
+    factory: Callable[[Any], Obj],
+    profile_cls: type,
+    profile_field: str,
+    profile_source: str | Path | None,
+) -> set[Obj]:
+    try:
+        string_list = normalize_string_list(value)
+    except TypeError:
+        raise InvalidFieldError(
+            msg="expecting a list of strings or string",
+            cls=profile_cls,
+            field=profile_field,
+            value=value,
+            source=profile_source,
+        )
+    return {factory(s) for s in string_list}
+
+
+def parse_object_list(
+    value: Any,
+    factory: Callable[[Any], Obj],
+    profile_cls: type,
+    profile_field: str,
+    profile_source: str | Path | None,
+) -> list[Obj]:
+    if not isinstance(value, list):
+        raise InvalidFieldError(
+            msg="expecting a list of dicts",
+            cls=profile_cls,
+            field=profile_field,
+            value=value,
+            source=profile_source,
+        )
+    try:
+        return [factory(x) for x in value]
+    except (TypeError, ValueError, KeyError) as exc:
+        raise InvalidFieldError(
+            msg=str(exc),
+            cls=profile_cls,
+            field=profile_field,
+            value=value,
+            source=profile_source,
+        )
+
+
+def parse_string(
+    value: Any,
+    profile_cls: type,
+    profile_field: str,
+    profile_source: str | Path | None,
+) -> str:
+    if not isinstance(value, str):
+        raise InvalidFieldError(
+            msg="expecting a string",
+            cls=profile_cls,
+            field=profile_field,
+            value=value,
+            source=profile_source,
+        )
+    return value
+
+
+def parse_string_list(
+    value: Any,
+    profile_cls: type,
+    profile_field: str,
+    profile_source: str | Path | None,
+) -> list[str]:
+    try:
+        return normalize_string_list(value)
+    except TypeError:
+        raise InvalidFieldError(
+            msg="expecting either a list of strings or a string",
+            cls=profile_cls,
+            field=profile_field,
+            value=value,
+            source=profile_source,
+        )
+
+
+def parse_string_or_string_list(
+    value: Any,
+    profile_cls: type,
+    profile_field: str,
+    profile_source: str | Path | None,
+) -> str | list[str]:
+    if not isinstance(value, list) or not (
+        all(isinstance(x, str) for x in value)
+        or all(
+            isinstance(x, list) and all(isinstance(y, str) for y in x) for x in value
+        )
+    ):
+        raise InvalidFieldError(
+            msg="expecting a string or a list of strings",
+            cls=profile_cls,
+            field=profile_field,
+            value=value,
+            source=profile_source,
+        )
+    return value
+
+
+def parse_string_map(
+    value: Any,
+    profile_cls: type,
+    profile_field: str,
+    profile_source: str | Path | None,
+) -> dict[str, str]:
+    if isinstance(value, dict) and all(
+        isinstance(k, str) and isinstance(v, str) for (k, v) in value.items()
+    ):
+        return value
+    elif isinstance(value, list) and all(isinstance(x, list) for x in value):
+        return {k: v for k, v in ((x.split("=", 1) + [""])[:2] for x in value)}
+    else:
+        raise InvalidFieldError(
+            msg='expecting a dict with string keys and values or a list of strings in "KEY=VAL" format',
+            cls=profile_cls,
+            field=profile_field,
+            value=value,
+            source=profile_source,
+        )
+
+
+def normalize_string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        value = [value]
+    if not all(isinstance(v, str) for v in value):
+        raise TypeError("value should be either string or list of strings")
+    return list(w.strip() for w in itertools.chain(*(v.split(",") for v in value)))

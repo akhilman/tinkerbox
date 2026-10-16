@@ -1,5 +1,5 @@
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from dataclasses import dataclass, replace, asdict
 from typing import Any, Self
 
 from tinkerbox.utils import split_fields, substitute
