@@ -356,10 +356,14 @@ def extract_profile(container: str) -> ContainerProfile:
     return ContainerProfile.from_object(obj, profile_source=f"container:{container}")
 
 
-def list_images() -> Iterator[str]:
+def list_containers() -> Iterator[str]:
     images = json.loads(
         subprocess.run_podman_capture(
-            "container", "ls", "--format=json", f"--filter=label={APP_ID}.manager=true"
+            "container",
+            "ls",
+            "--all",
+            "--format=json",
+            f"--filter=label={APP_ID}.manager=true",
         )
     )
     for img in images:
@@ -374,13 +378,13 @@ def list_images() -> Iterator[str]:
 class ContainerNotFoundError(TinkerboxError):
     def __init__(self, container: str):
         super().__init__(f"Container {container!r} not exists")
-        self.image_name = container
+        self.container = container
 
 
 class NonNativeContainerError(TinkerboxError):
     def __init__(self, container: str):
         super().__init__(f"Container {container!r} is not tinkerbox container")
-        self.image_name = container
+        self.container = container
 
 
 class ImageNotSpecifiedError(TinkerboxError):
