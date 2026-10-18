@@ -113,13 +113,13 @@ def create(profile: ContainerProfile) -> str:
                 container_id,
                 *command,
             )
+
+        if name := profile.name:
+            run_podman("container", "rename", container_id, name)
     except:
         stop(container_id)
         remove(container_id)
         raise
-
-    if name := profile.name:
-        run_podman("container", "rename", container_id, name)
 
     return container_id
 
