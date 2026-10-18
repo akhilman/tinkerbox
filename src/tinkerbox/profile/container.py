@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Self
 
 from tinkerbox.alias_enum import AliasEnum
-from tinkerbox.utils import random_string, substitute
+from tinkerbox.utils import substitute
 
 from . import (
     Profile,
@@ -333,11 +333,9 @@ class ContainerProfile(Profile):
         # TODO: Load variables form image.
         if image := self.image:
             variables["CONTAINER_IMAGE"] = image
-        variables["CONTAINER_NAME"] = (
-            substitute(self.name, variables)
-            if self.name
-            else variables["PROFILE_NAME"] + random_string()
-        )
+        if name := self.name:
+            variables["CONTAINER_NAME"] = substitute(name, variables)
+
         return variables
 
     def substitute(self, variables: dict[str, str] | None = None) -> Self:

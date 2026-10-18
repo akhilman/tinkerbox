@@ -1,6 +1,4 @@
 import re
-import secrets
-import string
 from functools import lru_cache
 from pathlib import Path
 
@@ -17,11 +15,6 @@ def normalize_bool_value(value: str | int | bool) -> bool:
         return bool(value)
     else:
         raise ValueError(f"can not convert value {value!r} to bool")
-
-
-def random_string(length: int = 8) -> str:
-    chars = string.ascii_letters + string.digits
-    return "".join(secrets.choice(chars) for _ in range(length))
 
 
 def split_fields(value: str, sep=":", max_splits=-1) -> list[str]:

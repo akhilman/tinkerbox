@@ -6,7 +6,7 @@ from typing import Any, Self
 
 from tinkerbox.alias_enum import AliasEnum
 from tinkerbox.profile.run import Run
-from tinkerbox.utils import random_string, substitute
+from tinkerbox.utils import substitute
 
 from . import (
     Profile,
@@ -260,11 +260,8 @@ class ImageProfile(Profile):
         variables = super().variables()
         uid = os.getuid()
         user = self.user or pwd.getpwuid(uid).pw_name
-        variables["IMAGE_NAME"] = (
-            substitute(self.name, variables)
-            if self.name
-            else variables["PROFILE_NAME"] + random_string()
-        )
+        if self.name:
+            variables["IMAGE_NAME"] = substitute(self.name, variables)
         variables["CONTAINER_USER"] = user
         home = substitute(self.home or pwd.getpwuid(uid).pw_dir, variables)
         variables["CONTAINER_HOME"] = home
@@ -274,7 +271,7 @@ class ImageProfile(Profile):
         variables = {**self.variables(), **(variables or {})}
 
         from_image = substitute(self.from_image, variables) if self.from_image else None
-        name = variables["IMAGE_NAME"]
+        name = variables.get("IMAGE_NAME", self.name)
         user = variables["CONTAINER_USER"]
         home = variables["CONTAINER_HOME"]
         add = [x.substitute(variables) for x in self.add]
