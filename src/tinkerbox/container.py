@@ -150,7 +150,7 @@ def stop(container_name: str):
 
 
 def remove(container_name: str):
-    subprocess.run_podman_capture("container", "stop", container_name)
+    subprocess.run_podman_capture("container", "rm", container_name)
 
 
 def is_exists(container_name: str) -> bool:
