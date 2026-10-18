@@ -57,6 +57,12 @@ def setup_argparse(parser: argparse.ArgumentParser):
     cmd.set_defaults(func=remove_containers)
 
     cmd = commands.add_parser(
+        "start", aliases=["st"], help="start one or more containers"
+    )
+    cmd.add_argument("container", nargs="+", help="container to start")
+    cmd.set_defaults(func=start_containers)
+
+    cmd = commands.add_parser(
         "stop", aliases=["sp"], help="stop one or more containers"
     )
     cmd.add_argument("container", nargs="+", help="container to stop")
@@ -217,6 +223,11 @@ def remove_containers(args: argparse.Namespace):
                 raise TinkerboxError(f"container `{container}` is running")
 
     tinkerbox.container.remove(args.container)
+
+
+def start_containers(args: argparse.Namespace):
+    setup_logging(args.debug)
+    tinkerbox.container.start(args.container)
 
 
 def stop_containers(args: argparse.Namespace):
