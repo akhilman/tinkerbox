@@ -34,8 +34,6 @@ def run(cmd: str, *args: str):
         raise CalledProcessError(
             exc.returncode,
             command,
-            output=exc.output,
-            stderr=exc.stderr,
         )
 
     return result.returncode
