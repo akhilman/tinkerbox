@@ -7,7 +7,7 @@
 - [x] Do we need `random_string` from `utils.py`?
 - [ ] Add `ignore_failure` to container's exec option.
 - [ ] Add `ignore_missing` to container's copy option.
-- [ ] Maybe Support multiple names for containers and images.
+- [ ] ~Maybe Support multiple names for containers and images.~
 	- [ ] ~Make image name in `image build` optional.~
 	- [ ] ~Make container name in `container create` optional.~
 - [ ] Get more info from `container list`: image, size, status.
