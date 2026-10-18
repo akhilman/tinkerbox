@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, TypeVar
 
 import tinkerbox
+import tinkerbox.resources
 import tinkerbox.utils
 from tinkerbox import TinkerboxError, config_paths
 from tinkerbox.alias_enum import AliasEnum
@@ -171,7 +172,7 @@ class Profile(ABC):
 
         if name == "default":
             resource_path = (
-                importlib.resources.files(tinkerbox.__package__)
+                importlib.resources.files(tinkerbox.resources.__package__)
                 / f"{name}-{cls.kind()}.toml"
             )
             if resource_path.is_file():
