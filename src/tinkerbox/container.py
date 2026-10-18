@@ -29,6 +29,10 @@ def create(profile: ContainerProfile) -> str:
     if not image:
         raise ImageNotSpecifiedError
 
+    if flat_profile.name:
+        if is_exists(flat_profile.name):
+            raise ContainerExistsError(flat_profile.name)
+
     logger.debug("Creating container from image %s", profile.image)
 
     image_profile = tinkerbox.image.extract_profile(image)
@@ -379,6 +383,12 @@ def list_containers() -> Iterator[str]:
                 continue
 
         yield img["Id"]
+
+
+class ContainerExistsError(TinkerboxError):
+    def __init__(self, container: str):
+        super().__init__(f"Container {container!r} already exists")
+        self.container = container
 
 
 class ContainerNotFoundError(TinkerboxError):
