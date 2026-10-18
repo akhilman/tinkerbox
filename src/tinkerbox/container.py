@@ -124,15 +124,15 @@ def create(profile: ContainerProfile) -> str:
     return container_id
 
 
-def start(container_name: str):
-    logger.debug(f"Stating container: {container_name}")
-    subprocess.run_podman_capture("container", "start", container_name)
+def start(container: str):
+    logger.debug(f"Stating container: {container}")
+    subprocess.run_podman_capture("container", "start", container)
 
 
-def enter(container_name: str, command: str | None = None, user: str | None = None):
-    logger.debug(f"Entering container: {container_name}")
+def enter(container: str, command: str | None = None, user: str | None = None):
+    logger.debug(f"Entering container: {container}")
 
-    profile = extract_profile(container_name)
+    profile = extract_profile(container)
     args = []
 
     if command:
@@ -149,47 +149,47 @@ def enter(container_name: str, command: str | None = None, user: str | None = No
     for env in profile.pass_environment:
         args.append(f"--env={env}")
 
-    start(container_name)
-    subprocess.run_podman("container", "exec", "-it", *args, container_name, *cmd_args)
+    start(container)
+    subprocess.run_podman("container", "exec", "-it", *args, container, *cmd_args)
 
 
-def stop(container_name: str):
-    logger.debug(f"Stopping container: {container_name}")
-    subprocess.run_podman_capture("container", "stop", container_name)
+def stop(container: str):
+    logger.debug(f"Stopping container: {container}")
+    subprocess.run_podman_capture("container", "stop", container)
 
 
-def remove(container_name: str):
-    logger.debug(f"Removing container: {container_name}")
-    subprocess.run_podman_capture("container", "rm", container_name)
+def remove(container: str):
+    logger.debug(f"Removing container: {container}")
+    subprocess.run_podman_capture("container", "rm", container)
 
 
-def is_exists(container_name: str) -> bool:
+def is_exists(container: str) -> bool:
     try:
-        subprocess.run_podman("container", "exists", container_name)
+        subprocess.run_podman("container", "exists", container)
     except CalledProcessError:
         return False
 
     return True
 
 
-def is_running(container_name: str) -> bool:
+def is_running(container: str) -> bool:
     running = subprocess.run_podman_capture(
         "podman",
         "container",
         "inspect",
         "--format='{{.State.Running}}'",
-        container_name,
+        container,
     ).strip()
     return running == "true"
 
 
-def is_paused(container_name: str) -> bool:
+def is_paused(container: str) -> bool:
     running = subprocess.run_podman_capture(
         "podman",
         "container",
         "inspect",
         "--format='{{.State.Paused}}'",
-        container_name,
+        container,
     ).strip()
     return running == "true"
 
@@ -326,31 +326,29 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
     return pass_profile
 
 
-def extract_profile(container_name: str) -> ContainerProfile:
+def extract_profile(container: str) -> ContainerProfile:
     try:
         profile_json = subprocess.run_podman_capture(
             "container",
             "inspect",
             f'--format={{{{index .Config.Labels "{APP_ID}.profile"}}}}',
-            container_name,
+            container,
         ).strip()
     except CalledProcessError as exc:
         if exc.stderr and "Error: no such container" in exc.stderr:
-            raise ContainerNotFoundError(container_name) from exc
+            raise ContainerNotFoundError(container) from exc
         raise exc
 
     if not profile_json:
-        raise NonNativeContainerError(container_name)
+        raise NonNativeContainerError(container)
 
     obj = json.loads(profile_json)
     if not isinstance(obj, dict):
-        raise NonNativeContainerError(container_name)
+        raise NonNativeContainerError(container)
 
-    obj["profile_name"] = container_name
+    obj["profile_name"] = container
 
-    return ContainerProfile.from_object(
-        obj, profile_source=f"container:{container_name}"
-    )
+    return ContainerProfile.from_object(obj, profile_source=f"container:{container}")
 
 
 def list_images() -> Iterator[str]:
@@ -369,15 +367,15 @@ def list_images() -> Iterator[str]:
 
 
 class ContainerNotFoundError(TinkerboxError):
-    def __init__(self, container_name: str):
-        super().__init__(f"Container {container_name!r} not exists")
-        self.image_name = container_name
+    def __init__(self, container: str):
+        super().__init__(f"Container {container!r} not exists")
+        self.image_name = container
 
 
 class NonNativeContainerError(TinkerboxError):
-    def __init__(self, container_name: str):
-        super().__init__(f"Container {container_name!r} is not tinkerbox container")
-        self.image_name = container_name
+    def __init__(self, container: str):
+        super().__init__(f"Container {container!r} is not tinkerbox container")
+        self.image_name = container
 
 
 class ImageNotSpecifiedError(TinkerboxError):
