@@ -5,18 +5,6 @@ from pathlib import Path
 from tinkerbox.subprocess import DependencyError, run_capture
 
 
-def normalize_bool_value(value: str | int | bool) -> bool:
-    if isinstance(value, str):
-        if value.lower() in ["true", "yes", "y", "1"]:
-            return True
-        if value.lower() in ["false", "no", "n", "0"]:
-            return False
-    if isinstance(value, int):
-        return bool(value)
-    else:
-        raise ValueError(f"can not convert value {value!r} to bool")
-
-
 def split_fields(value: str, sep=":", max_splits=-1) -> list[str]:
     parts = []
     start = 0

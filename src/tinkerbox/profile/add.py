@@ -5,7 +5,8 @@ from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Self
 
-from tinkerbox.utils import normalize_bool_value, split_fields, substitute
+from tinkerbox.profile import normalize_bool_value
+from tinkerbox.utils import split_fields, substitute
 
 
 @dataclass

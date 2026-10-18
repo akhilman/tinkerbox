@@ -448,3 +448,15 @@ def normalize_string_list(value: Any) -> list[str]:
     if not all(isinstance(v, str) for v in value):
         raise TypeError("value should be either string or list of strings")
     return list(w.strip() for w in itertools.chain(*(v.split(",") for v in value)))
+
+
+def normalize_bool_value(value: str | int | bool) -> bool:
+    if isinstance(value, str):
+        if value.lower() in ["true", "yes", "y", "1"]:
+            return True
+        if value.lower() in ["false", "no", "n", "0"]:
+            return False
+    if isinstance(value, int):
+        return bool(value)
+    else:
+        raise ValueError(f"can not convert value {value!r} to bool")
