@@ -1,4 +1,3 @@
-from collections.abc import Iterator, Iterable
 import importlib.resources
 import json
 import logging
@@ -6,12 +5,14 @@ import os
 import shutil
 import tempfile
 from collections import defaultdict
+from collections.abc import Iterable, Iterator
 from dataclasses import asdict
 from hashlib import sha1
 from pathlib import Path
 from typing import TextIO
 
 import tinkerbox
+import tinkerbox.resources
 from tinkerbox import APP_ID, TinkerboxError, config_paths, subprocess
 from tinkerbox.profile.add import Add, AddFile, AddText, AddUrl
 from tinkerbox.profile.image import ImageProfile
@@ -119,6 +120,12 @@ def build_image(profile: ImageProfile, keep_tmp=False) -> str:
 
 
 def write_add(add: Add, file: TextIO, temp_dir: Path):
+    dst = str(add.dst)
+    opts: dict[str, str | bool | list[str] | None] = {
+        k: v
+        for k, v in asdict(add).items()
+        if k not in ("content", "src", "url", "dst")
+    }
     if isinstance(add, AddText):
         text = (
             temp_dir
@@ -129,40 +136,10 @@ def write_add(add: Add, file: TextIO, temp_dir: Path):
             logger.debug("Writing file content to `%s`", text)
             f.write(add.content)
         src = str(text.relative_to(temp_dir))
-        dst = str(add.dst)
-        opts: dict[str, str | None] = {
-            k: v for k, v in asdict(add).items() if k not in ("content", "dst")
-        }
     elif isinstance(add, AddUrl):
         src = add.url
-        dst = str(add.dst)
-        opts: dict[str, str | bool | list[str] | None] = {
-            k: v for k, v in asdict(add).items() if k not in ("url", "dst")
-        }
     elif isinstance(add, AddFile):
-        if not add.src.is_absolute():
-            if add.src.exists():
-                src_orig = add.src.absolute()
-            else:
-                src_orig = find_file(add.src)
-        src_copy = (
-            temp_dir
-            / f"{src_orig.name}.{sha1((str(src_orig.absolute())).encode()).hexdigest()}/{src_orig.name}"
-        )
-        src_copy.parent.mkdir(parents=True, exist_ok=True)
-        if src_orig.is_dir():
-            logger.debug("Copying `%s` directory to `%s`", src_orig, src_copy)
-            shutil.copytree(
-                src_orig, src_copy, symlinks=True, ignore_dangling_symlinks=True
-            )
-        else:
-            logger.debug("Copying `%s` file to `%s`", src_orig, src_copy)
-            shutil.copy(src_orig, src_copy, follow_symlinks=True)
-        src = str(src_copy.relative_to(temp_dir))
-        dst = str(add.dst)
-        opts: dict[str, str | bool | list[str] | None] = {
-            k: v for k, v in asdict(add).items() if k not in ("src", "dst")
-        }
+        src = prepare_resource(add.src, temp_dir)
     else:
         raise TypeError(f"unexpected Add type: {type(add)}")
 
@@ -214,19 +191,46 @@ def write_run(run: Run, file: TextIO):
     file.write("\n")
 
 
-def find_file(path) -> Path:
-    assert not path.is_absolute()
+def prepare_resource(path: Path, temp_dir: Path) -> Path:
+    """
+    Copy file or resource to temp_dir and return path relative to temp_dir.
+    """
+    if path.exists():
+        return copy_file(path, temp_dir)
 
-    for dir in config_paths():
-        cfg = dir / path
-        if cfg.exists():
-            return cfg
+    for cfg_dir in config_paths():
+        abs_path = cfg_dir / path
+        if abs_path.exists():
+            return copy_file(abs_path, temp_dir)
 
-    if path in [Path("default-bootstrap.sh"), Path("default-entrypoint.sh")]:
-        built_in = importlib.resources.files(tinkerbox.__package__) / path
-        return Path(str(built_in))
+    resource = importlib.resources.files(tinkerbox.resources.__package__).joinpath(path)
+    if resource.is_file():
+        content = resource.read_bytes()
+        temp_path = temp_dir / "built-in" / path
+        temp_path.parent.mkdir(exist_ok=True)
+        with temp_path.open("wb") as f:
+            logger.debug("Writing `%s`", temp_path)
+            f.write(content)
+        return temp_path.relative_to(temp_dir)
 
     raise FileNotFoundError(f"file not found: {path!r}")
+
+
+def copy_file(path: Path, temp_dir: Path) -> Path:
+    base_name = path.name
+    temp_path = (
+        temp_dir
+        / f"{base_name}.{sha1(str(path.absolute()).encode('utf-8')).hexdigest()}/{base_name}"
+    )
+    temp_path.parent.mkdir(exist_ok=True)
+    if path.is_dir():
+        logger.debug("Copying `%s` directory to `%s`", path, temp_path)
+        shutil.copytree(path, temp_path, symlinks=True, ignore_dangling_symlinks=True)
+    else:
+        logger.debug("Copying `%s` file to `%s`", path, temp_path)
+        shutil.copy(path, temp_path, follow_symlinks=True)
+
+    return temp_path.relative_to(temp_dir)
 
 
 def is_exists(image: str) -> bool:
