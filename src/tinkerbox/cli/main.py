@@ -37,6 +37,7 @@ def main():
         sys.stderr.write(f"{exc}\n")
         return_code = 1
         if isinstance(exc, CalledProcessError):
+            logger.debug(f"error message: {exc.stderr}")
             return_code = exc.return_code
         sys.exit(return_code)
 
