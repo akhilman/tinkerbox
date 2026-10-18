@@ -31,11 +31,16 @@ def setup_argparse(parser: argparse.ArgumentParser):
     add_enter_args(cmd)
     cmd.set_defaults(func=enter_container)
 
-    cmd = commands.add_parser("profile", aliases=["pr"], help="manage image profile")
+    cmd = commands.add_parser("list", aliases=["ls"], help="list containers")
+    cmd.set_defaults(func=list_containers)
+
+    cmd = commands.add_parser(
+        "profile",
+        aliases=["pr"],
+        help="manage container profiles",
+    )
     tinkerbox.cli.profile.setup_argparse(cmd)
 
-    cmd = commands.add_parser("list", aliases=["ls"], help="list images")
-    cmd.set_defaults(func=list_images)
 
 
 def add_cerate_args(parser: argparse.ArgumentParser):
@@ -145,10 +150,10 @@ def profile_opts_from_cli_args(args: argparse.Namespace) -> dict[str, Any]:
     return {k: v for k, v in vars(args).items() if k in update_image_args}
 
 
-def list_images(args: argparse.Namespace):
+def list_containers(args: argparse.Namespace):
     setup_logging(args.debug)
 
-    for name in tinkerbox.container.list_images():
+    for name in tinkerbox.container.list_containers():
         sys.stdout.write(f"{name}\n")
 
 
