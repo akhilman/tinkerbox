@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import shlex
@@ -14,6 +15,8 @@ from tinkerbox.profile.exec import Exec
 from tinkerbox.profile.mount import Mount
 from tinkerbox.subprocess import CalledProcessError, run_podman
 
+logger = logging.getLogger(__name__)
+
 
 def create(profile: ContainerProfile) -> str:
     """
@@ -25,6 +28,8 @@ def create(profile: ContainerProfile) -> str:
 
     if not image:
         raise ImageNotSpecifiedError
+
+    logger.debug("Creating container from image %s", profile.image)
 
     image_profile = tinkerbox.image.extract_profile(image)
     profile = flat_profile.substitute(image_profile.variables())
@@ -120,10 +125,13 @@ def create(profile: ContainerProfile) -> str:
 
 
 def start(container_name: str):
+    logger.debug(f"Stating container: {container_name}")
     subprocess.run_podman_capture("container", "start", container_name)
 
 
 def enter(container_name: str, command: str | None = None, user: str | None = None):
+    logger.debug(f"Entering container: {container_name}")
+
     profile = extract_profile(container_name)
     args = []
 
@@ -146,10 +154,12 @@ def enter(container_name: str, command: str | None = None, user: str | None = No
 
 
 def stop(container_name: str):
+    logger.debug(f"Stopping container: {container_name}")
     subprocess.run_podman_capture("container", "stop", container_name)
 
 
 def remove(container_name: str):
+    logger.debug(f"Removing container: {container_name}")
     subprocess.run_podman_capture("container", "rm", container_name)
 
 
