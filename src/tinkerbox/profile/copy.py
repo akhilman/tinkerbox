@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any, Self
 
@@ -14,6 +14,7 @@ class Copy:
     src: Path
     dst: Path | None = None
     src_container: str | None = None
+    ignore_failure: bool = False
 
     @classmethod
     def from_object(cls, obj: Any) -> Self:
@@ -41,7 +42,22 @@ class Copy:
         if src_container is not None and not isinstance(src_container, str):
             raise TypeError("copy's `src_container` field should be a string or nil")
 
-        return cls(src=Path(src), dst=Path(dst), src_container=src_container)
+        ignore_failure = obj.pop("ignore_failure", None)
+        if not isinstance(ignore_failure, bool | None):
+            raise TypeError("copy's `ignore_failure` field should be a bool or nil")
+        ignore_failure = bool(ignore_failure)
+
+        if obj:
+            raise ValueError(
+                f"copy object has unexpected fields: {', '.join(obj.keys())}"
+            )
+
+        return cls(
+            src=Path(src),
+            dst=Path(dst),
+            src_container=src_container,
+            ignore_failure=ignore_failure,
+        )
 
     @classmethod
     def from_argument(cls, arg: str) -> Self:
@@ -67,11 +83,14 @@ class Copy:
         self, fill_unset=False
     ) -> dict[str, str | list[dict[str, str]] | None]:
         return {
-            k: str(v) for k, v in asdict(self).items() if v is not None or fill_unset
+            k: str(v) if isinstance(v, Path) else v
+            for k, v in asdict(self).items()
+            if v is not None or fill_unset
         }
 
     def substitute(self, variables: dict[str, str]) -> Self:
-        return type(self)(
+        return replace(
+            self,
             src=Path(substitute(str(self.src), variables)),
             dst=Path(substitute(str(self.dst), variables)) if self.dst else None,
             src_container=substitute(self.src_container, variables)

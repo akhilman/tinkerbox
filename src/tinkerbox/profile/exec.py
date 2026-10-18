@@ -13,6 +13,7 @@ class Exec:
     command: str | list[str]
     user: str | None = None
     work_dir: str | None = None
+    ignore_failure: bool = False
 
     @classmethod
     def from_object(cls, obj: Any) -> Self:
@@ -42,6 +43,11 @@ class Exec:
         if not isinstance(user, str | None):
             raise TypeError("exec's `work_dir` field should be a string or nil")
 
+        ignore_failure = obj.pop("ignore_failure", None)
+        if not isinstance(ignore_failure, bool | None):
+            raise TypeError("exec's `ignore_failure` field should be a bool or nil")
+        ignore_failure = bool(ignore_failure)
+
         if obj:
             raise ValueError(
                 f"exec object has unexpected fields: {', '.join(obj.keys())}"
@@ -51,6 +57,7 @@ class Exec:
             command=command,
             user=user,
             work_dir=work_dir,
+            ignore_failure=ignore_failure,
         )
 
     @classmethod

@@ -93,7 +93,13 @@ def create(profile: ContainerProfile) -> str:
             else:
                 dst = cp.src
             dst = f"{container_id}:{dst}"
-            subprocess.run_podman("container", "cp", src, dst)
+            try:
+                subprocess.run_podman("container", "cp", src, dst)
+            except CalledProcessError:
+                if cp.ignore_failure:
+                    logger.warning("Failed to copy file from `%s` to `%s`", src, dst)
+                else:
+                    raise
 
         pass_env_args = [f"--env={env}" for env in profile.pass_environment]
 
@@ -109,14 +115,22 @@ def create(profile: ContainerProfile) -> str:
             if exec.work_dir:
                 args.append(f"--workdir={exec.work_dir}")
 
-            subprocess.run_podman(
-                "container",
-                "exec",
-                *args,
-                *pass_env_args,
-                container_id,
-                *command,
-            )
+            try:
+                subprocess.run_podman(
+                    "container",
+                    "exec",
+                    *args,
+                    *pass_env_args,
+                    container_id,
+                    *command,
+                )
+            except CalledProcessError:
+                if exec.ignore_failure:
+                    logger.warning(
+                        "Failed to execute `%s` in the container", shlex.join(command)
+                    )
+                else:
+                    raise
 
         if name := profile.name:
             run_podman("container", "rename", container_id, name)
