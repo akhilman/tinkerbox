@@ -39,7 +39,7 @@
 	- [x] ls
 	- [ ] rebase
 	- [ ] recreate
-	- [ ] rm
+	- [x] rm
 	- [ ] start
 	- [ ] stop
 	- [x] profile

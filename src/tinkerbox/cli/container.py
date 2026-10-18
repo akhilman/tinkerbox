@@ -1,3 +1,4 @@
+from tinkerbox import TinkerboxError
 import argparse
 import sys
 from typing import Any
@@ -41,6 +42,19 @@ def setup_argparse(parser: argparse.ArgumentParser):
     )
     tinkerbox.cli.profile.setup_argparse(cmd)
 
+    cmd = commands.add_parser(
+        "remove",
+        aliases=["rm"],
+        help="remove one or more containers",
+    )
+    cmd.add_argument(
+        "--stop",
+        "-s",
+        action="store_true",
+        help="stop running containers",
+    )
+    cmd.add_argument("container", nargs="+", help="containers to remove")
+    cmd.set_defaults(func=remove_containers)
 
 
 def add_cerate_args(parser: argparse.ArgumentParser):
@@ -184,3 +198,20 @@ def add_enter_args(parser: argparse.ArgumentParser):
 def enter_container(args: argparse.Namespace):
     setup_logging(args.debug)
     tinkerbox.container.enter(args.container, command=args.command, user=args.user)
+
+
+def remove_containers(args: argparse.Namespace):
+    setup_logging(args.debug)
+
+    if args.stop:
+        for container in args.container:
+            if tinkerbox.container.is_running(container):
+                tinkerbox.container.stop(container)
+    else:
+        for container in args.container:
+            print(container, tinkerbox.container.is_running(container))
+            if tinkerbox.container.is_running(container):
+                raise TinkerboxError(f"container `{container}` is running")
+
+    for container in args.container:
+        tinkerbox.container.remove(container)
