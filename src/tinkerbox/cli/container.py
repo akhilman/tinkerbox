@@ -204,13 +204,10 @@ def remove_containers(args: argparse.Namespace):
     setup_logging(args.debug)
 
     if args.stop:
-        for container in args.container:
-            if tinkerbox.container.is_running(container):
-                tinkerbox.container.stop(container)
+        tinkerbox.container.stop(args.container)
     else:
         for container in args.container:
             if tinkerbox.container.is_running(container):
                 raise TinkerboxError(f"container `{container}` is running")
 
-    for container in args.container:
-        tinkerbox.container.remove(container)
+    tinkerbox.container.remove(args.container)

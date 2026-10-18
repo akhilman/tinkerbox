@@ -124,11 +124,6 @@ def create(profile: ContainerProfile) -> str:
     return container_id
 
 
-def start(container: str):
-    logger.debug(f"Stating container: {container}")
-    subprocess.run_podman_capture("container", "start", container)
-
-
 def enter(container: str, command: str | None = None, user: str | None = None):
     logger.debug(f"Entering container: {container}")
 
@@ -153,14 +148,25 @@ def enter(container: str, command: str | None = None, user: str | None = None):
     subprocess.run_podman("container", "exec", "-it", *args, container, *cmd_args)
 
 
-def stop(container: str):
-    logger.debug(f"Stopping container: {container}")
-    subprocess.run_podman_capture("container", "stop", container)
+def start(containers: str | list[str]):
+    if isinstance(containers, str):
+        containers = [containers]
+    logger.debug(f"Stating container: {' '.join(containers)}")
+    subprocess.run_podman_capture("container", "start", *containers)
 
 
-def remove(container: str):
-    logger.debug(f"Removing container: {container}")
-    subprocess.run_podman_capture("container", "rm", container)
+def stop(containers: str | list[str]):
+    if isinstance(containers, str):
+        containers = [containers]
+    logger.debug(f"Stopping containers: {' '.join(containers)}")
+    subprocess.run_podman_capture("container", "stop", *containers)
+
+
+def remove(containers: str | list[str]):
+    if isinstance(containers, str):
+        containers = [containers]
+    logger.debug(f"Removing containers: {' '.join(containers)}")
+    subprocess.run_podman_capture("container", "rm", *containers)
 
 
 def is_exists(container: str) -> bool:
