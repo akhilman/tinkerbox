@@ -1,6 +1,7 @@
 import re
 import secrets
 import string
+from functools import lru_cache
 from pathlib import Path
 
 from tinkerbox.subprocess import DependencyError, run_capture
@@ -90,6 +91,7 @@ def substitute(text: str, variables: dict[str, str]) -> str:
     return _SUBSTITUTE_VAR.sub(replace, text)
 
 
+@lru_cache
 def timezone() -> str | None:
     try:
         timezone = run_capture(
