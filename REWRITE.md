@@ -5,8 +5,8 @@
 - [ ] Add `--replace` to `container create`.
 - [x] Add `--enter` to `container create` and stop container after creation if `--enter` is not specified.
 - [x] Do we need `random_string` from `utils.py`?
-- [ ] Add `ignore_failure` to container's exec option.
-- [ ] Add `ignore_missing` to container's copy option.
+- [x] Add `ignore_failure` to container's exec option.
+- [x] Add `ignore_missing` to container's copy option.
 - [ ] ~Maybe Support multiple names for containers and images.~
 	- [ ] ~Make image name in `image build` optional.~
 	- [ ] ~Make container name in `container create` optional.~
