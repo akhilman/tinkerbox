@@ -23,7 +23,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
     cmd = commands.add_parser(
         "create", aliases=["cr"], help="create a new container from an image"
     )
-    add_container_args(cmd)
+    add_cerate_args(cmd)
     add_container_profile_args(cmd)
     cmd.set_defaults(func=create_container)
 
@@ -38,7 +38,13 @@ def setup_argparse(parser: argparse.ArgumentParser):
     cmd.set_defaults(func=list_images)
 
 
-def add_container_args(parser: argparse.ArgumentParser):
+def add_cerate_args(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--enter",
+        "-E",
+        action="store_true",
+        help="enter to the newly created container",
+    )
     parser.add_argument("image", help="image name")
     parser.add_argument("name", help="container name")
     parser.add_argument("profile", nargs="*", help="profile to use")
@@ -156,7 +162,12 @@ def create_container(args: argparse.Namespace):
     else:
         profile.extends = ["default"]
 
-    tinkerbox.container.create(profile)
+    container_id = tinkerbox.container.create(profile)
+
+    if args.enter:
+        tinkerbox.container.enter(container_id)
+    else:
+        tinkerbox.container.stop(container_id)
 
 
 def add_enter_args(parser: argparse.ArgumentParser):
