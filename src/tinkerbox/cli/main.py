@@ -34,11 +34,13 @@ def main():
         args.func(args)
     except TinkerboxError as exc:
         logger.debug("Exception is raised", exc_info=True)
-        sys.stderr.write(f"{exc}\n")
         return_code = 1
         if isinstance(exc, CalledProcessError):
-            logger.debug(f"error message: {exc.stderr}")
             return_code = exc.return_code
+            if exc.stderr:
+                sys.stderr.write(exc.stderr)
+                sys.stderr.write("\n")
+        sys.stderr.write(f"{exc}\n")
         sys.exit(return_code)
 
 
