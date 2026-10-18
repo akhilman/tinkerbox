@@ -229,51 +229,51 @@ def find_file(path) -> Path:
     raise FileNotFoundError(f"file not found: {path!r}")
 
 
-def is_exists(name: str) -> bool:
+def is_exists(image: str) -> bool:
     try:
-        subprocess.run_podman_capture("image", "exists", name)
+        subprocess.run_podman_capture("image", "exists", image)
     except CalledProcessError:
         return False
 
     return True
 
 
-def extract_profile(image_name: str) -> ImageProfile:
+def extract_profile(image: str) -> ImageProfile:
     try:
         profile_json = subprocess.run_podman_capture(
             "image",
             "inspect",
             f'--format={{{{index .Config.Labels "{APP_ID}.profile"}}}}',
-            image_name,
+            image,
         ).strip()
     except CalledProcessError as exc:
         if exc.stderr and "image not known" in exc.stderr:
-            raise ImageNotFoundError(image_name) from exc
+            raise ImageNotFoundError(image) from exc
         raise exc
 
     if not profile_json:
-        raise NonNativeImageError(image_name)
+        raise NonNativeImageError(image)
 
     obj = json.loads(profile_json)
 
     if not isinstance(obj, dict):
-        raise NonNativeImageError(image_name)
+        raise NonNativeImageError(image)
 
-    obj["profile_name"] = image_name
+    obj["profile_name"] = image
 
-    return ImageProfile.from_object(obj, profile_source=f"image:{image_name}")
+    return ImageProfile.from_object(obj, profile_source=f"image:{image}")
 
 
-def extract_user_and_group(image_name: str) -> tuple[str, str]:
+def extract_user_and_group(image: str) -> tuple[str, str]:
     try:
         user_group = subprocess.run_podman_capture(
             "inspect",
             "--format={{.Config.User}}",
-            image_name,
+            image,
         ).strip()
     except CalledProcessError as exc:
         if exc.stderr and "image not known" in exc.stderr:
-            raise ImageNotFoundError(image_name) from exc
+            raise ImageNotFoundError(image) from exc
         raise exc
 
     assert user_group
@@ -305,12 +305,12 @@ def remove_images(images: Iterable[str]):
 
 
 class ImageNotFoundError(TinkerboxError):
-    def __init__(self, image_name: str):
-        super().__init__(f"Image {image_name!r} not found")
-        self.image_name = image_name
+    def __init__(self, image: str):
+        super().__init__(f"Image {image!r} not found")
+        self.image = image
 
 
 class NonNativeImageError(TinkerboxError):
-    def __init__(self, image_name: str):
-        super().__init__(f"Image {image_name!r} is not tinkerbox image")
-        self.image_name = image_name
+    def __init__(self, image: str):
+        super().__init__(f"Image {image!r} is not tinkerbox image")
+        self.image = image
