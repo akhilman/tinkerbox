@@ -173,14 +173,19 @@ def is_exists(container: str) -> bool:
 
 
 def is_running(container: str) -> bool:
-    running = subprocess.run_podman_capture(
-        "podman",
-        "container",
-        "inspect",
-        "--format='{{.State.Running}}'",
-        container,
-    ).strip()
-    return running == "true"
+    try:
+        output = subprocess.run_podman_capture(
+            "container",
+            "inspect",
+            "--format='{{.State.Running}}'",
+            container,
+        )
+
+    except CalledProcessError as exc:
+        if exc.stderr and "no such container" in exc.stderr:
+            raise ContainerNotFoundError(container)
+        raise exc
+    return "true" in output
 
 
 def is_paused(container: str) -> bool:
