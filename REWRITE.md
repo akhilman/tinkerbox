@@ -41,7 +41,7 @@
 	- [ ] recreate
 	- [x] rm
 	- [ ] start
-	- [ ] stop
+	- [x] stop
 	- [x] profile
 		- [x] ls
 		- [x] cat
