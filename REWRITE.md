@@ -10,8 +10,8 @@
 - [ ] ~Maybe Support multiple names for containers and images.~
 	- [ ] ~Make image name in `image build` optional.~
 	- [ ] ~Make container name in `container create` optional.~
-- [ ] Get more info from `container list`: image, size, status.
-- [ ] Get more info from `image list`: containers, size, base image.
+- [x] Get more info from `container list`: image, size, status.
+- [x] Get more info from `image list`: containers, size, base image.
 - [ ] Deduplicate volumes and mounts.
 - [ ] Support env variable expansion like `PATH=@{PATH}:/foo`, and then `PATH=@{PATH}:/bar`.
 - [ ] Expand `~` to the actual home path inside containers for the image's copy option.

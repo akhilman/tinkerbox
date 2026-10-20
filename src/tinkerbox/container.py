@@ -1,3 +1,4 @@
+from typing import Any
 import json
 import logging
 import os
@@ -380,16 +381,24 @@ def extract_profile(container: str) -> ContainerProfile:
     return ContainerProfile.from_object(obj, profile_source=f"container:{container}")
 
 
-def list_containers() -> Iterator[str]:
+def list_containers(calculate_size: bool = False) -> list[dict[str, Any]]:
+    args = ["--size"] if calculate_size else []
     images = json.loads(
         subprocess.run_podman_capture(
             "container",
             "ls",
             "--all",
-            "--format=json",
+            "--sort=names",
             f"--filter=label={APP_ID}.manager=true",
+            "--format=json",
+            *args,
         )
     )
+    return images
+
+
+def list_container_names() -> Iterator[str]:
+    images = list_containers()
     for img in images:
         if names := img.get("Names"):
             if names:

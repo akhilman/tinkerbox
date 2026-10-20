@@ -1,10 +1,12 @@
 import argparse
+import json
 import sys
 from typing import Any
 
 import tinkerbox.cli.profile
 import tinkerbox.container
 from tinkerbox import TinkerboxError
+from tinkerbox.cli import formatting
 from tinkerbox.logging import setup_logging
 from tinkerbox.profile import normalize_string_list
 from tinkerbox.profile.container import (
@@ -34,6 +36,11 @@ def setup_argparse(parser: argparse.ArgumentParser):
     cmd.set_defaults(func=enter_container)
 
     cmd = commands.add_parser("list", aliases=["ls"], help="list containers")
+    cmd.add_argument("--json", "-j", action="store_true", help="output as JSON")
+    cmd.add_argument("--names-only", "-n", action="store_true", help="show only names")
+    cmd.add_argument(
+        "--size", "-s", action="store_true", help="calculate container size"
+    )
     cmd.set_defaults(func=list_containers)
 
     cmd = commands.add_parser(
@@ -180,8 +187,42 @@ def profile_opts_from_cli_args(args: argparse.Namespace) -> dict[str, Any]:
 def list_containers(args: argparse.Namespace):
     setup_logging(args.debug)
 
-    for name in tinkerbox.container.list_containers():
-        sys.stdout.write(f"{name}\n")
+    container_list = tinkerbox.container.list_containers(calculate_size=args.size)
+
+    if args.names_only and args.json:
+        sys.stdout.write(
+            json.dumps([formatting.name_or_id(ctr) for ctr in container_list])
+        )
+        sys.stdout.write("\n")
+    elif args.names_only:
+        for container in container_list:
+            name = formatting.name_or_id(container)
+            sys.stdout.write(f"{name}\n")
+    elif args.json:
+        sys.stdout.write(json.dumps(container_list, indent=2, sort_keys=True))
+        sys.stdout.write("\n")
+    else:
+        table = formatting.Table()
+
+        table.add_row(["NAME", "STATE", "IMAGE"] + (["SIZE"] if args.size else []))
+
+        for container in container_list:
+            name = formatting.name_or_id(container, max_id_length=12)
+            state = container.get("State", "-")
+            image = container.get("Image") or container.get("ImageId", "-")[:12]
+            row = [name, state, image]
+            if args.size:
+                if size := container.get("Size", {}).get("rwSize"):
+                    size = formatting.format_size(size)
+                else:
+                    size = "-"
+                row += [
+                    size,
+                ]
+            table.add_row(row)
+        for line in table.format():
+            sys.stdout.write(line)
+            sys.stdout.write("\n")
 
 
 def create_container(args: argparse.Namespace):
