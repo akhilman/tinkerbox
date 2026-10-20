@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, TypeVar
 
 import tinkerbox
-import tinkerbox.resources
+import tinkerbox.builtin
 import tinkerbox.utils
 from tinkerbox import TinkerboxError, config_paths
 from tinkerbox.alias_enum import AliasEnum
@@ -171,17 +171,16 @@ class Profile(ABC):
                         return profile
 
         if name == "default":
-            resource_path = (
-                importlib.resources.files(tinkerbox.resources.__package__)
+            resource = (
+                importlib.resources.files(tinkerbox.builtin.__package__)
                 / f"{name}-{cls.kind()}.toml"
             )
-            if resource_path.is_file():
-                with importlib.resources.as_file(resource_path) as f:
-                    logging.debug('Loading build-in %s profile "%s"', cls.kind(), name)
-                    obj = tomllib.loads(f.read_text())
-                    obj["profile_name"] = name
-                    profile = cls.from_object(obj, profile_source="built-in")
-                    return profile
+            if resource.is_file():
+                logging.debug('Loading build-in %s profile "%s"', cls.kind(), name)
+                obj = tomllib.loads(resource.read_text("utf-8"))
+                obj["profile_name"] = name
+                profile = cls.from_object(obj, profile_source="built-in")
+                return profile
 
         raise ProfileNotFoundError(cls.kind(), name)
 

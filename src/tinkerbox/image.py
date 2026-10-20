@@ -9,12 +9,12 @@ from collections.abc import Iterable, Iterator
 from dataclasses import asdict
 from hashlib import sha1
 from pathlib import Path
-from typing import TextIO, Any
+from typing import Any, TextIO
 
 import tinkerbox
-import tinkerbox.resources
-from tinkerbox import APP_ID, TinkerboxError, config_paths, subprocess
-from tinkerbox.profile.add import Add, AddFile, AddText, AddUrl
+import tinkerbox.builtin
+from tinkerbox import APP_ID, TinkerboxError, subprocess
+from tinkerbox.profile.add import Add, AddFile, AddText, AddUrl, AddBuiltin
 from tinkerbox.profile.image import ImageProfile
 from tinkerbox.profile.run import Run
 from tinkerbox.subprocess import CalledProcessError
@@ -120,12 +120,22 @@ def build_image(profile: ImageProfile, keep_tmp=False) -> str:
 
 
 def write_add(add: Add, file: TextIO, temp_dir: Path):
+    # Handle builtin resources
+    if isinstance(add, AddBuiltin):
+        add = AddText(
+            dst=add.dst,
+            content=read_builtin(add.builtin),
+            chmod=add.chmod,
+            chown=add.chown,
+        )
+
     dst = str(add.dst)
     opts: dict[str, str | bool | list[str] | None] = {
         k: v
         for k, v in asdict(add).items()
         if k not in ("content", "src", "url", "dst")
     }
+
     if isinstance(add, AddText):
         text = (
             temp_dir
@@ -139,7 +149,10 @@ def write_add(add: Add, file: TextIO, temp_dir: Path):
     elif isinstance(add, AddUrl):
         src = add.url
     elif isinstance(add, AddFile):
-        src = prepare_resource(add.src, temp_dir)
+        if add.src.exists():
+            src = copy_file(add.src, temp_dir)
+        else:
+            raise FileNotFoundError(f"file not found: {add.src!r}")
     else:
         raise TypeError(f"unexpected Add type: {type(add)}")
 
@@ -191,29 +204,19 @@ def write_run(run: Run, file: TextIO):
     file.write("\n")
 
 
-def prepare_resource(path: Path, temp_dir: Path) -> Path:
+def read_builtin(file_name: str) -> str:
     """
-    Copy file or resource to temp_dir and return path relative to temp_dir.
+    Read built-in resource
     """
-    if path.exists():
-        return copy_file(path, temp_dir)
 
-    for cfg_dir in config_paths():
-        abs_path = cfg_dir / path
-        if abs_path.exists():
-            return copy_file(abs_path, temp_dir)
-
-    resource = importlib.resources.files(tinkerbox.resources.__package__).joinpath(path)
+    resource = importlib.resources.files(tinkerbox.builtin.__package__).joinpath(
+        file_name
+    )
     if resource.is_file():
-        content = resource.read_bytes()
-        temp_path = temp_dir / "built-in" / path
-        temp_path.parent.mkdir(exist_ok=True)
-        with temp_path.open("wb") as f:
-            logger.debug("Writing `%s`", temp_path)
-            f.write(content)
-        return temp_path.relative_to(temp_dir)
+        content = resource.read_text("utf-8")
+        return content
 
-    raise FileNotFoundError(f"file not found: {path!r}")
+    raise FileNotFoundError(f"file not found: builtin:{file_name!r}")
 
 
 def copy_file(path: Path, temp_dir: Path) -> Path:

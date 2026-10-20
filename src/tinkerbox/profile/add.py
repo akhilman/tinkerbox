@@ -29,6 +29,8 @@ class Add(ABC):
             return AddUrl.from_object(obj)
         elif "content" in obj:
             return AddText.from_object(obj)
+        elif "builtin" in obj:
+            return AddBuiltin.from_object(obj)
         else:
             raise ValueError(
                 "file object must have either `src`, `url` or `content` field"
@@ -62,19 +64,12 @@ class AddFile(Add):
         try:
             src = rest.pop("src")
         except KeyError:
-            raise KeyError("copy file object must have a `src` field")
+            raise KeyError("file object must have a `src` field")
         if not isinstance(src, str):
             raise TypeError("file object's `src` field must be a string")
         src = Path(src)
 
-        try:
-            dst = rest.pop("dst")
-        except KeyError:
-            raise KeyError("copy file object must have a `dst` field")
-        if not isinstance(dst, str):
-            raise TypeError("file object's `dst` field must be a string")
-        dst = Path(dst)
-
+        dst, rest = parse_dst(rest)
         base_kwargs, rest = base_obj_to_kwargs(rest)
         file_and_url_kwargs, rest = file_and_url_obj_to_kwargs(rest)
 
@@ -160,18 +155,11 @@ class AddUrl(Add):
         try:
             url = rest.pop("url")
         except KeyError:
-            raise KeyError("copy file object must have a `url` field")
+            raise KeyError("file object must have a `url` field")
         if not isinstance(url, str):
             raise TypeError("file object's `url` field must be a string")
 
-        try:
-            dst = rest.pop("dst")
-        except KeyError:
-            raise KeyError("copy file object must have a `dst` field")
-        if not isinstance(dst, str):
-            raise TypeError("file object's `dst` field must be a string")
-        dst = Path(dst)
-
+        dst, rest = parse_dst(rest)
         base_kwargs, rest = base_obj_to_kwargs(rest)
         file_and_url_kwargs, rest = file_and_url_obj_to_kwargs(rest)
         url_kwargs, rest = url_obj_to_kwargs(rest)
@@ -218,17 +206,11 @@ class AddText(Add):
         try:
             content = rest.pop("content")
         except KeyError:
-            raise KeyError("copy file object must have a `content` field")
+            raise KeyError("file object must have a `content` field")
         if not isinstance(content, str):
             raise TypeError("file object's `content` field must be a string")
 
-        try:
-            dst = rest.pop("dst")
-        except KeyError:
-            raise KeyError("copy file object must have a `dst` field")
-        if not isinstance(dst, str):
-            raise TypeError("file object's `dst` field must be a string")
-
+        dst, rest = parse_dst(rest)
         base_kwargs, rest = base_obj_to_kwargs(rest)
 
         if rest:
@@ -255,6 +237,69 @@ class AddText(Add):
             dst=Path(substitute(str(self.dst), variables)),
             chown=substitute(self.chown, variables) if self.chown else None,
         )
+
+
+@dataclass
+class AddBuiltin(Add):
+    builtin: str = field(kw_only=True)
+
+    @classmethod
+    def from_object(cls, obj: Any) -> Self:
+        if not isinstance(obj, dict):
+            raise TypeError("file object must be a dict")
+
+        rest = {**obj}
+
+        try:
+            builtin = rest.pop("builtin")
+        except KeyError:
+            raise KeyError("file object must have a `builtin` field")
+        if not isinstance(builtin, str):
+            raise TypeError("file object's `builtin` field must be a string")
+
+        dst, rest = parse_dst(rest)
+        base_kwargs, rest = base_obj_to_kwargs(rest)
+
+        if rest:
+            raise ValueError(
+                f"file object has unexpected keys: {', '.join(rest.keys())}"
+            )
+
+        return replace(
+            cls(builtin=builtin, dst=dst),
+            **base_kwargs,
+        )
+
+    def to_object(self, fill_unset=False) -> dict[str, str | list[str] | bool | None]:
+        return {
+            k: str(v) if isinstance(v, Path) else v
+            for k, v in asdict(self).items()
+            if v is not None or fill_unset
+        }
+
+    def substitute(self, variables: dict[str, str]) -> Self:
+        return replace(
+            self,
+            dst=Path(substitute(str(self.dst), variables)),
+            chown=substitute(self.chown, variables) if self.chown else None,
+        )
+
+
+def parse_dst(obj: Any) -> tuple[Path, dict[str, Any]]:
+    if not isinstance(obj, dict):
+        raise TypeError("add value must be a dict")
+
+    rest = {**obj}
+
+    try:
+        dst = rest.pop("dst")
+    except KeyError:
+        raise KeyError("file object must have a `dst` field")
+    if not isinstance(dst, str):
+        raise TypeError("file object's `dst` field must be a string")
+    dst = Path(dst)
+
+    return dst, rest
 
 
 def base_obj_to_kwargs(obj: Any) -> tuple[dict[str, str | None], dict[str, Any]]:
