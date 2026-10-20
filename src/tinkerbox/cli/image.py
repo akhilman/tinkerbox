@@ -1,9 +1,11 @@
+import json
 import argparse
 import sys
 from typing import Any
 
 import tinkerbox.cli.profile
 import tinkerbox.image
+from tinkerbox.cli import formatting
 from tinkerbox.logging import setup_logging
 from tinkerbox.profile import normalize_string_list
 from tinkerbox.profile.image import ImageOverride, ImageProfile, PullPolicy
@@ -31,6 +33,8 @@ def setup_argparse(parser: argparse.ArgumentParser):
     cmd.set_defaults(func=remove_image)
 
     cmd = commands.add_parser("list", aliases=["ls"], help="list images")
+    cmd.add_argument("--json", "-j", action="store_true", help="output as JSON")
+    cmd.add_argument("--names-only", "-n", action="store_true", help="show only names")
     cmd.set_defaults(func=list_images)
 
 
@@ -105,8 +109,35 @@ def profile_opts_from_cli_args(args: argparse.Namespace) -> dict["str", Any]:
 def list_images(args: argparse.Namespace):
     setup_logging(args.debug)
 
-    for name in tinkerbox.image.list_images():
-        sys.stdout.write(f"{name}\n")
+    image_list = tinkerbox.image.list_images()
+
+    if args.names_only and args.json:
+        sys.stdout.write(json.dumps([formatting.name_or_id(img) for img in image_list]))
+        sys.stdout.write("\n")
+    elif args.names_only:
+        for image in image_list:
+            name = formatting.name_or_id(image)
+            sys.stdout.write(f"{name}\n")
+    elif args.json:
+        sys.stdout.write(json.dumps(image_list, indent=2, sort_keys=True))
+        sys.stdout.write("\n")
+    else:
+        table = formatting.Table()
+
+        table.add_row(("NAME", "FROM", "SIZE", "CONTAINERS"))
+
+        for image in image_list:
+            name = formatting.name_or_id(image, max_id_length=12)
+            from_image = tinkerbox.image.extract_profile(image["Id"]).from_image or "-"
+            if (size_bytes := image.get("Size", None)) and isinstance(size_bytes, int):
+                size = formatting.format_size(size_bytes)
+            else:
+                size = "-"
+            num_containers = str(image.get("Containers", "-"))
+            table.add_row((name, from_image, size, num_containers))
+        for line in table.format():
+            sys.stdout.write(line)
+            sys.stdout.write("\n")
 
 
 def build_image(args: argparse.Namespace):

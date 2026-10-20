@@ -9,7 +9,7 @@ from collections.abc import Iterable, Iterator
 from dataclasses import asdict
 from hashlib import sha1
 from pathlib import Path
-from typing import TextIO
+from typing import TextIO, Any
 
 import tinkerbox
 import tinkerbox.resources
@@ -287,12 +287,8 @@ def extract_user_and_group(image: str) -> tuple[str, str]:
     return (user, group)
 
 
-def list_images() -> Iterator[str]:
-    images = json.loads(
-        subprocess.run_podman_capture(
-            "image", "ls", "--format=json", f"--filter=label={APP_ID}.manager=true"
-        )
-    )
+def list_image_names() -> Iterator[str]:
+    images = list_images()
     for img in images:
         if names := img.get("Names"):
             if names:
@@ -300,6 +296,19 @@ def list_images() -> Iterator[str]:
                 continue
 
         yield img["Id"]
+
+
+def list_images() -> list[dict[str, Any]]:
+    images = json.loads(
+        subprocess.run_podman_capture(
+            "image",
+            "ls",
+            "--sort=repository",
+            f"--filter=label={APP_ID}.manager=true",
+            "--format=json",
+        )
+    )
+    return images
 
 
 def remove_images(images: Iterable[str]):
