@@ -48,8 +48,6 @@ class Add(ABC):
 @dataclass
 class AddFile(Add):
     src: Path = field(kw_only=True)
-    keep_git_dir: bool | None = None
-    checksum: str | None = None
     link: bool | None = None
     unpack: bool | None = None
     exclude: list[str] = field(default_factory=list)
@@ -277,6 +275,7 @@ def base_obj_to_kwargs(obj: Any) -> tuple[dict[str, str | None], dict[str, Any]]
         "chmod": chmod,
         "chown": chown,
     }
+
     return (validated, rest)
 
 
@@ -313,6 +312,7 @@ def file_and_url_obj_to_kwargs(
         "unpack": unpack,
         "exclude": exclude,
     }
+
     return (validated, rest)
 
 
@@ -338,4 +338,5 @@ def url_obj_to_kwargs(obj: Any) -> tuple[dict[str, str | bool | None], dict[str,
         "keep_git_dir": keep_git_dir,
         "checksum": checksum,
     }
+
     return (validated, rest)
