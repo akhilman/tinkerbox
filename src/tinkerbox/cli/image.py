@@ -35,6 +35,9 @@ def setup_argparse(parser: argparse.ArgumentParser):
     cmd = commands.add_parser("list", aliases=["ls"], help="list images")
     cmd.add_argument("--json", "-j", action="store_true", help="output as JSON")
     cmd.add_argument("--names-only", "-n", action="store_true", help="show only names")
+    cmd.add_argument(
+        "--no-headers", action="store_true", help="do not output column headers"
+    )
     cmd.set_defaults(func=list_images)
 
 
@@ -124,7 +127,8 @@ def list_images(args: argparse.Namespace):
     else:
         table = formatting.Table()
 
-        table.add_row(("NAME", "FROM", "SIZE", "CONTAINERS"))
+        if not args.no_headers:
+            table.add_row(("NAME", "FROM", "SIZE", "CONTAINERS"))
 
         for image in image_list:
             name = formatting.name_or_id(image, max_id_length=12)

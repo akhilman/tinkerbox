@@ -41,6 +41,9 @@ def setup_argparse(parser: argparse.ArgumentParser):
     cmd.add_argument(
         "--size", "-s", action="store_true", help="calculate container size"
     )
+    cmd.add_argument(
+        "--no-headers", action="store_true", help="do not output column headers"
+    )
     cmd.set_defaults(func=list_containers)
 
     cmd = commands.add_parser(
@@ -204,7 +207,8 @@ def list_containers(args: argparse.Namespace):
     else:
         table = formatting.Table()
 
-        table.add_row(["NAME", "STATE", "IMAGE"] + (["SIZE"] if args.size else []))
+        if not args.no_headers:
+            table.add_row(["NAME", "STATE", "IMAGE"] + (["SIZE"] if args.size else []))
 
         for container in container_list:
             name = formatting.name_or_id(container, max_id_length=12)
