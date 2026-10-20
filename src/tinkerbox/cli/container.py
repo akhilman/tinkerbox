@@ -53,7 +53,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
         action="store_true",
         help="stop running containers",
     )
-    cmd.add_argument("container", nargs="+", help="containers to remove")
+    cmd.add_argument("container", nargs="+", help="container to remove")
     cmd.set_defaults(func=remove_containers)
 
 
