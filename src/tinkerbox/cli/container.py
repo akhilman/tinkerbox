@@ -1,10 +1,10 @@
-from tinkerbox import TinkerboxError
 import argparse
 import sys
 from typing import Any
 
 import tinkerbox.cli.profile
 import tinkerbox.container
+from tinkerbox import TinkerboxError
 from tinkerbox.logging import setup_logging
 from tinkerbox.profile.container import (
     ContainerOverride,
