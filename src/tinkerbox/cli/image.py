@@ -1,3 +1,4 @@
+from tinkerbox import APP_ID
 import json
 import argparse
 import sys
@@ -132,7 +133,13 @@ def list_images(args: argparse.Namespace):
 
         for image in image_list:
             name = formatting.name_or_id(image, max_id_length=12)
-            from_image = tinkerbox.image.extract_profile(image["Id"]).from_image or "-"
+            from_image = "-"
+            if profile := image.get("Labels", {}).get(f"{APP_ID}.profile"):
+                profile = ImageProfile.from_object(
+                    json.loads(profile), profile_source=f"image:{name}"
+                )
+                if profile.from_image:
+                    from_image = profile.from_image
             if (size_bytes := image.get("Size", None)) and isinstance(size_bytes, int):
                 size = formatting.format_size(size_bytes)
             else:
