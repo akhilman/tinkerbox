@@ -6,6 +6,7 @@ import tinkerbox.cli.profile
 import tinkerbox.container
 from tinkerbox import TinkerboxError
 from tinkerbox.logging import setup_logging
+from tinkerbox.profile import normalize_string_list
 from tinkerbox.profile.container import (
     ContainerOverride,
     ContainerProfile,
@@ -76,15 +77,15 @@ def add_cerate_args(parser: argparse.ArgumentParser):
         action="store_true",
         help="enter to the newly created container",
     )
+    parser.add_argument("--profile", "-P", nargs="*", help="profile to use")
     parser.add_argument("image", help="image name")
     parser.add_argument("name", help="container name")
-    parser.add_argument("profile", nargs="*", help="profile to use")
 
 
 def add_container_profile_args(parser: argparse.ArgumentParser):
     parser.add_argument(
         "--passthrough",
-        "-P",
+        "-t",
         metavar="{" + ",".join(Passthrough.all_values()) + "}",
         action="append",
         help="passthrough host services",
@@ -189,7 +190,7 @@ def create_container(args: argparse.Namespace):
     obj = profile_opts_from_cli_args(args)
     profile = ContainerProfile.from_object(obj, profile_source="command line")
     if args.profile:
-        profile.extends = args.profile
+        profile.extends = normalize_string_list(args.profile)
     else:
         profile.extends = ["default"]
 

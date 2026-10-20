@@ -5,6 +5,7 @@ from typing import Any
 import tinkerbox.cli.profile
 import tinkerbox.image
 from tinkerbox.logging import setup_logging
+from tinkerbox.profile import normalize_string_list
 from tinkerbox.profile.image import ImageOverride, ImageProfile, PullPolicy
 
 
@@ -35,8 +36,8 @@ def setup_argparse(parser: argparse.ArgumentParser):
 
 def add_build_args(parser: argparse.ArgumentParser):
     parser.add_argument("--keep-tmp", action="store_true", help="keep temporary files")
+    parser.add_argument("--profile", "-P", nargs="*", help="profile to use")
     parser.add_argument("name", help="image name")
-    parser.add_argument("profile", nargs="*", help="profile to use")
     add_image_profile_args(parser)
 
 
@@ -114,7 +115,7 @@ def build_image(args: argparse.Namespace):
     obj = profile_opts_from_cli_args(args)
     profile = ImageProfile.from_object(obj, profile_source="command line")
     if args.profile:
-        profile.extends = args.profile
+        profile.extends = normalize_string_list(args.profile)
     else:
         profile.extends = ["default"]
 
