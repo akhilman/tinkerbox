@@ -1,5 +1,5 @@
 description = "Default Tinkerbox container profile. Meant to be used with default Tinkerbox image profile, but may work with other images."
-enter_command = "sh -c 'exec $(getent passwd $(whoami) | cut -d: -f7)'"
+enter_command = "sh -c 'exec $(getent passwd $(whoami) | cut -d: -f7) -l'"
 
 pass_environment = [
   "TERM",
