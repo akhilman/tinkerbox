@@ -52,14 +52,17 @@ def substitute(text: str, variables: dict[str, str]) -> str:
         ValueError: If a required variable is not defined.
     """
 
-    def replace(match: re.Match[str]) -> str:
+    def replace(match: re.Match[str], visited) -> str:
         name = match.group(1)
         operator = match.group(3)
         default = match.group(4)
 
+        if name in visited:
+            raise RecursionError(f"variables {name!r} depends on itself")
+
         if name in variables:
             value = variables[name]
-            return value
+            return _SUBSTITUTE_VAR.sub(lambda x: replace(x, {name, *visited}), value)
 
         if operator == "?":
             return ""
@@ -69,7 +72,7 @@ def substitute(text: str, variables: dict[str, str]) -> str:
 
         raise ValueError(f"variable {name!r} is not defined")
 
-    return _SUBSTITUTE_VAR.sub(replace, text)
+    return _SUBSTITUTE_VAR.sub(lambda x: replace(x, set()), text)
 
 
 @lru_cache

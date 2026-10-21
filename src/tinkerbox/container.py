@@ -1,4 +1,3 @@
-from typing import Any
 import json
 import logging
 import os
@@ -7,6 +6,7 @@ import shlex
 import stat
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import tinkerbox.image
 from tinkerbox import APP_ID, TinkerboxError, subprocess
@@ -30,14 +30,16 @@ def create(profile: ContainerProfile) -> str:
     if not image:
         raise ImageNotSpecifiedError
 
-    if flat_profile.name:
-        if is_exists(flat_profile.name):
-            raise ContainerExistsError(flat_profile.name)
+    image_profile = tinkerbox.image.extract_profile(image)
+    profile = flat_profile.substitute(
+        {**image_profile.variables(), **flat_profile.variables()}
+    )
+
+    if profile.name:
+        if is_exists(profile.name):
+            raise ContainerExistsError(profile.name)
 
     logger.debug("Creating container from image %s", profile.image)
-
-    image_profile = tinkerbox.image.extract_profile(image)
-    profile = flat_profile.substitute(image_profile.variables())
 
     args = []
 

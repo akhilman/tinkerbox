@@ -259,21 +259,28 @@ class ImageProfile(Profile):
     def variables(self) -> dict[str, str]:
         variables = super().variables()
         uid = os.getuid()
-        user = self.user or pwd.getpwuid(uid).pw_name
+        gid = os.getgid()
+        host_user = pwd.getpwuid(uid).pw_name
+        host_home = pwd.getpwuid(uid).pw_dir
+
         if self.name:
-            variables["IMAGE_NAME"] = substitute(self.name, variables)
-        variables["CONTAINER_USER"] = user
-        home = substitute(self.home or pwd.getpwuid(uid).pw_dir, variables)
-        variables["CONTAINER_HOME"] = home
+            variables["IMAGE_NAME"] = self.name
+        variables["UID"] = str(uid)
+        variables["GID"] = str(gid)
+        variables["CONTAINER_USER"] = self.user or host_user
+        variables["CONTAINER_HOME"] = self.home or host_home
+
         return variables
 
-    def substitute(self, variables: dict[str, str] | None = None) -> Self:
-        variables = {**self.variables(), **(variables or {})}
+    def substitute(self, variables: dict[str, str]) -> Self:
+        uid = os.getuid()
+        host_user = pwd.getpwuid(uid).pw_name
+        host_home = pwd.getpwuid(uid).pw_dir
 
         from_image = substitute(self.from_image, variables) if self.from_image else None
-        name = variables.get("IMAGE_NAME", self.name)
-        user = variables["CONTAINER_USER"]
-        home = variables["CONTAINER_HOME"]
+        name = substitute(self.name, variables) if self.name else None
+        user = substitute(self.user, variables) if self.user else host_user
+        home = substitute(self.home, variables) if self.home else host_home
         add = [x.substitute(variables) for x in self.add]
         run = [x.substitute(variables) for x in self.run]
         environment = {k: substitute(v, variables) for k, v in self.environment.items()}

@@ -330,20 +330,18 @@ class ContainerProfile(Profile):
 
     def variables(self) -> dict[str, str]:
         variables = super().variables()
-        # TODO: Load variables form image.
-        if image := self.image:
-            variables["CONTAINER_IMAGE"] = image
-        if name := self.name:
-            variables["CONTAINER_NAME"] = substitute(name, variables)
+        if self.image:
+            variables["CONTAINER_IMAGE"] = self.image
+        if self.name:
+            variables["CONTAINER_NAME"] = self.name
 
         return variables
 
-    def substitute(self, variables: dict[str, str] | None = None) -> Self:
-        variables = {**self.variables(), **(variables or {})}
+    def substitute(self, variables: dict[str, str]) -> Self:
         return replace(
             self,
-            name=variables.get("CONTAINER_NAME", self.name),
-            image=variables.get("CONTAINER_IMAGE", self.image),
+            name=substitute(self.name, variables) if self.name else None,
+            image=substitute(self.image, variables) if self.image else None,
             environment={
                 k: substitute(v, variables) for k, v in self.environment.items()
             },
