@@ -8,7 +8,7 @@ authors = [{ name = "Ildar Akhmetgaleev", email = "akhilman@gmail.com" }]
 requires-python = ">=3.13"
 dependencies = []
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Topic :: Software Development :: Build Tools",
   "Topic :: Software Development :: Testing",
@@ -46,10 +46,10 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["tinkerbox"]
+include = ["tinkerbox*"]
 
 [tool.setuptools.package-data]
-tinkerbox = [
+"tinkerbox.builtin" = [
   "default-container.toml",
   "default-image.toml",
   "default-bootstrap.sh",
