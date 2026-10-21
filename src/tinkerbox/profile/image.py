@@ -263,6 +263,8 @@ class ImageProfile(Profile):
         host_user = pwd.getpwuid(uid).pw_name
         host_home = pwd.getpwuid(uid).pw_dir
 
+        if self.from_image:
+            variables["IMAGE_FROM"] = self.from_image
         if self.name:
             variables["IMAGE_NAME"] = self.name
         variables["UID"] = str(uid)
