@@ -124,21 +124,15 @@ class Profile(ABC):
     def variables(self) -> dict[str, str]:
         variables = {k: v for k, v in os.environ.items()}
 
-        uid = os.getuid()
-        gid = os.getgid()
-        variables["UID"] = str(uid)
-        variables["GID"] = str(gid)
-        variables["PROFILE_NAME"] = (
-            self.profile_name if self.profile_name else "unnamed"
-        )
-
+        if self.profile_name:
+            variables["PROFILE_NAME"] = self.profile_name
         if tz := tinkerbox.utils.timezone():
             variables["TZ"] = tz
 
         return variables
 
     @abstractmethod
-    def substitute(self: T, variables: dict[str, str] | None = None) -> T:
+    def substitute(self: T, variables: dict[str, str]) -> T:
         """
         Substitutes `@{VAR}` in fields.
         """

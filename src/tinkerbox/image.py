@@ -27,7 +27,7 @@ def build_image(profile: ImageProfile, keep_tmp=False) -> str:
     Returns image id.
     """
     flat_profile = profile.flatten()
-    profile = flat_profile.substitute()
+    profile = flat_profile.substitute(flat_profile.variables())
 
     with tempfile.TemporaryDirectory(
         prefix=f"{APP_ID}.{profile.name or 'unnamed'}.",
