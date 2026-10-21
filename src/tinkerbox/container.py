@@ -86,15 +86,14 @@ def create(profile: ContainerProfile) -> str:
 
     try:
         for cp in profile.copy:
-            if cp.src_container:
-                src = f"{cp.src_container}:{cp.src}"
-            else:
-                src = str(cp.src.expanduser())
+            src = cp.src.expanduser()
+            dst = cp.dst.expanduser() if cp.dst else src
 
-            if cp.dst:
-                dst = cp.dst
+            if cp.src_container:
+                src = f"{cp.src_container}:{src}"
             else:
-                dst = cp.src
+                src = str(src)
+
             dst = f"{container_id}:{dst}"
             try:
                 subprocess.run_podman("container", "cp", src, dst)

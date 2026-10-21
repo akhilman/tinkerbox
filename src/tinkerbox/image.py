@@ -129,7 +129,7 @@ def write_add(add: Add, file: TextIO, temp_dir: Path):
             chown=add.chown,
         )
 
-    dst = str(add.dst)
+    dst = str(add.dst.expanduser())
     opts: dict[str, str | bool | list[str] | None] = {
         k: v
         for k, v in asdict(add).items()
