@@ -12,10 +12,10 @@
 	- [ ] ~Make container name in `container create` optional.~
 - [x] Get more info from `container list`: image, size, status.
 - [x] Get more info from `image list`: containers, size, base image.
-- [ ] Deduplicate volumes and mounts.
-- [ ] Support env variable expansion like `PATH=@{PATH}:/foo`, and then `PATH=@{PATH}:/bar`.
+- [ ] ~Deduplicate volumes and mounts.~
+- [ ] ~Support env variable expansion like `PATH=@{PATH}:/foo`, and then `PATH=@{PATH}:/bar`.~
 - [ ] Expand `~` to the actual home path inside containers for the image's copy option.
-- [ ] The option `profile` must take a name or a file path, maybe even url. There could be a generic function to read content from URI (resource|file|url).
+- [ ] ~The option `profile` must take a name or a file path, maybe even url. There could be a generic function to read content from URI (resource|file|url).~
 
 ### Subcommands
 - [ ] image
