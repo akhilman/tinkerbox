@@ -35,9 +35,8 @@ def create(profile: ContainerProfile) -> str:
         {**image_profile.variables(), **flat_profile.variables()}
     )
 
-    if profile.name:
-        if is_exists(profile.name):
-            raise ContainerExistsError(profile.name)
+    if profile.name and is_exists(profile.name):
+        raise ContainerExistsError(profile.name)
 
     logger.debug("Creating container from image %s", profile.image)
 
