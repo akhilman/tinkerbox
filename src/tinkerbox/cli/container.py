@@ -140,7 +140,7 @@ def add_container_profile_args(parser: argparse.ArgumentParser):
     parser.add_argument(
         "--volume",
         "-v",
-        dest="devices",
+        dest="volumes",
         action="append",
         help="create a bind mount to the volume or directory",
         metavar="[[SOURCE-VOLUME|HOST-DIR:]CONTAINER-DIR[:OPTIONS]]",
