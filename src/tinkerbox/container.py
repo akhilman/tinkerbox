@@ -227,7 +227,7 @@ def is_paused(container: str) -> bool:
 
 
 def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
-    passtrhough = profile.passthrough
+    passthrough = profile.passthrough
     pass_profile = ContainerProfile()
 
     if runtime_dir_env := os.getenv("XDG_RUNTIME_DIR"):
@@ -235,7 +235,7 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
     else:
         raise XdgRuntimeDirNotSetError
 
-    if passtrhough & {Passthrough.ALL, Passthrough.PULSEAUDIO}:
+    if passthrough & {Passthrough.ALL, Passthrough.PULSEAUDIO}:
         pulse_dir = Path(xdg_runtime_dir) / "pulse"
         if not pulse_dir.is_dir():
             raise PassthroughError(Passthrough.PULSEAUDIO, f"{pulse_dir} is not exists")
@@ -249,7 +249,7 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
             )
         )
 
-    if passtrhough & {Passthrough.ALL, Passthrough.PIPEWIRE}:
+    if passthrough & {Passthrough.ALL, Passthrough.PIPEWIRE}:
         pw_cli_output = subprocess.run_capture("pw-cli", "ls")
         match = re.search(
             r'PipeWire:Interface:Core.*?core\.name\s*=\s*"([^"]+)"',
@@ -274,7 +274,7 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
             )
         )
 
-    if passtrhough & {Passthrough.ALL, Passthrough.DBUS}:
+    if passthrough & {Passthrough.ALL, Passthrough.DBUS}:
         bus_socket = xdg_runtime_dir / "bus"
         if not bus_socket.is_socket():
             PassthroughError(Passthrough.DBUS, f"DBus socket not exists {bus_socket}")
@@ -288,7 +288,7 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
             )
         )
 
-    if passtrhough & {Passthrough.ALL, Passthrough.WAYLAND}:
+    if passthrough & {Passthrough.ALL, Passthrough.WAYLAND}:
         wayland_env = os.getenv("WAYLAND_DISPLAY")
         if not wayland_env:
             raise PassthroughError(
@@ -310,7 +310,7 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
         )
         pass_profile.environment["WAYLAND_DISPLAY"] = wayland_env
 
-    if passtrhough & {Passthrough.ALL, Passthrough.X11}:
+    if passthrough & {Passthrough.ALL, Passthrough.X11}:
         x11_dir = Path("/tmp/.X11-unix")
         if not x11_dir.is_dir():
             raise PassthroughError(
@@ -328,7 +328,7 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
         if x11_display := os.getenv("DISPLAY"):
             pass_profile.environment["DISPLAY"] = x11_display
 
-    if passtrhough & {Passthrough.ALL, Passthrough.GPU}:
+    if passthrough & {Passthrough.ALL, Passthrough.GPU}:
         for entry in Path("/dev/dri").rglob("*"):
             mode = entry.lstat().st_mode
 
