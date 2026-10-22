@@ -66,7 +66,7 @@ def add_image_profile_args(parser: argparse.ArgumentParser):
         "-a",
         action="append",
         help="add a file to the image",
-        metavar="[HOST-PATH|RESOURCE-NAME|URL:]CONTAINER-PATH[:[chown=USER,][chmod=MODE]]",
+        metavar="[HOST-PATH|URL:]CONTAINER-PATH[:[chown=USER,][chmod=MODE]]",
     )
     parser.add_argument(
         "--run",
