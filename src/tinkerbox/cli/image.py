@@ -1,11 +1,11 @@
-from tinkerbox import APP_ID
-import json
 import argparse
+import json
 import sys
 from typing import Any
 
 import tinkerbox.cli.profile
 import tinkerbox.image
+from tinkerbox import APP_ID
 from tinkerbox.cli import formatting
 from tinkerbox.logging import setup_logging
 from tinkerbox.profile import normalize_string_list
