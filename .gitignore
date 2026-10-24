@@ -1,4 +1,5 @@
 .python-version
+.ropeproject
 .venv
 build
 dist
