@@ -8,8 +8,8 @@ import tinkerbox.image
 from tinkerbox import APP_ID
 from tinkerbox.cli import formatting
 from tinkerbox.logging import setup_logging
-from tinkerbox.profile import normalize_string_list
 from tinkerbox.profile.image import ImageOverride, ImageProfile, PullPolicy
+from tinkerbox.utils import normalize_string_list
 
 
 def setup_argparse(parser: argparse.ArgumentParser):

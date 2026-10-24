@@ -1,7 +1,7 @@
 from __future__ import annotations
+from tinkerbox.utils import normalize_string_list
 
 import importlib.resources
-import itertools
 import json
 import logging
 import os
@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import Any, Self, TypeVar
 
 import tinkerbox
 import tinkerbox.builtin
@@ -85,7 +85,7 @@ class Profile(ABC):
 
         return obj
 
-    def flatten(self: T) -> T:
+    def flatten(self) -> Self:
         """
         Merges this profile over loaded profiles form the `extends` field.
         """
@@ -112,7 +112,7 @@ class Profile(ABC):
 
         return flat
 
-    def merge(self: T, other: T) -> T:
+    def merge(self, other: Self) -> Self:
         merged = type(self)()
 
         merged.description = self.description
@@ -140,7 +140,7 @@ class Profile(ABC):
         raise NotImplementedError
 
     @classmethod
-    def load(cls: type[T], name: str) -> T:
+    def load(cls, name: str) -> Self:
         for dir in config_paths():
             for suffix in ["json", "toml"]:
                 path = dir / cls.kind().value / f"{name}.{suffix}"
@@ -433,23 +433,3 @@ def parse_string_map(
             value=value,
             source=profile_source,
         )
-
-
-def normalize_string_list(value: Any) -> list[str]:
-    if not isinstance(value, list):
-        value = [value]
-    if not all(isinstance(v, str) for v in value):
-        raise TypeError("value should be either string or list of strings")
-    return list(w.strip() for w in itertools.chain(*(v.split(",") for v in value)))
-
-
-def normalize_bool_value(value: str | int | bool) -> bool:
-    if isinstance(value, str):
-        if value.lower() in ["true", "yes", "y", "1"]:
-            return True
-        if value.lower() in ["false", "no", "n", "0"]:
-            return False
-    if isinstance(value, int):
-        return bool(value)
-    else:
-        raise ValueError(f"can not convert value {value!r} to bool")

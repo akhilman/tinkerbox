@@ -1,8 +1,30 @@
+import itertools
 import re
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 from tinkerbox.subprocess import DependencyError, run_capture
+
+
+def normalize_string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        value = [value]
+    if not all(isinstance(v, str) for v in value):
+        raise TypeError("value should be either string or list of strings")
+    return [w.strip() for w in itertools.chain(*(v.split(",") for v in value))]
+
+
+def normalize_bool_value(value: str | int | bool) -> bool:
+    if isinstance(value, str):
+        if value.lower() in ["true", "yes", "y", "1"]:
+            return True
+        if value.lower() in ["false", "no", "n", "0"]:
+            return False
+    if isinstance(value, int):
+        return bool(value)
+    else:
+        raise TypeError(f"can not convert value {value!r} to bool")
 
 
 def split_fields(value: str, sep=":", max_splits=-1) -> list[str]:
