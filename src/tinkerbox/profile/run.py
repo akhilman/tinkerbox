@@ -1,4 +1,4 @@
-from dataclasses import dataclass, replace, asdict
+from dataclasses import asdict, dataclass, replace
 from typing import Any, Self
 
 from tinkerbox.utils import split_fields, substitute
@@ -86,9 +86,9 @@ class Run:
                     match split_fields(opt, "=", 1):
                         case ["mount", args]:
                             mount_args = {}
-                            for arg in split_fields(args, ","):
+                            for a in split_fields(args, ","):
                                 try:
-                                    (k, v) = split_fields(arg, "=", 1)
+                                    (k, v) = split_fields(a, "=", 1)
                                 except Exception as exc:
                                     raise ValueError(
                                         f"incorrect run option: {opt}"

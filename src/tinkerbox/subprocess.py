@@ -112,10 +112,10 @@ class DependencyError(TinkerboxError):
 @dataclass
 class CalledProcessError(TinkerboxError):
     return_code: int
-    args: list[str]
+    call_args: list[str]
     output: str | None = None
     stderr: str | None = None
 
     def __str__(self):
-        cmd = shlex.join(self.args)
+        cmd = shlex.join(self.call_args)
         return f"Subprocess returned non zero ({self.return_code}) exit code: {cmd}"

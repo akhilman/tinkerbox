@@ -243,7 +243,7 @@ class ContainerProfile(Profile):
         if fill_unset or self.image:
             obj["image"] = self.image
         if fill_unset or self.passthrough:
-            obj["passthrough"] = list(sorted(map(str, self.passthrough)))
+            obj["passthrough"] = sorted(map(str, self.passthrough))
         if fill_unset or self.environment:
             obj["environment"] = self.environment
         if fill_unset or self.mounts:
@@ -261,9 +261,9 @@ class ContainerProfile(Profile):
         if fill_unset or self.exec:
             obj["exec"] = [x.to_object() for x in self.exec]
         if fill_unset or self.override:
-            obj["override"] = list(sorted(map(str, self.override)))
+            obj["override"] = sorted(map(str, self.override))
         if fill_unset or self.pass_environment:
-            obj["pass_environment"] = list(sorted(self.pass_environment))
+            obj["pass_environment"] = sorted(self.pass_environment)
         if fill_unset or self.enter_command:
             obj["enter_command"] = self.enter_command
 

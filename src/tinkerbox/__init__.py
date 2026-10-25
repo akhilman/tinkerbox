@@ -3,7 +3,6 @@ from collections.abc import Iterator
 from importlib.metadata import packages_distributions
 from pathlib import Path
 
-
 APP_ID = "io.github.akhilman.tinkerbox"
 
 

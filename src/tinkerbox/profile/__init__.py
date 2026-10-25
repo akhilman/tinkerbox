@@ -1,5 +1,4 @@
 from __future__ import annotations
-from tinkerbox.utils import normalize_string_list
 
 import importlib.resources
 import json
@@ -10,13 +9,16 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any, Self, TypeVar
+from typing import Any, Self
 
 import tinkerbox
 import tinkerbox.builtin
 import tinkerbox.utils
 from tinkerbox import TinkerboxError, config_paths
 from tinkerbox.alias_enum import AliasEnum
+from tinkerbox.utils import normalize_string_list
+
+logger = logging.getLogger(__name__)
 
 
 class ProfileKind(AliasEnum):
@@ -132,7 +134,7 @@ class Profile(ABC):
         return variables
 
     @abstractmethod
-    def substitute(self: T, variables: dict[str, str]) -> T:
+    def substitute(self, variables: dict[str, str]) -> Self:
         """
         Substitutes `@{VAR}` in fields.
         """
@@ -145,7 +147,7 @@ class Profile(ABC):
             for suffix in ["json", "toml"]:
                 path = dir / cls.kind().value / f"{name}.{suffix}"
                 if path.is_file():
-                    logging.debug('Loading %s profile form "%s"', cls.kind(), path)
+                    logger.debug('Loading %s profile form "%s"', cls.kind(), path)
                     obj = None
                     try:
                         if suffix == "json":
@@ -156,7 +158,7 @@ class Profile(ABC):
                                 obj = tomllib.load(f)
                     except Exception as exc:
                         exc.add_note(f"Profile source: {path}")
-                        raise exc
+                        raise
                     if obj:
                         if not isinstance(obj, dict):
                             raise ProfileNotObjectError(cls=cls, source=path)
@@ -170,16 +172,13 @@ class Profile(ABC):
                 / f"{name}-{cls.kind()}.toml"
             )
             if resource.is_file():
-                logging.debug('Loading build-in %s profile "%s"', cls.kind(), name)
+                logger.debug('Loading build-in %s profile "%s"', cls.kind(), name)
                 obj = tomllib.loads(resource.read_text("utf-8"))
                 obj["profile_name"] = name
                 profile = cls.from_object(obj, profile_source="built-in")
                 return profile
 
         raise ProfileNotFoundError(cls.kind(), name)
-
-
-T = TypeVar("T", bound=Profile)
 
 
 def list_profiles(kind: ProfileKind) -> set[str]:
@@ -279,16 +278,13 @@ class ProfileNotFoundError(TinkerboxError):
         return f"Unable to find {self.kind!r} profile {self.name!r}"
 
 
-Obj = TypeVar("Obj")
-
-
-def parse_enum(
+def parse_enum[T](
     value: Any,
-    factory: Callable[[Any], Obj],
+    factory: Callable[[Any], T],
     profile_cls: type,
     profile_field: str,
     profile_source: str | Path | None,
-) -> Obj:
+) -> T:
     if not isinstance(value, str):
         raise InvalidFieldError(
             msg="expecting a string",
@@ -309,13 +305,13 @@ def parse_enum(
         )
 
 
-def parse_enum_set(
+def parse_enum_set[T](
     value: Any,
-    factory: Callable[[Any], Obj],
+    factory: Callable[[Any], T],
     profile_cls: type,
     profile_field: str,
     profile_source: str | Path | None,
-) -> set[Obj]:
+) -> set[T]:
     try:
         string_list = normalize_string_list(value)
     except TypeError:
@@ -329,13 +325,13 @@ def parse_enum_set(
     return {factory(s) for s in string_list}
 
 
-def parse_object_list(
+def parse_object_list[T](
     value: Any,
-    factory: Callable[[Any], Obj],
+    factory: Callable[[Any], T],
     profile_cls: type,
     profile_field: str,
     profile_source: str | Path | None,
-) -> list[Obj]:
+) -> list[T]:
     if not isinstance(value, list):
         raise InvalidFieldError(
             msg="expecting a list of dicts",

@@ -14,7 +14,7 @@ from typing import Any, TextIO
 import tinkerbox
 import tinkerbox.builtin
 from tinkerbox import APP_ID, TinkerboxError, subprocess
-from tinkerbox.profile.add import Add, AddFile, AddText, AddUrl, AddBuiltin
+from tinkerbox.profile.add import Add, AddBuiltin, AddFile, AddText, AddUrl
 from tinkerbox.profile.image import ImageProfile
 from tinkerbox.profile.run import Run
 from tinkerbox.subprocess import CalledProcessError
@@ -163,8 +163,7 @@ def write_add(add: Add, file: TextIO, temp_dir: Path):
             case None:
                 continue
             case list(x):
-                for item in x:
-                    file.write(f" --{k}={item}")
+                file.writelines(f" --{k}={item}" for item in x)
                 continue
 
             case True:
@@ -256,7 +255,7 @@ def extract_profile(image: str) -> ImageProfile:
     except CalledProcessError as exc:
         if exc.stderr and "image not known" in exc.stderr:
             raise ImageNotFoundError(image) from exc
-        raise exc
+        raise
 
     if not profile_json:
         raise NonNativeImageError(image)
@@ -281,7 +280,7 @@ def extract_user_and_group(image: str) -> tuple[str, str]:
     except CalledProcessError as exc:
         if exc.stderr and "image not known" in exc.stderr:
             raise ImageNotFoundError(image) from exc
-        raise exc
+        raise
 
     assert user_group
     assert ":" in user_group
@@ -293,10 +292,9 @@ def extract_user_and_group(image: str) -> tuple[str, str]:
 def list_image_names() -> Iterator[str]:
     images = list_images()
     for img in images:
-        if names := img.get("Names"):
-            if names:
-                yield names[0]
-                continue
+        if (names := img.get("Names")) and names:
+            yield names[0]
+            continue
 
         yield img["Id"]
 

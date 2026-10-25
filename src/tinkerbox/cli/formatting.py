@@ -1,6 +1,5 @@
-from typing import Any
-import sys
 from collections.abc import Iterable, Iterator
+from typing import Any
 
 
 class Table:

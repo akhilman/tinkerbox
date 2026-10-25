@@ -12,9 +12,9 @@ from . import (
     Profile,
     ProfileKind,
     UnexpectedFieldsError,
+    parse_enum,
     parse_enum_set,
     parse_object_list,
-    parse_enum,
     parse_string,
     parse_string_map,
     parse_string_or_string_list,
@@ -205,7 +205,7 @@ class ImageProfile(Profile):
         if fill_unset or self.cmd:
             obj["cmd"] = self.cmd
         if fill_unset or self.override:
-            obj["override"] = list(sorted(map(str, self.override)))
+            obj["override"] = sorted(map(str, self.override))
 
         return obj
 

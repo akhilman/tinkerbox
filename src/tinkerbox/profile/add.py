@@ -337,7 +337,7 @@ def file_and_url_obj_to_kwargs(
             link = normalize_bool_value(link)
         except ValueError as err:
             err.add_note("Failed to convert file's `link` field to bool")
-            raise err
+            raise
 
     unpack = rest.pop("unpack", None)
     if unpack is not None:
@@ -345,7 +345,7 @@ def file_and_url_obj_to_kwargs(
             unpack = normalize_bool_value(unpack)
         except ValueError as err:
             err.add_note("Failed to convert file's `unpack` field to bool")
-            raise err
+            raise
 
     exclude = rest.pop("exclude", [])
     if not isinstance(exclude, list) or not all(isinstance(x, str) for x in exclude):
@@ -372,7 +372,7 @@ def url_obj_to_kwargs(obj: Any) -> tuple[dict[str, str | bool | None], dict[str,
             keep_git_dir = normalize_bool_value(keep_git_dir)
         except ValueError as err:
             err.add_note("Failed to convert file's `keep-git-dir` field to bool")
-            raise err
+            raise
 
     checksum = rest.pop("checksum", None)
     if not isinstance(checksum, str | None):

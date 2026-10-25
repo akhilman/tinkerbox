@@ -47,7 +47,6 @@ class Network:
                 pass
             case [mode]:
                 options = ""
-                pass
 
         obj = {"mode": mode}
 

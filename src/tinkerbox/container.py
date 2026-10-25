@@ -209,7 +209,7 @@ def is_running(container: str) -> bool:
     except CalledProcessError as exc:
         if exc.stderr and "no such container" in exc.stderr:
             raise ContainerNotFoundError(container)
-        raise exc
+        raise
     return "true" in output
 
 
@@ -367,7 +367,7 @@ def extract_profile(container: str) -> ContainerProfile:
     except CalledProcessError as exc:
         if exc.stderr and "Error: no such container" in exc.stderr:
             raise ContainerNotFoundError(container) from exc
-        raise exc
+        raise
 
     if not profile_json:
         raise NonNativeContainerError(container)
@@ -400,10 +400,9 @@ def list_containers(calculate_size: bool = False) -> list[dict[str, Any]]:
 def list_container_names() -> Iterator[str]:
     images = list_containers()
     for img in images:
-        if names := img.get("Names"):
-            if names:
-                yield names[0]
-                continue
+        if (names := img.get("Names")) and names:
+            yield names[0]
+            continue
 
         yield img["Id"]
 
