@@ -1,22 +1,9 @@
 import os
 from collections.abc import Iterator
-from importlib.metadata import packages_distributions
 from pathlib import Path
 
 APP_ID = "io.github.akhilman.tinkerbox"
-
-
-def package_name() -> str:
-
-    package = __package__
-    assert package
-    module_name = package.split(".")[0]
-    distributions = packages_distributions().get(module_name, [])
-
-    if not distributions:
-        raise RuntimeError(f"could not determine distribution for {module_name!r}")
-
-    return distributions[0]
+APP_NAME = "tinkerbox"
 
 
 def config_paths() -> Iterator[Path]:
@@ -24,8 +11,6 @@ def config_paths() -> Iterator[Path]:
 
     Paths are returned without checking whether they currently exist.
     """
-    pkg_name = package_name()
-
     # XDG_CONFIG_HOME defaults to ~/.config.
     xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
     if xdg_config_home:
@@ -36,7 +21,7 @@ def config_paths() -> Iterator[Path]:
         config_home = Path.home() / ".config"
 
     for dir in (config_home, Path("/etc")):
-        dir = dir / pkg_name
+        dir = dir / APP_NAME
         if dir.is_dir():
             yield dir
 
