@@ -5,7 +5,6 @@ import sys
 import tinkerbox.container
 import tinkerbox.image
 import tinkerbox.profile
-from tinkerbox.logging import setup_logging
 from tinkerbox.profile import ProfileKind
 from tinkerbox.profile.container import ContainerProfile
 from tinkerbox.profile.image import ImageProfile
@@ -38,8 +37,6 @@ def setup_argparse(parser: argparse.ArgumentParser):
 
 
 def list_profiles(args: argparse.Namespace):
-    setup_logging(args.debug)
-
     kind = ProfileKind(args.entity)
     profiles = tinkerbox.profile.list_profiles(kind)
     for name in profiles:
@@ -47,8 +44,6 @@ def list_profiles(args: argparse.Namespace):
 
 
 def cat_profile(args: argparse.Namespace):
-    setup_logging(args.debug)
-
     name = args.profile
     kind = ProfileKind(args.entity)
     match kind:
@@ -68,8 +63,6 @@ def cat_profile(args: argparse.Namespace):
 
 
 def extract_profile(args: argparse.Namespace):
-    setup_logging(args.debug)
-
     source = args.source
     kind = ProfileKind(args.entity)  # TODO: Get rid of this enum.
     match kind:

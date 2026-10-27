@@ -7,7 +7,6 @@ import tinkerbox.cli.profile
 import tinkerbox.container
 from tinkerbox import TinkerboxError
 from tinkerbox.cli import formatting
-from tinkerbox.logging import setup_logging
 from tinkerbox.profile import normalize_string_list
 from tinkerbox.profile.container import (
     ContainerOverride,
@@ -188,8 +187,6 @@ def profile_opts_from_cli_args(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def list_containers(args: argparse.Namespace):
-    setup_logging(args.debug)
-
     container_list = tinkerbox.container.list_containers(calculate_size=args.size)
 
     if args.names_only and args.json:
@@ -230,8 +227,6 @@ def list_containers(args: argparse.Namespace):
 
 
 def create_container(args: argparse.Namespace):
-    setup_logging(args.debug)
-
     obj = profile_opts_from_cli_args(args)
     profile = ContainerProfile.from_object(obj, profile_source="command line")
     if args.profile:
@@ -254,13 +249,10 @@ def add_enter_args(parser: argparse.ArgumentParser):
 
 
 def enter_container(args: argparse.Namespace):
-    setup_logging(args.debug)
     tinkerbox.container.enter(args.container, command=args.command, user=args.user)
 
 
 def remove_containers(args: argparse.Namespace):
-    setup_logging(args.debug)
-
     if args.stop:
         tinkerbox.container.stop(args.container)
     else:
@@ -272,10 +264,8 @@ def remove_containers(args: argparse.Namespace):
 
 
 def start_containers(args: argparse.Namespace):
-    setup_logging(args.debug)
     tinkerbox.container.start(args.container)
 
 
 def stop_containers(args: argparse.Namespace):
-    setup_logging(args.debug)
     tinkerbox.container.stop(args.container)

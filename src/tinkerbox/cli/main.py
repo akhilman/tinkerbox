@@ -30,6 +30,11 @@ def main():
     # Parse arguments
     args = parser.parse_args()
 
+    logging.basicConfig(
+        level=logging.DEBUG if args.debug else logging.INFO,
+        # format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+    )
+
     try:
         args.func(args)
     except TinkerboxError as exc:

@@ -7,7 +7,6 @@ import tinkerbox.cli.profile
 import tinkerbox.image
 from tinkerbox import APP_ID
 from tinkerbox.cli import formatting
-from tinkerbox.logging import setup_logging
 from tinkerbox.profile.image import ImageOverride, ImageProfile, PullPolicy
 from tinkerbox.utils import normalize_string_list
 
@@ -111,8 +110,6 @@ def profile_opts_from_cli_args(args: argparse.Namespace) -> dict["str", Any]:
 
 
 def list_images(args: argparse.Namespace):
-    setup_logging(args.debug)
-
     image_list = tinkerbox.image.list_images()
 
     if args.names_only and args.json:
@@ -152,8 +149,6 @@ def list_images(args: argparse.Namespace):
 
 
 def build_image(args: argparse.Namespace):
-    setup_logging(args.debug)
-
     obj = profile_opts_from_cli_args(args)
     profile = ImageProfile.from_object(obj, profile_source="command line")
     if args.profile:
@@ -164,21 +159,5 @@ def build_image(args: argparse.Namespace):
     tinkerbox.image.build_image(profile, keep_tmp=args.keep_tmp)
 
 
-def cat_image_profile(args: argparse.Namespace):
-    setup_logging(args.debug)
-
-    print("image_profile")
-    print(args)
-
-
 def remove_image(args: argparse.Namespace):
-    setup_logging(args.debug)
-
     tinkerbox.image.remove_images(args.image)
-
-
-def rename_image(args: argparse.Namespace):
-    setup_logging(args.debug)
-
-    print("rename_image")
-    print(args)
