@@ -102,7 +102,7 @@ def add_container_profile_args(parser: argparse.ArgumentParser):
     )
     parser.add_argument(
         "--copy",
-        "-C",
+        "-c",
         action="append",
         help="copy files to the container, DST takes precedence as the destination",
         metavar="[SRC_CONTAINER:]SRC[:DST]",
