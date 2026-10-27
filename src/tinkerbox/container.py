@@ -38,7 +38,7 @@ def create(profile: ContainerProfile) -> str:
     if profile.name and is_exists(profile.name):
         raise ContainerExistsError(profile.name)
 
-    logger.debug("Creating container from image %s", profile.image)
+    logger.info("Creating container from image %s", profile.image)
 
     args = []
 
@@ -94,6 +94,12 @@ def create(profile: ContainerProfile) -> str:
                 src = str(src)
 
             dst = f"{container_id}:{dst}"
+
+            if cp.ignore_failure:
+                logger.info(f"Trying to copy: {cp.src} -> {cp.dst}")
+            else:
+                logger.info(f"Copying: {cp.src} -> {cp.dst}")
+
             try:
                 subprocess.run_podman("container", "cp", src, dst)
             except CalledProcessError:
@@ -115,6 +121,13 @@ def create(profile: ContainerProfile) -> str:
                 args.append(f"--user={exec.user}")
             if exec.work_dir:
                 args.append(f"--workdir={exec.work_dir}")
+
+            msg = "Trying to execute" if exec.ignore_failure else "Executing"
+            if exec.user:
+                msg = f"{msg} as {exec.user}"
+            if exec.work_dir:
+                msg = f"{msg} in {exec.work_dir}"
+            logger.info("%s: %s", msg, shlex.join(command))
 
             try:
                 subprocess.run_podman(
