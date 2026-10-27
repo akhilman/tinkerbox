@@ -32,10 +32,8 @@ classifiers = [
   "Operating System :: MacOS",
 ]
 
-
 [project.scripts]
 tinkerbox = "tinkerbox.cli.main:main"
-
 
 [build-system]
 requires = ["setuptools"]
