@@ -35,7 +35,7 @@ class Device:
         if not isinstance(container_device, str | None):
             raise TypeError("device's `container_device` field should be a string")
 
-        permissions = obj.pop("permissions", list)
+        permissions = obj.pop("permissions", [])
         if isinstance(permissions, str):
             permissions = set(map(DevicePermission, permissions.replace(",", "")))
         elif isinstance(permissions, list):
