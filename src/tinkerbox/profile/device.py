@@ -24,18 +24,20 @@ class Device:
         elif not isinstance(obj, dict):
             raise TypeError("device should be either a dict or a string")
 
+        rest = {**obj}
+
         try:
-            host_device = obj.pop("host_device")
+            host_device = rest.pop("host_device")
         except KeyError:
             raise ValueError("device should have at least `host_device` field")
         if not isinstance(host_device, str):
             raise TypeError("device's `host_device` field should be a string")
 
-        container_device = obj.pop("container_device", None)
+        container_device = rest.pop("container_device", None)
         if not isinstance(container_device, str | None):
             raise TypeError("device's `container_device` field should be a string")
 
-        permissions = obj.pop("permissions", [])
+        permissions = rest.pop("permissions", [])
         if isinstance(permissions, str):
             permissions = set(map(DevicePermission, permissions.replace(",", "")))
         elif isinstance(permissions, list):
@@ -45,8 +47,8 @@ class Device:
                 "device's `permissions` field must be string or list of strings"
             )
 
-        if obj:
-            raise ValueError(f"device has unexpected fields: {', '.join(obj.keys())}")
+        if rest:
+            raise ValueError(f"device has unexpected fields: {', '.join(rest.keys())}")
 
         return cls(
             host_device=host_device,
