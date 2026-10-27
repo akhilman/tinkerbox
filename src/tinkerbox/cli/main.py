@@ -2,7 +2,7 @@ import argparse
 import logging
 import sys
 
-from tinkerbox import TinkerboxError
+from tinkerbox import APP_NAME, TinkerboxError
 from tinkerbox.subprocess import CalledProcessError
 
 from . import container, image
@@ -11,7 +11,7 @@ from . import container, image
 def main():
     logger = logging.getLogger(__name__)
     parser = argparse.ArgumentParser(
-        prog="tinkerbox",
+        prog=APP_NAME,
         description="Tinkerbox is a tool to manage interactive podman containers for experiments and development.",
     )
 
