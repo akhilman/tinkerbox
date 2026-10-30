@@ -30,7 +30,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
     add_container_profile_args(cmd)
     cmd.set_defaults(func=create_container)
 
-    cmd = commands.add_parser("enter", aliases=["en"], help="enter to the container")
+    cmd = commands.add_parser("enter", aliases=["en"], help="enter a container")
     add_enter_args(cmd)
     cmd.set_defaults(func=enter_container)
 
