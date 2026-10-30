@@ -4,6 +4,12 @@ Tinkerbox is a tool for managing interactive [Podman](https://podman.io/) contai
 
 It is similar to [Toolbox](https://containertoolbx.org/) and [Distrobox](https://distrobox.it/), but does **not** share the host’s home directory or other filesystem paths by default. Containers stay isolated; persistence and host integration are controlled explicitly through profiles and CLI options.
 
+## Development notes
+
+This branch is a full rewrite in Python. See `REWRITE.md` for design notes, planned subcommands, and open TODOs (rebase/recreate, richer list output, timezone handling, etc.).
+
+The old version written as a fish script available in the [fish](/akhilman/tinkerbox/tree/fish) branch.
+
 **Status:** Work in progress / alpha, but usable.
 
 ## Features
@@ -849,17 +855,6 @@ tinkerbox container start webdav
 ```
 
 Again, this behaviour comes from the default profiles; custom profiles can omit or replace the entrypoint.
-
-## Development notes
-
-This branch is a full rewrite in Python. See `REWRITE.md` for design notes, planned subcommands, and open TODOs (rebase/recreate, richer list output, timezone handling, etc.).
-
-The old version written as a fish script available in the `fish` branch.
-
-```bash
-# Run from source
-python -m tinkerbox ...
-```
 
 ## License
 
