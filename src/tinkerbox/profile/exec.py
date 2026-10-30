@@ -24,9 +24,8 @@ class Exec:
 
         obj = {**obj}
 
-        try:
-            command = obj.pop("command")
-        except KeyError:
+        command = obj.pop("command", None) or obj.pop("cmd", None)
+        if not command:
             raise ValueError("exec should have at least `command` field")
         if not isinstance(command, str) and not (
             isinstance(command, list) and all(isinstance(x, str) for x in command)

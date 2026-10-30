@@ -130,36 +130,36 @@ def write_add(add: Add, file: TextIO, temp_dir: Path):
     # Handle builtin resources
     if isinstance(add, AddBuiltin):
         add = AddText(
-            dst=add.dst,
+            destination=add.destination,
             content=read_builtin(add.builtin),
             chmod=add.chmod,
             chown=add.chown,
         )
 
-    dst = str(add.dst.expanduser())
+    destination = str(add.destination.expanduser())
     opts: dict[str, str | bool | list[str] | None] = {
         k: v
         for k, v in asdict(add).items()
-        if k not in ("content", "src", "url", "dst")
+        if k not in ("content", "source", "url", "destination")
     }
 
     if isinstance(add, AddText):
         text = (
             temp_dir
-            / f"{add.dst.name}.{sha1(add.content.encode()).hexdigest()}/{add.dst.name}"
+            / f"{add.destination.name}.{sha1(add.content.encode()).hexdigest()}/{add.destination.name}"
         )
         text.parent.mkdir(parents=True, exist_ok=True)
         with text.open("w") as f:
             logger.debug("Writing file content to `%s`", text)
             f.write(add.content)
-        src = str(text.relative_to(temp_dir))
+        source = str(text.relative_to(temp_dir))
     elif isinstance(add, AddUrl):
-        src = add.url
+        source = add.url
     elif isinstance(add, AddFile):
-        if add.src.exists():
-            src = copy_file(add.src, temp_dir)
+        if add.source.exists():
+            source = copy_file(add.source, temp_dir)
         else:
-            raise FileNotFoundError(f"file not found: {add.src!r}")
+            raise FileNotFoundError(f"file not found: {add.source!r}")
     else:
         raise TypeError(f"unexpected Add type: {type(add)}")
 
@@ -182,7 +182,7 @@ def write_add(add: Add, file: TextIO, temp_dir: Path):
 
         file.write(f" --{k}={v_str}")
 
-    file.write(f" {src} {dst}\n")
+    file.write(f" {source} {destination}\n")
 
 
 def write_run(run: Run, file: TextIO):

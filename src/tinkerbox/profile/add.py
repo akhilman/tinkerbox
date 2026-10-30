@@ -11,7 +11,7 @@ from tinkerbox.utils import normalize_bool_value, split_fields, substitute
 @dataclass
 class Add(ABC):
     # TODO: Allow more ADD arguments.
-    dst: Path = field(kw_only=True)
+    destination: Path = field(kw_only=True)
     chmod: str | None = None
     chown: str | None = None
 
@@ -22,7 +22,7 @@ class Add(ABC):
         if not isinstance(obj, dict):
             raise TypeError("file object must be a dict or string")
 
-        if "src" in obj:
+        if "source" in obj or "src" in obj:
             return AddFile.from_object(obj)
         elif "url" in obj:
             return AddUrl.from_object(obj)
@@ -32,7 +32,7 @@ class Add(ABC):
             return AddBuiltin.from_object(obj)
         else:
             raise ValueError(
-                "file object must have either `src`, `url` or `content` field"
+                "file object must have either `source`, `url` or `content` field"
             )
 
     @abstractmethod
@@ -48,7 +48,7 @@ class Add(ABC):
 
 @dataclass
 class AddFile(Add):
-    src: Path = field(kw_only=True)
+    source: Path = field(kw_only=True)
     link: bool | None = None
     unpack: bool | None = None
     exclude: list[str] = field(default_factory=list)
@@ -60,15 +60,14 @@ class AddFile(Add):
 
         rest = {**obj}
 
-        try:
-            src = rest.pop("src")
-        except KeyError:
-            raise KeyError("file object must have a `src` field")
-        if not isinstance(src, str):
-            raise TypeError("file object's `src` field must be a string")
-        src = Path(src)
+        source = rest.pop("source", None) or rest.pop("src", None)
+        if not source:
+            raise KeyError("file object must have a `source` field")
+        if not isinstance(source, str):
+            raise TypeError("file object's `source` field must be a string")
+        source = Path(source)
 
-        dst, rest = parse_dst(rest)
+        destination, rest = parse_dst(rest)
         base_kwargs, rest = base_obj_to_kwargs(rest)
         file_and_url_kwargs, rest = file_and_url_obj_to_kwargs(rest)
 
@@ -78,7 +77,7 @@ class AddFile(Add):
             )
 
         return replace(
-            cls(src=src, dst=dst),
+            cls(source=source, destination=destination),
             **base_kwargs,
             **file_and_url_kwargs,
         )
@@ -87,11 +86,11 @@ class AddFile(Add):
     def from_argument(cls, arg: str) -> Self:
         parts = split_fields(arg, ":")
         match parts:
-            case [src]:
-                return cls(src=Path(src), dst=Path(src))
-            case [src, dst]:
-                return cls(src=Path(src), dst=Path(dst))
-            case [src, dst, opts]:
+            case [source]:
+                return cls(source=Path(source), destination=Path(source))
+            case [source, destination]:
+                return cls(source=Path(source), destination=Path(destination))
+            case [source, destination, opts]:
                 pass
             case _:
                 raise ValueError(f"incorrect file argument format: {arg}")
@@ -115,7 +114,9 @@ class AddFile(Add):
                     raise ValueError(f"incorrect file argument format: {arg}")
 
         try:
-            return cls.from_object({"src": src, "dst": dst, **opts_obj})
+            return cls.from_object(
+                {"source": source, "destination": destination, **opts_obj}
+            )
         except ValueError as exc:
             raise ValueError(f"incorrect file argument: {arg}") from exc
 
@@ -129,8 +130,8 @@ class AddFile(Add):
     def substitute(self, variables: dict[str, str]) -> Self:
         return replace(
             self,
-            src=Path(substitute(str(self.src), variables)),
-            dst=Path(substitute(str(self.dst), variables)),
+            source=Path(substitute(str(self.source), variables)),
+            destination=Path(substitute(str(self.destination), variables)),
             chown=substitute(self.chown, variables) if self.chown else None,
         )
 
@@ -158,7 +159,7 @@ class AddUrl(Add):
         if not isinstance(url, str):
             raise TypeError("file object's `url` field must be a string")
 
-        dst, rest = parse_dst(rest)
+        destination, rest = parse_dst(rest)
         base_kwargs, rest = base_obj_to_kwargs(rest)
         file_and_url_kwargs, rest = file_and_url_obj_to_kwargs(rest)
         url_kwargs, rest = url_obj_to_kwargs(rest)
@@ -169,7 +170,7 @@ class AddUrl(Add):
             )
 
         return replace(
-            cls(url=url, dst=dst),
+            cls(url=url, destination=destination),
             **base_kwargs,
             **file_and_url_kwargs,
             **url_kwargs,
@@ -186,7 +187,7 @@ class AddUrl(Add):
         return replace(
             self,
             url=substitute(self.url, variables),
-            dst=Path(substitute(str(self.dst), variables)),
+            destination=Path(substitute(str(self.destination), variables)),
             chown=substitute(self.chown, variables) if self.chown else None,
         )
 
@@ -209,7 +210,7 @@ class AddText(Add):
         if not isinstance(content, str):
             raise TypeError("file object's `content` field must be a string")
 
-        dst, rest = parse_dst(rest)
+        destination, rest = parse_dst(rest)
         base_kwargs, rest = base_obj_to_kwargs(rest)
 
         if rest:
@@ -218,7 +219,7 @@ class AddText(Add):
             )
 
         return replace(
-            cls(content=content, dst=dst),
+            cls(content=content, destination=destination),
             **base_kwargs,
         )
 
@@ -233,7 +234,7 @@ class AddText(Add):
         return replace(
             self,
             content=substitute(self.content, variables),
-            dst=Path(substitute(str(self.dst), variables)),
+            destination=Path(substitute(str(self.destination), variables)),
             chown=substitute(self.chown, variables) if self.chown else None,
         )
 
@@ -256,7 +257,7 @@ class AddBuiltin(Add):
         if not isinstance(builtin, str):
             raise TypeError("file object's `builtin` field must be a string")
 
-        dst, rest = parse_dst(rest)
+        destination, rest = parse_dst(rest)
         base_kwargs, rest = base_obj_to_kwargs(rest)
 
         if rest:
@@ -265,7 +266,7 @@ class AddBuiltin(Add):
             )
 
         return replace(
-            cls(builtin=builtin, dst=dst),
+            cls(builtin=builtin, destination=destination),
             **base_kwargs,
         )
 
@@ -279,7 +280,7 @@ class AddBuiltin(Add):
     def substitute(self, variables: dict[str, str]) -> Self:
         return replace(
             self,
-            dst=Path(substitute(str(self.dst), variables)),
+            destination=Path(substitute(str(self.destination), variables)),
             chown=substitute(self.chown, variables) if self.chown else None,
         )
 
@@ -290,15 +291,14 @@ def parse_dst(obj: Any) -> tuple[Path, dict[str, Any]]:
 
     rest = {**obj}
 
-    try:
-        dst = rest.pop("dst")
-    except KeyError:
-        raise KeyError("file object must have a `dst` field")
-    if not isinstance(dst, str):
-        raise TypeError("file object's `dst` field must be a string")
-    dst = Path(dst)
+    destination = rest.pop("destination", None) or rest.pop("dst", None)
+    if not destination:
+        raise KeyError("file object must have a `destination` field")
+    if not isinstance(destination, str):
+        raise TypeError("file object's `destination` field must be a string")
+    destination = Path(destination)
 
-    return dst, rest
+    return destination, rest
 
 
 def base_obj_to_kwargs(obj: Any) -> tuple[dict[str, str | None], dict[str, Any]]:

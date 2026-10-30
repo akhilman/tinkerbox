@@ -11,9 +11,9 @@ class Copy:
     Copy a file or directory to the a container.
     """
 
-    src: Path
-    dst: Path | None = None
-    src_container: str | None = None
+    source: Path
+    destination: Path | None = None
+    source_container: str | None = None
     ignore_failure: bool = False
 
     @classmethod
@@ -25,21 +25,22 @@ class Copy:
 
         obj = {**obj}
 
-        try:
-            src = obj.pop("src")
-        except KeyError:
-            raise ValueError("copy should have at least a `src` field")
-        if not isinstance(src, str):
+        source = obj.pop("source", None) or obj.pop("src", None)
+        if not source:
+            raise ValueError("copy should have at least a `source` field")
+        if not isinstance(source, str):
             raise TypeError(
-                "copy's `src` field should be a string or a list of strings"
+                "copy's `source` field should be a string or a list of strings"
             )
 
-        dst = obj.pop("dst", None)
-        if dst is not None and not isinstance(dst, str):
-            raise TypeError("copy's `dst` field should be a string or nil")
+        destination = obj.pop("destination", None) or obj.pop("dst", None)
+        if destination is not None and not isinstance(destination, str):
+            raise TypeError("copy's `destination` field should be a string or nil")
 
-        src_container = obj.pop("src_container", None)
-        if src_container is not None and not isinstance(src_container, str):
+        source_container = obj.pop("source_container", None) or obj.pop(
+            "container", None
+        )
+        if source_container is not None and not isinstance(source_container, str):
             raise TypeError("copy's `src_container` field should be a string or nil")
 
         ignore_failure = obj.pop("ignore_failure", None)
@@ -53,9 +54,9 @@ class Copy:
             )
 
         return cls(
-            src=Path(src),
-            dst=Path(dst),
-            src_container=src_container,
+            source=Path(source),
+            destination=Path(destination),
+            source_container=source_container,
             ignore_failure=ignore_failure,
         )
 
@@ -70,12 +71,16 @@ class Copy:
         parts = split_fields(arg, ":")
 
         match parts:
-            case [src]:
-                return cls(Path(src))
-            case [src, dst]:
-                return cls(Path(src), dst=Path(dst))
-            case [src_container, src, dst]:
-                return cls(Path(src), dst=Path(dst), src_container=src_container)
+            case [source]:
+                return cls(Path(source))
+            case [source, destination]:
+                return cls(Path(source), destination=Path(destination))
+            case [src_container, source, destination]:
+                return cls(
+                    Path(source),
+                    destination=Path(destination),
+                    source_container=src_container,
+                )
             case _:
                 raise ValueError(f"invalid copy format: {arg}")
 
@@ -91,9 +96,11 @@ class Copy:
     def substitute(self, variables: dict[str, str]) -> Self:
         return replace(
             self,
-            src=Path(substitute(str(self.src), variables)),
-            dst=Path(substitute(str(self.dst), variables)) if self.dst else None,
-            src_container=substitute(self.src_container, variables)
-            if self.src_container
+            source=Path(substitute(str(self.source), variables)),
+            destination=Path(substitute(str(self.destination), variables))
+            if self.destination
+            else None,
+            src_container=substitute(self.source_container, variables)
+            if self.source_container
             else None,
         )

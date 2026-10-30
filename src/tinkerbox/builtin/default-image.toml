@@ -11,13 +11,13 @@ CONTAINER_HOME = "@{CONTAINER_HOME}"
 
 [[add]]
 builtin = "default-bootstrap.sh"
-dst = "/usr/local/sbin/bootstrap.sh"
+destination = "/usr/local/sbin/bootstrap.sh"
 chown = "root"
 chmod = "755"
 
 [[add]]
 builtin = "default-entrypoint.sh"
-dst = "/usr/local/sbin/entrypoint.sh"
+destination = "/usr/local/sbin/entrypoint.sh"
 chown = "root"
 chmod = "755"
 

@@ -23,14 +23,13 @@ class Volume:
 
         obj = {**obj}
 
-        try:
-            target = obj.pop("target")
-        except KeyError:
+        target = obj.pop("target", None) or obj.pop("tgt", None)
+        if not target:
             raise ValueError("volume should have at least `target` field")
         if not isinstance(target, str):
             raise TypeError("volume's `target` field should be a string")
 
-        source = obj.pop("source", None)
+        source = obj.pop("source", None) or obj.pop("src", None)
         if not isinstance(source, str | None):
             raise TypeError("volume's `source` field should be a string")
 

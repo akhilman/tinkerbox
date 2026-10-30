@@ -85,26 +85,28 @@ def create(profile: ContainerProfile) -> str:
 
     try:
         for cp in profile.copy:
-            src = cp.src.expanduser()
-            dst = cp.dst.expanduser() if cp.dst else src
+            source = cp.source.expanduser()
+            destination = cp.destination.expanduser() if cp.destination else source
 
-            if cp.src_container:
-                src = f"{cp.src_container}:{src}"
+            if cp.source_container:
+                source = f"{cp.source_container}:{source}"
             else:
-                src = str(src)
+                source = str(source)
 
-            dst = f"{container_id}:{dst}"
+            destination = f"{container_id}:{destination}"
 
             if cp.ignore_failure:
-                logger.info(f"Trying to copy: {cp.src} -> {cp.dst}")
+                logger.info(f"Trying to copy: {cp.source} -> {cp.destination}")
             else:
-                logger.info(f"Copying: {cp.src} -> {cp.dst}")
+                logger.info(f"Copying: {cp.source} -> {cp.destination}")
 
             try:
-                subprocess.run_podman("container", "cp", src, dst)
+                subprocess.run_podman("container", "cp", source, destination)
             except CalledProcessError:
                 if cp.ignore_failure:
-                    logger.warning("Failed to copy file from `%s` to `%s`", src, dst)
+                    logger.warning(
+                        "Failed to copy file from `%s` to `%s`", source, destination
+                    )
                 else:
                     raise
 
@@ -254,8 +256,8 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
             Mount(
                 mount_type="bind",
                 options={
-                    "src": str(pulse_dir),
-                    "dst": str(pulse_dir),
+                    "source": str(pulse_dir),
+                    "destination": str(pulse_dir),
                 },
             )
         )
@@ -279,8 +281,8 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
             Mount(
                 mount_type="bind",
                 options={
-                    "src": str(pw_socket),
-                    "dst": str(pw_socket),
+                    "source": str(pw_socket),
+                    "destination": str(pw_socket),
                 },
             )
         )
@@ -293,8 +295,8 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
             Mount(
                 mount_type="bind",
                 options={
-                    "src": str(bus_socket),
-                    "dst": str(bus_socket),
+                    "source": str(bus_socket),
+                    "destination": str(bus_socket),
                 },
             )
         )
@@ -314,8 +316,8 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
             Mount(
                 mount_type="bind",
                 options={
-                    "src": str(wayland_socket),
-                    "dst": str(wayland_socket),
+                    "source": str(wayland_socket),
+                    "destination": str(wayland_socket),
                 },
             )
         )
@@ -331,8 +333,8 @@ def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
             Mount(
                 mount_type="bind",
                 options={
-                    "src": str(x11_dir),
-                    "dst": str(x11_dir),
+                    "source": str(x11_dir),
+                    "destination": str(x11_dir),
                 },
             )
         )

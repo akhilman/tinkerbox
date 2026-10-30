@@ -25,12 +25,12 @@ TZ = "@{TZ?}"
 
 [[mounts]]
 type = "tmpfs"
-dst = "/tmp"
+destination = "/tmp"
 tmpfs-size = "5g"
 
 [[mounts]]
 type = "tmpfs"
-dst = "/run"
+destination = "/run"
 tmpfs-size = "64m"
 
 [[volumes]]
