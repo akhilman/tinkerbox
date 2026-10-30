@@ -1,4 +1,5 @@
 import importlib.resources
+import itertools
 import json
 import logging
 import os
@@ -41,11 +42,6 @@ def build_image(profile: ImageProfile, keep_tmp=False) -> str:
             assert profile.home
             uid = os.getuid()
             f.write(f"FROM {profile.from_image}\n")
-            f.write("USER root\n")
-
-            for add in profile.add:
-                if add.chown not in [profile.user, str(uid)]:
-                    write_add(add, f, temp_dir)
 
             if environment := {k: v for k, v in profile.environment.items() if v}:
                 f.write("ENV")
@@ -53,20 +49,31 @@ def build_image(profile: ImageProfile, keep_tmp=False) -> str:
                     f.write(f" {k}={v}")
                 f.write("\n")
 
+            per_user_add: defaultdict[str, list[Add]] = defaultdict(list)
             per_user_run: defaultdict[str, list[Run]] = defaultdict(list)
+
+            for add in profile.add:
+                per_user_add[add.chown or "root"].append(add)
             for run in profile.run:
-                per_user_run[run.user].append(run)
+                per_user_run[run.user or "root"].append(run)
 
-            for run in per_user_run.get("root", []):
-                write_run(run, f)
-            for run in per_user_run.get("0", []):
+            f.write("USER root\n")
+            for add in itertools.chain(
+                per_user_add.get("root", []), per_user_add.get("0", [])
+            ):
+                write_add(add, f, temp_dir)
+            for run in itertools.chain(
+                per_user_run.get("root", []), per_user_run.get("0", [])
+            ):
                 write_run(run, f)
 
-            for user, runs in per_user_run.items():
-                if user in (profile.user, str(uid), "root", "0"):
+            for user in {*per_user_run.keys(), *per_user_add.keys()}:
+                if user in ("root", "0", profile.user, str(uid)):
                     continue
                 f.write(f"USER {user}\n")
-                for run in runs:
+                for add in per_user_add.get(user, []):
+                    write_add(add, f, temp_dir)
+                for run in per_user_run.get(user, []):
                     write_run(run, f)
 
             f.write(f"USER {profile.user}:{profile.user}\n")
@@ -76,9 +83,9 @@ def build_image(profile: ImageProfile, keep_tmp=False) -> str:
                 if add.chown in (profile.user, str(uid)):
                     write_add(add, f, temp_dir)
 
-            for run in per_user_run.get(profile.user, []):
-                write_run(run, f)
-            for run in per_user_run.get(str(uid), []):
+            for run in itertools.chain(
+                per_user_run.get(profile.user, []), per_user_run.get(str(uid), [])
+            ):
                 write_run(run, f)
 
             if profile.entrypoint:

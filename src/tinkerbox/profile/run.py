@@ -11,7 +11,7 @@ class Run:
     """
 
     command: str | list[str]
-    user: str
+    user: str | None = None
     mount: list[dict[str, str]] | None = None
     network: str | None = None
     security: str | None = None
@@ -36,8 +36,8 @@ class Run:
                 "run's `command` field should be a string or a list of strings"
             )
 
-        user = obj.pop("user", "root")
-        if not isinstance(user, str):
+        user = obj.pop("user", None)
+        if user and not isinstance(user, str):
             raise TypeError("run's `user` field should be a string")
 
         mount = obj.pop("mount", None)
@@ -126,7 +126,7 @@ class Run:
         return replace(
             self,
             command=command,
-            user=substitute(self.user, variables),
+            user=substitute(self.user, variables) if self.user else None,
             mount=[
                 {k: substitute(v, variables) for k, v in x.items()} for x in self.mount
             ]
