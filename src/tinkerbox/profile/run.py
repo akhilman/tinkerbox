@@ -68,7 +68,13 @@ class Run:
                 f"run object has unexpected fields: {', '.join(obj.keys())}"
             )
 
-        return cls(command, user)
+        return cls(
+            command,
+            user=user,
+            mount=mount,
+            network=network,
+            security=security,
+        )
 
     @classmethod
     def from_argument(cls, arg: str) -> Self:
