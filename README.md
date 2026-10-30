@@ -854,6 +854,8 @@ Again, this behaviour comes from the default profiles; custom profiles can omit 
 
 This branch is a full rewrite in Python. See `REWRITE.md` for design notes, planned subcommands, and open TODOs (rebase/recreate, richer list output, timezone handling, etc.).
 
+The old version written as a fish script available in the `fish` branch.
+
 ```bash
 # Run from source
 python -m tinkerbox ...
