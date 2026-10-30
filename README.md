@@ -127,7 +127,7 @@ Profiles may **extend** others (`extends = ["default"]`). After loading, Tinkerb
 | `run` | list of run entries | Commands to run during the build (see [Run entries](#run-entries)). |
 | `entrypoint` | string or list of strings | Image `ENTRYPOINT`. |
 | `cmd` | string or list of strings | Image `CMD`. |
-| `override` | string or list of strings | When merging with a parent profile, replace (instead of append) the listed collections. See [Image's override(#images-override). |
+| `override` | string or list of strings | When merging with a parent profile, replace (instead of append) the listed collections. See [Image's override](#images-override). |
 
 String fields that support substitution include `from`, `name`, `user`, `home`, environment values, `entrypoint`, `cmd`, and the relevant fields inside `add` / `run`.
 
