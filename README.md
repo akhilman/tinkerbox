@@ -127,7 +127,7 @@ Profiles may **extend** others (`extends = ["default"]`). After loading, Tinkerb
 | `run` | list of run entries | Commands to run during the build (see [Run entries](#run-entries)). |
 | `entrypoint` | string or list of strings | Image `ENTRYPOINT`. |
 | `cmd` | string or list of strings | Image `CMD`. |
-| `override` | string or list of strings | When merging with a parent profile, replace (instead of append) the listed collections. See [Override](#override). |
+| `override` | string or list of strings | When merging with a parent profile, replace (instead of append) the listed collections. See [Image's override(#images-override). |
 
 String fields that support substitution include `from`, `name`, `user`, `home`, environment values, `entrypoint`, `cmd`, and the relevant fields inside `add` / `run`.
 
@@ -140,7 +140,7 @@ String fields that support substitution include `from`, `name`, `user`, `home`, 
 | `never` | `n` | Never pull. |
 | `newer` | `u`, `update` | Pull if a newer image is available. |
 
-#### Override
+#### Image's override
 
 When this profile is merged on top of a parent, list fields normally **append**. `override` forces **replace** for the named parts:
 
@@ -365,7 +365,7 @@ Profiles may **extend** others (`extends = ["default"]`). After loading, Tinkerb
 | `copy` | list | Files to copy into the container at create time. See [Copy](#copy). |
 | `exec` | list | Commands to run inside the container at create time. See [Exec](#exec). |
 | `enter_command` | string | Command used when entering the container (login shell selection, etc.). |
-| `override` | string or list of strings | When merging with a parent, replace (instead of append/union) the listed collections. See [Override](#override). |
+| `override` | string or list of strings | When merging with a parent, replace (instead of append/union) the listed collections. See [Container's override](#containers-override). |
 
 #### Passthrough
 
@@ -557,7 +557,7 @@ command = ["systemctl", "--user", "daemon-reload"]
 user = "@{CONTAINER_USER}"
 ```
 
-#### Override
+#### Container's override
 
 When this profile is merged on top of a parent, list/set fields normally **append** or **union**. `override` forces **replace** for the named parts:
 
