@@ -14,7 +14,7 @@ if command -v systemd-tmpfiles > /dev/null; then
 	command systemd-tmpfiles --create
 fi
 
-INIT_USERS="root $CONTAINER_USER"
+INIT_USERS="root $(awk -F: '$3 >= 1000 && $3 < 65534 {print $1}' /etc/passwd)"
 INIT_SCRIPT=init
 
 for user in $INIT_USERS; do
