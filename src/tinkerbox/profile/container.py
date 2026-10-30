@@ -120,7 +120,7 @@ class ContainerProfile(Profile):
                 profile_source,
             )
 
-        if environment := obj.pop("environment", obj.pop("env", None)):
+        if environment := obj.pop("environment", None) or obj.pop("env", None):
             profile.environment = parse_string_map(
                 environment,
                 cls,

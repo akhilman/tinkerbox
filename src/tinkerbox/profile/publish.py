@@ -60,9 +60,8 @@ class Publish:
 
         obj = {**obj}
 
-        try:
-            container_port = obj.pop("container_port", obj.pop("port"))
-        except KeyError:
+        container_port = obj.pop("container_port", None) or obj.pop("port", None)
+        if not container_port:
             raise KeyError(
                 "publish object should have at least `container_port` or `port` field"
             )
