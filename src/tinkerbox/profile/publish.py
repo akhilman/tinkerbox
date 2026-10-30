@@ -114,7 +114,7 @@ class Publish:
                 pass
             case [host_port, container_port_protocol]:
                 pass
-            case [host_port, ip, container_port_protocol]:
+            case [ip, host_port, container_port_protocol]:
                 pass
             case _:
                 raise ValueError(f"invalid publish format: {publish}")
