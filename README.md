@@ -8,7 +8,7 @@ It is similar to [Toolbox](https://containertoolbx.org/) and [Distrobox](https:/
 
 This branch is a full rewrite in Python. See `REWRITE.md` for design notes, planned subcommands, and open TODOs (rebase/recreate, richer list output, timezone handling, etc.).
 
-The old version written as a fish script available in the [fish](/akhilman/tinkerbox/tree/fish) branch.
+The old version written as a fish script available in the [fish](https://github.com/akhilman/tinkerbox/tree/fish) branch.
 
 **Status:** Work in progress / alpha, but usable.
 
