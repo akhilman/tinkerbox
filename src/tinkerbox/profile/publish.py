@@ -173,22 +173,22 @@ class Publish:
         return arg
 
 
-def normalize_port(container_port: Any) -> int | PortRange:
-    if isinstance(container_port, int):
+def normalize_port(port: Any) -> int | PortRange:
+    if isinstance(port, int):
         pass
-    elif isinstance(container_port, str):
-        if "-" in container_port:
-            container_port = PortRange.from_string(container_port)
+    elif isinstance(port, str):
+        if "-" in port:
+            port = PortRange.from_string(port)
         else:
-            container_port = int(container_port)
-    elif isinstance(container_port, dict):
-        container_port = PortRange.from_object(container_port)
+            port = int(port)
+    elif isinstance(port, dict):
+        port = PortRange.from_object(port)
     else:
         raise TypeError(
             "container_Port object should be either an int or a string or a dict"
         )
 
-    return container_port
+    return port
 
 
 def port_to_object(port: int | PortRange) -> int | dict[str, int]:
