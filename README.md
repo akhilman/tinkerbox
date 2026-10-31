@@ -304,7 +304,7 @@ user = "root"
 ```
 
 ```bash
-tinkerbox image build my-dev -P dev
+tinkerbox image build -P dev my-dev
 ## or rely on profile name field if you pass name only via profile / CLI as implemented
 ```
 
