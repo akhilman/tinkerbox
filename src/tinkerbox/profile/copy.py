@@ -41,7 +41,7 @@ class Copy:
             "container", None
         )
         if source_container is not None and not isinstance(source_container, str):
-            raise TypeError("copy's `src_container` field should be a string or nil")
+            raise TypeError("copy's `source_container` field should be a string or nil")
 
         ignore_failure = obj.pop("ignore_failure", None)
         if not isinstance(ignore_failure, bool | None):
@@ -75,11 +75,11 @@ class Copy:
                 return cls(Path(source))
             case [source, destination]:
                 return cls(Path(source), destination=Path(destination))
-            case [src_container, source, destination]:
+            case [source_container, source, destination]:
                 return cls(
                     Path(source),
                     destination=Path(destination),
-                    source_container=src_container,
+                    source_container=source_container,
                 )
             case _:
                 raise ValueError(f"invalid copy format: {arg}")
@@ -100,7 +100,7 @@ class Copy:
             destination=Path(substitute(str(self.destination), variables))
             if self.destination
             else None,
-            src_container=substitute(self.source_container, variables)
+            source_container=substitute(self.source_container, variables)
             if self.source_container
             else None,
         )
