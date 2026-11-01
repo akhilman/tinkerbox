@@ -104,7 +104,8 @@ Image profiles describe how to build a container image. They live under:
 
 - `~/.config/tinkerbox/image/` (or `$XDG_CONFIG_HOME/tinkerbox/image/`)
 - `/etc/tinkerbox/image/`
-- there is built-in image profile `default` that can be overridden by placing a file `default.toml` or `default.json` to the profiles directory.
+- there is built-in image profile `default` that can be overridden by placing a file `default.toml` or `default.json` to the profiles directory
+- the `default` built-in image profile can still be accessed by the name `builtin:default`, even if it is overridden
 
 Files may be `name.toml` or `name.json`. Load/inspect with:
 
@@ -290,6 +291,14 @@ The shipped `default` image profile roughly:
 
 Supported bases called out for that default bootstrap path include Alpine, Arch, Debian, Fedora, openSUSE Tumbleweed, and Ubuntu; other images with a common package manager may work but are untested. Custom image profiles can use any `from` and need not use the default bootstrap at all.
 
+#### Modifying default profile
+```toml
+# ~/.config/tinkerbox/image/default.toml
+extends = "builtin:default"
+from = "fedora"
+pull = "newer"
+```
+
 #### Minimal custom image profile
 
 ```toml
@@ -339,7 +348,8 @@ They live under:
 
 - `~/.config/tinkerbox/container/` (or `$XDG_CONFIG_HOME/tinkerbox/container/`)
 - `/etc/tinkerbox/container/`
-- built-in package data (`default`)
+- there is built-in container profile `default` that can be overridden by placing a file `default.toml` or `default.json` to the profiles directory
+- the `default` built-in container profile can still be accessed by the name `builtin:default`, even if it is overridden
 
 Files may be `name.toml` or `name.json`. Load/inspect with:
 

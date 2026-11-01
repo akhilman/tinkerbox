@@ -143,6 +143,9 @@ class Profile(ABC):
 
     @classmethod
     def load(cls, name: str) -> Self:
+        if name == "builtin:default":
+            return cls.default()
+
         for dir in config_paths():
             for suffix in ["json", "toml"]:
                 path = dir / cls.kind().value / f"{name}.{suffix}"
@@ -167,16 +170,23 @@ class Profile(ABC):
                         return profile
 
         if name == "default":
-            resource = (
-                importlib.resources.files(tinkerbox.builtin.__package__)
-                / f"{name}-{cls.kind()}.toml"
-            )
-            if resource.is_file():
-                logger.debug('Loading build-in %s profile "%s"', cls.kind(), name)
-                obj = tomllib.loads(resource.read_text("utf-8"))
-                obj["profile_name"] = name
-                profile = cls.from_object(obj, profile_source="built-in")
-                return profile
+            return cls.default()
+
+        raise ProfileNotFoundError(cls.kind(), name)
+
+    @classmethod
+    def default(cls) -> Self:
+        name = "default"
+        resource = (
+            importlib.resources.files(tinkerbox.builtin.__package__)
+            / f"{name}-{cls.kind()}.toml"
+        )
+        if resource.is_file():
+            logger.debug('Loading build-in %s profile "%s"', cls.kind(), name)
+            obj = tomllib.loads(resource.read_text("utf-8"))
+            obj["profile_name"] = name
+            profile = cls.from_object(obj, profile_source="built-in")
+            return profile
 
         raise ProfileNotFoundError(cls.kind(), name)
 
