@@ -120,7 +120,7 @@ def list_images(args: argparse.Namespace):
             name = formatting.name_or_id(image)
             sys.stdout.write(f"{name}\n")
     elif args.json:
-        sys.stdout.write(json.dumps(image_list, indent=2, sort_keys=True))
+        sys.stdout.write(json.dumps(image_list, indent=2))
         sys.stdout.write("\n")
     else:
         table = formatting.Table()

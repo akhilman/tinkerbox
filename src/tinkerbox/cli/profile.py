@@ -56,9 +56,7 @@ def cat_profile(args: argparse.Namespace):
 
     if args.flatten:
         profile = profile.flatten()
-    sys.stdout.write(
-        json.dumps(profile.to_object(fill_unset=True), sort_keys=True, indent=2)
-    )
+    sys.stdout.write(json.dumps(profile.to_object(fill_unset=True), indent=2))
     sys.stdout.write("\n")
 
 
@@ -72,7 +70,5 @@ def extract_profile(args: argparse.Namespace):
             profile = tinkerbox.image.extract_profile(source)
         case _:
             raise ValueError(f"unexpected profile kind: {kind}")
-    sys.stdout.write(
-        json.dumps(profile.to_object(fill_unset=True), sort_keys=True, indent=2)
-    )
+    sys.stdout.write(json.dumps(profile.to_object(fill_unset=True), indent=2))
     sys.stdout.write("\n")

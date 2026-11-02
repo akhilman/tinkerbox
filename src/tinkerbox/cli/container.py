@@ -199,7 +199,7 @@ def list_containers(args: argparse.Namespace):
             name = formatting.name_or_id(container)
             sys.stdout.write(f"{name}\n")
     elif args.json:
-        sys.stdout.write(json.dumps(container_list, indent=2, sort_keys=True))
+        sys.stdout.write(json.dumps(container_list, indent=2))
         sys.stdout.write("\n")
     else:
         table = formatting.Table()
