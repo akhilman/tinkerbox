@@ -21,7 +21,7 @@ The old version written as a fish script available in the [fish](https://github.
 - Optional host service passthrough (X11, Wayland, DBus, PulseAudio, PipeWire, GPU)
 - Uses only standard python libraries, no external dependencies
 
-The default profiles provide a ready-to-use experience (supported distros, persistent `/home` volume, init scripts, etc.). You can write your own profiles with completely different behaviour.
+The default profiles provide a ready-to-use experience (supported distributions, persistent `/home` volume, init scripts, etc.). You can write your own profiles with completely different behaviour.
 
 ## Requirements
 
@@ -514,8 +514,8 @@ Maps to Podman `-p` / `--publish`.
 
 Port ranges may be written as `"8000-8010"` or `{ start = 8000, end = 8010 }`.
 
-**String form:** `[[IP:][HOSTPORT]:]CONTAINER_PORT[/PROTOCOL]`  
-(as accepted by the parser’s colon-splitting rules)
+**String form:** `[[IP:][HOST_PORT]:]CONTAINER_PORT[/PROTOCOL]`
+(as accepted by the parser's colon-splitting rules)
 
 ```toml
 [[publish]]
@@ -548,7 +548,7 @@ source = "./config/app.toml"
 destination = "/etc/app/config.toml"
 
 [[copy]]
-source_container = "otherbox"
+source_container = "other-box"
 source = "/var/data"
 destination = "/var/data"
 ```
@@ -673,7 +673,7 @@ and before the image is built or the container is created.
 
 | Variable | Source |
 |----------|--------|
-| Every host environment variable | `os.environ` (e.g. `@{HOME}`, `@{PATH}`, `@{USER}`) |
+| Every host environment variable (e.g. `@{HOME}`, `@{PATH}`, `@{USER}`) |
 | `TZ` | Host timezone from `timedatectl` or `/etc/localtime` (if detectable) |
 
 **Image profiles** (in addition to the base set)
