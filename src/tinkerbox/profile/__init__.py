@@ -35,9 +35,7 @@ class ProfileKind(AliasEnum):
 
 @dataclass
 class Profile(ABC):
-    # Profile options
-    profile_name: str | None = None
-    profile_source: str | Path | None = None
+    profile_source: str | Path
     description: str | None = None
     extends: list[str] = field(default_factory=list)
 
@@ -47,19 +45,14 @@ class Profile(ABC):
         raise NotImplementedError
 
     @classmethod
-    def from_object(cls, obj: dict[str, Any], profile_source: str | Path | None = None):
+    def from_object(
+        cls,
+        obj: dict[str, Any],
+        profile_source: str | Path,
+    ):
 
-        profile = cls()
+        profile = cls(profile_source=profile_source)
 
-        profile.profile_source = profile_source
-
-        if profile_name := obj.pop("profile_name", None):
-            profile.profile_name = parse_string(
-                profile_name,
-                cls,
-                "profile_name",
-                profile_source,
-            )
         if description := obj.pop("description", None):
             profile.description = parse_string(
                 description,
@@ -92,30 +85,39 @@ class Profile(ABC):
         Merges this profile over loaded profiles form the `extends` field.
         """
 
-        visited = set()
+        visited_names = set()
+        visited_sources = set()
         stack = [*self.extends]
         flat = replace(self)  # Make deep copy
 
-        if self.profile_name:
-            visited.add(self.profile_name)
+        if self.profile_source:
+            visited_sources.add(self.profile_source)
 
         while stack:
             name = stack.pop(-1)
-            if name in visited:
+
+            if name in visited_names:
                 continue
-            visited.add(name)
+
             base = type(self).load(name)
+
+            source = base.profile_source
+            if source in visited_sources:
+                continue
+
+            visited_names.add(name)
+            visited_sources.add(source)
+
             stack.extend(base.extends)
             base.extends = []
             flat = base.merge(flat)
 
-        flat.profile_name = self.profile_name
         flat.profile_source = self.profile_source
 
         return flat
 
     def merge(self, other: Self) -> Self:
-        merged = type(self)()
+        merged = type(self)(other.profile_source)
 
         merged.description = self.description
         if other.description is not None:
@@ -126,8 +128,6 @@ class Profile(ABC):
     def variables(self) -> dict[str, str]:
         variables = {k: v for k, v in os.environ.items()}
 
-        if self.profile_name:
-            variables["PROFILE_NAME"] = self.profile_name
         if tz := tinkerbox.utils.timezone():
             variables["TZ"] = tz
 
@@ -165,7 +165,6 @@ class Profile(ABC):
                     if obj:
                         if not isinstance(obj, dict):
                             raise ProfileNotObjectError(cls=cls, source=path)
-                        obj["profile_name"] = name
                         profile = cls.from_object(obj, profile_source=path)
                         return profile
 
@@ -176,19 +175,16 @@ class Profile(ABC):
 
     @classmethod
     def default(cls) -> Self:
-        name = "default"
         resource = (
             importlib.resources.files(tinkerbox.builtin.__package__)
-            / f"{name}-{cls.kind()}.toml"
+            / f"default-{cls.kind()}.toml"
         )
-        if resource.is_file():
-            logger.debug('Loading build-in %s profile "%s"', cls.kind(), name)
-            obj = tomllib.loads(resource.read_text("utf-8"))
-            obj["profile_name"] = name
-            profile = cls.from_object(obj, profile_source="built-in")
-            return profile
+        assert resource.is_file()
 
-        raise ProfileNotFoundError(cls.kind(), name)
+        logger.debug("Loading build-in %s default profile", cls.kind())
+        obj = tomllib.loads(resource.read_text("utf-8"))
+        profile = cls.from_object(obj, profile_source="built-in:default")
+        return profile
 
 
 def list_profiles(kind: ProfileKind) -> set[str]:

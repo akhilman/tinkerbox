@@ -241,7 +241,7 @@ def is_paused(container: str) -> bool:
 
 def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
     passthrough = profile.passthrough
-    pass_profile = ContainerProfile()
+    pass_profile = ContainerProfile(profile_source="passthrough")
 
     if runtime_dir_env := os.getenv("XDG_RUNTIME_DIR"):
         xdg_runtime_dir = Path(runtime_dir_env)
@@ -391,9 +391,10 @@ def extract_profile(container: str) -> ContainerProfile:
     if not isinstance(obj, dict):
         raise NonNativeContainerError(container)
 
-    obj["profile_name"] = container
-
-    return ContainerProfile.from_object(obj, profile_source=f"container:{container}")
+    return ContainerProfile.from_object(
+        obj,
+        profile_source=f"container:{container}",
+    )
 
 
 def list_containers(calculate_size: bool = False) -> list[dict[str, Any]]:

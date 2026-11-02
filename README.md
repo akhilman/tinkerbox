@@ -336,7 +336,6 @@ When substituting an image profile, the following are available in addition to t
 | `CONTAINER_HOME` | Profile `home`, or host home |
 | `IMAGE_FROM` | Profile `from`, if set |
 | `IMAGE_NAME` | Profile `name`, if set |
-| `PROFILE_NAME` | Loaded profile name, if set |
 | `TZ` | Host timezone when detectable |
 
 See the [Variable substitution](#variable-substitution) section for `@{VAR}`, `@{VAR?}`, and `@{VAR:-default}` syntax.
@@ -631,7 +630,7 @@ tinkerbox container create -P web my-debian web
 
 #### Related variables (container create)
 
-Container profile substitution includes the base set (host environment, `PROFILE_NAME`, `TZ`, …) plus:
+Container profile substitution includes the base set (host environment, `TZ`, …) plus:
 
 | Variable | Meaning |
 |----------|---------|
@@ -675,7 +674,6 @@ and before the image is built or the container is created.
 | Variable | Source |
 |----------|--------|
 | Every host environment variable | `os.environ` (e.g. `@{HOME}`, `@{PATH}`, `@{USER}`) |
-| `PROFILE_NAME` | Name of the profile being loaded (if set) |
 | `TZ` | Host timezone from `timedatectl` or `/etc/localtime` (if detectable) |
 
 **Image profiles** (in addition to the base set)

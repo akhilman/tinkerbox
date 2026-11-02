@@ -133,7 +133,8 @@ def list_images(args: argparse.Namespace):
             from_image = "-"
             if profile := image.get("Labels", {}).get(f"{APP_ID}.profile"):
                 profile = ImageProfile.from_object(
-                    json.loads(profile), profile_source=f"image:{name}"
+                    json.loads(profile),
+                    profile_source=f"image:{name}",
                 )
                 if profile.from_image:
                     from_image = profile.from_image

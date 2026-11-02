@@ -272,9 +272,10 @@ def extract_profile(image: str) -> ImageProfile:
     if not isinstance(obj, dict):
         raise NonNativeImageError(image)
 
-    obj["profile_name"] = image
-
-    return ImageProfile.from_object(obj, profile_source=f"image:{image}")
+    return ImageProfile.from_object(
+        obj,
+        profile_source=f"image:{image}",
+    )
 
 
 def extract_user_and_group(image: str) -> tuple[str, str]:

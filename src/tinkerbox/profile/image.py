@@ -73,9 +73,7 @@ class ImageProfile(Profile):
         return ProfileKind.IMAGE
 
     @classmethod
-    def from_object(
-        cls, obj: dict[str, Any], profile_source: str | Path | None = None
-    ) -> Self:
+    def from_object(cls, obj: dict[str, Any], profile_source: str | Path) -> Self:
 
         obj = {**obj}
         profile = super().from_object(obj, profile_source=profile_source)
