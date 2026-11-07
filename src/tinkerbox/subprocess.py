@@ -3,7 +3,6 @@ import shlex
 import subprocess
 import sys
 import threading
-from dataclasses import dataclass
 
 from tinkerbox import TinkerboxError
 
@@ -109,13 +108,19 @@ class DependencyError(TinkerboxError):
     pass
 
 
-@dataclass
 class CalledProcessError(TinkerboxError):
-    return_code: int
-    call_args: list[str]
-    output: str | None = None
-    stderr: str | None = None
-
-    def __str__(self):
-        cmd = shlex.join(self.call_args)
-        return f"Subprocess returned non zero ({self.return_code}) exit code: {cmd}"
+    def __init__(
+        self,
+        return_code: int,
+        call_args: list[str],
+        output: str | None = None,
+        stderr: str | None = None,
+    ):
+        cmd = shlex.join(call_args)
+        super().__init__(
+            f"Subprocess returned non zero ({return_code}) exit code: {cmd}"
+        )
+        self.return_code: int = return_code
+        self.call_args: list[str] = call_args
+        self.output: str | None = output
+        self.stderr: str | None = stderr
