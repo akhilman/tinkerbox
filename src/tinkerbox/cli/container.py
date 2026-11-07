@@ -26,7 +26,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
     cmd = commands.add_parser(
         "create", aliases=["cr"], help="create a new container from an image"
     )
-    add_cerate_args(cmd)
+    add_create_args(cmd)
     add_container_profile_args(cmd)
     cmd.set_defaults(func=create_container)
 
@@ -79,7 +79,7 @@ def setup_argparse(parser: argparse.ArgumentParser):
     cmd.set_defaults(func=stop_containers)
 
 
-def add_cerate_args(parser: argparse.ArgumentParser):
+def add_create_args(parser: argparse.ArgumentParser):
     parser.add_argument(
         "--enter",
         "-E",
