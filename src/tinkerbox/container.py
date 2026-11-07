@@ -229,14 +229,19 @@ def is_running(container: str) -> bool:
 
 
 def is_paused(container: str) -> bool:
-    running = subprocess.run_podman_capture(
-        "podman",
-        "container",
-        "inspect",
-        "--format='{{.State.Paused}}'",
-        container,
-    ).strip()
-    return running == "true"
+    try:
+        output = subprocess.run_podman_capture(
+            "podman",
+            "container",
+            "inspect",
+            "--format='{{.State.Paused}}'",
+            container,
+        )
+    except CalledProcessError as exc:
+        if exc.stderr and "no such container" in exc.stderr:
+            raise ContainerNotFoundError(container)
+        raise
+    return "true" in output
 
 
 def apply_passthrough(profile: ContainerProfile) -> ContainerProfile:
