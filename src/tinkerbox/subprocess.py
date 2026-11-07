@@ -10,15 +10,15 @@ from tinkerbox import TinkerboxError
 logger = logging.getLogger(__name__)
 
 
-def run_podman(*args: str):
-    run("podman", *args)
+def run_podman(*args: str) -> int:
+    return run("podman", *args)
 
 
 def run_podman_capture(*args: str, echo_output: bool = False) -> str:
     return run_capture("podman", *args, echo_output=echo_output)
 
 
-def run(cmd: str, *args: str):
+def run(cmd: str, *args: str) -> int:
     command = [cmd, *args]
     logger.debug("$ %s", shlex.join(command))
 
