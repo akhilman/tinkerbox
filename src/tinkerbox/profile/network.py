@@ -11,7 +11,7 @@ class Network:
     """
 
     mode: str
-    options: dict[str, str | None] = field(default_factory=dict)
+    options: dict[str, str | bool | None] = field(default_factory=dict)
 
     @classmethod
     def from_object(cls, obj: Any) -> Self:
@@ -29,11 +29,12 @@ class Network:
         if not isinstance(mode, str):
             raise TypeError("network's `mode` field should be a string")
 
-        options = {k: (v if v else None) for k, v in obj.items()}
+        options = {k: v for k, v in obj.items() if v}
         if not all(
-            isinstance(k, str) and isinstance(v, str | None) for k, v in options.items()
+            isinstance(k, str) and isinstance(v, str | bool | None)
+            for k, v in options.items()
         ):
-            raise TypeError("network options should be strings or nils")
+            raise TypeError("network options should be strings, bools or nils")
 
         return cls(mode, options=options)
 
@@ -56,23 +57,21 @@ class Network:
                 case [key, val]:
                     obj[key] = val
                 case [key]:
-                    obj[key] = None
+                    obj[key] = True
 
         return cls.from_object(obj)
 
-    def to_object(self) -> dict[str, str | None]:
+    def to_object(self) -> dict[str, str | bool | None]:
         return {"mode": self.mode, **self.options}
 
     def to_argument(self) -> str:
         """Convert to Podman --network format: MODE:MODE-SPECIFIC-OPTION[,...]"""
 
         arg = f"{self.mode}"
-        if self.options:
-            arg += ":"
-        for key, val in self.options.items():
-            if val:
-                arg += f",{key}={val}"
-            else:
-                arg += f",{key}"
-
+        for n, (key, val) in enumerate(filter(lambda kv: kv[1], self.options.items())):
+            arg += "," if n > 0 else ":"
+            if val is True:
+                arg += f"{key}"
+            elif val:
+                arg += f"{key}={val}"
         return arg

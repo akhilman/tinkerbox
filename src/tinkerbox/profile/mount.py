@@ -29,7 +29,8 @@ class Mount:
         if not isinstance(mount_type, str):
             raise TypeError("mount's `type` field should be a string")
 
-        options = {k: (v if v else None) for k, v in obj.items()}
+        # TODO: agent - `True` and `None` handling is changed, update docstring.
+        options = {k: v for k, v in obj.items() if v}
         if not all(
             isinstance(k, str) and isinstance(v, str | bool | None)
             for k, v in options.items()
@@ -69,10 +70,11 @@ class Mount:
 
         arg = f"type={self.mount_type}"
         for key, val in self.options.items():
+            # TODO: agent - `True` handling is changed, update docstring.
+            if val is True:
+                arg += f",{key}"
             if val:
                 arg += f",{key}={val}"
-            else:
-                arg += f",{key}"
 
         return arg
 
