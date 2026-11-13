@@ -425,7 +425,7 @@ def parse_string_map(
         isinstance(k, str) and isinstance(v, str) for (k, v) in value.items()
     ):
         return value
-    elif isinstance(value, list) and all(isinstance(x, list) for x in value):
+    elif isinstance(value, list) and all(isinstance(x, str) for x in value):
         return {k: v for k, v in ((x.split("=", 1) + [""])[:2] for x in value)}
     else:
         raise InvalidFieldError(
