@@ -71,7 +71,7 @@ def substitute(text: str, variables: dict[str, str]) -> str:
         The text with all variable references substituted.
 
     Raises:
-        ValueError: If a required variable is not defined.
+        KeyError: If a required variable is not defined.
     """
 
     def replace(match: re.Match[str], visited) -> str:
@@ -92,7 +92,8 @@ def substitute(text: str, variables: dict[str, str]) -> str:
         if operator == ":-" and default:
             return default
 
-        raise ValueError(f"variable {name!r} is not defined")
+        # TODO: agent - ErrorType was changed from ValueError to TypeError. Walk through all call tree and update docstrings.
+        raise KeyError(f"variable {name!r} is not defined")
 
     return _SUBSTITUTE_VAR.sub(lambda x: replace(x, set()), text)
 
